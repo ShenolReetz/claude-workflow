@@ -1,0 +1,11 @@
+{
+  "anthropic_api_key": "sk-ant-api03-YOUR-KEY-HERE",
+  "openai_api_key": "sk-proj-YOUR-OPENAI-KEY-HERE",
+  "airtable_api_key": "patYOUR-AIRTABLE-KEY-HERE",
+  "airtable_base_id": "appYOUR-BASE-ID-HERE",
+  "airtable_table_name": "Video Titles",
+  "elevenlabs_api_key": "sk_YOUR-ELEVENLABS-KEY-HERE",
+  "json2video_api_key": "YOUR-JSON2VIDEO-KEY-HERE",
+  "amazon_associate_id": "your-associate-id-20",
+  "google_drive_credentials": "/home/claude-workflow/config/google_drive_credentials.json"
+}

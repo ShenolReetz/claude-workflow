@@ -1,0 +1,34 @@
+version: "3.8"
+
+services:
+  claude-workflow:
+    build: .
+    container_name: claude-workflow
+    restart: unless-stopped
+    environment:
+      - TZ=Europe/Berlin
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./config:/app/config:ro
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ./temp_files:/app/temp_files
+      - ./src:/app/src
+    networks:
+      - claude-network
+      
+  redis:
+    image: redis:7-alpine
+    container_name: claude-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - claude-network
+
+networks:
+  claude-network:
+    driver: bridge
+
+volumes:
+  redis_data:
