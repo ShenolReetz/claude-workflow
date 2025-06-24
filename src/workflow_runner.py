@@ -133,9 +133,9 @@ class ContentPipelineOrchestrator:
             print("☁️ Uploading video to Google Drive...")
             upload_result = await upload_video_to_google_drive(
                 self.config,
-                pending_title['record_id'],
                 video_result['video_url'],
-                pending_title['record_id']  # Add record_id as 4th argument
+                video_result.get('project_name', f'Video_{pending_title["record_id"]}'),
+                pending_title['record_id']
             )
             
             if upload_result['success']:
