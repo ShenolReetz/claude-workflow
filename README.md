@@ -47,3 +47,20 @@ pip install --break-system-packages httpx beautifulsoup4 lxml anthropic openai g
 
 # Run the workflow
 python3 src/workflow_runner.py
+
+## 🆕 Text Generation Control MCP
+
+The latest addition to the system is the **Text Generation Control MCP**, which ensures all generated content meets strict timing requirements for text-to-speech conversion.
+
+### Features:
+- **9-Second Timing Validation**: Each product description is validated to ensure it can be read in exactly 9 seconds
+- **Automatic Regeneration**: Products that don't meet timing requirements are automatically regenerated
+- **Keyword Enforcement**: Ensures SEO keywords are properly integrated into product descriptions
+- **Category Validation**: Verifies products match their assigned categories
+
+### Implementation Files:
+- `mcp_servers/text_generation_control_server.py` - Quality control server
+- `src/mcp/text_generation_control_agent_mcp_v2.py` - Control agent with regeneration loop
+
+### Workflow Integration:
+The Text Control MCP runs after countdown script generation to ensure all products meet quality standards before proceeding to video creation.
