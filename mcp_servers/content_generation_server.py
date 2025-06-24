@@ -210,6 +210,22 @@ async def test_content_generation():
     script = await server.generate_countdown_script(optimized_title, keywords)
     if script:
         print(f"Script intro: {script.get('intro', 'N/A')[:50]}...")
+    
+    async def generate_single_product(self, prompt: str) -> str:
+        """Generate a single product based on specific requirements"""
+        try:
+            message = self.anthropic_client.messages.create(
+                model="claude-3-haiku-20240307",
+                max_tokens=200,
+                messages=[
+                    {"role": "user", "content": prompt}
+                ]
+            )
+            return message.content[0].text
+        except Exception as e:
+            logger.error(f"Error generating single product: {e}")
+            return None
+
 
 if __name__ == "__main__":
     asyncio.run(test_content_generation())
