@@ -84,12 +84,24 @@ class ContentGenerationMCPServer:
             prompt = f"""
             Create a YouTube Shorts script for: "{title}"
             Keywords to include: {keywords_str}
+            Category context: {title}
+            
+            PRODUCT EXAMPLES BY CATEGORY:
+            - Marine Stereos: Fusion MS-RA70, JBL PRV-175, Kenwood KMR-M328BT
+            - Satellite TV: DISH Wally HD, Winegard SK-SWM3, KING VQ4500
+            - Computer Vacuums: XPOWER A-2, Metro Vacuum DataVac, OPOLAR Cordless
+            - Security Cameras: Wyze Cam v3, Blink Mini, Ring Indoor Cam
+            - Keyboards: Logitech MX Keys, Corsair K95 RGB, Razer BlackWidow
             
             STRICT REQUIREMENTS:
             - TOTAL VIDEO: Under 60 seconds
             - INTRO: Maximum 5 seconds, extremely attention-grabbing
             - PRODUCTS: Exactly 5 products, countdown from #5 to #1
             - EACH PRODUCT: Maximum 9 seconds each
+            - IMPORTANT: Use ONLY REAL products that ACTUALLY exist on Amazon!
+              Examples: "Logitech MX Keys", "Sony WH-1000XM5", "Apple AirPods Pro"
+              NEVER invent fake products like "Neptune Command Center" or "TelepathX"!
+              Use actual brand names and model numbers!
             - OUTRO: Maximum 5 seconds, call-to-action for links in comments
             - FORMAT: 9:16 vertical video
             - STYLE: Fast-paced, energetic, hook viewer immediately
@@ -100,7 +112,7 @@ class ContentGenerationMCPServer:
                 "products": [
                     {{
                         "rank": 5,
-                        "name": "Product name",
+                        "name": "REAL product name (e.g. Sony WH-1000XM5)",
                         "script": "9-second product description",
                         "key_features": ["feature1", "feature2", "feature3"]
                     }}

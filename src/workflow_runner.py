@@ -13,6 +13,8 @@ from mcp.amazon_affiliate_agent_mcp import run_amazon_affiliate_generation
 from mcp_servers.content_generation_server import ContentGenerationMCPServer
 from mcp.text_generation_control_agent_mcp_v2 import run_text_control_with_regeneration
 from mcp.json2video_agent_mcp import run_video_creation
+from mcp.amazon_drive_integration import save_amazon_images_to_drive
+from mcp.amazon_images_workflow import download_and_save_amazon_images
 from mcp.google_drive_agent_mcp import upload_video_to_google_drive
 
 class ContentPipelineOrchestrator:
@@ -117,7 +119,53 @@ class ContentPipelineOrchestrator:
         else:
             print(f"⚠️ Affiliate link generation had issues: {affiliate_result.get('error', 'Unknown error')}")
         
-        # Step 8: Create video with JSON2Video
+        
+            # Step 7b: Download and save Amazon product images
+            print("📸 Downloading Amazon product images...")
+            
+            products_list = []
+            for i in range(1, 6):
+                product_title = saved_content.get(f'ProductNo{i}Title')
+                if product_title:
+                    products_list.append({
+                        'title': product_title,
+                        'description': saved_content.get(f'ProductNo{i}Description', '')
+                    })
+            
+            amazon_images_result = await save_amazon_images_to_drive(
+                self.config,
+                pending_title['record_id'],
+                video_result.get('project_name', pending_title['title']),
+                products_list
+            )
+            
+            if amazon_images_result['success']:
+                print(f"✅ Saved {amazon_images_result['images_saved']} Amazon product images")
+                
+                for link_info in amazon_images_result.get('affiliate_links', []):
+                    await update_airtable_record(
+                        self.config,
+                        pending_title['record_id'],
+                        {f'ProductNo{link_info["product_num"]}AffiliateLink': link_info['affiliate_link']}
+                    )
+
+
+            # Step 7b: Download Amazon product images if available
+            if affiliate_result.get('product_results'):
+                print("📸 Downloading Amazon product images...")
+                
+                images_result = await download_and_save_amazon_images(
+                    self.config,
+                    pending_title['record_id'],
+                    video_result.get('project_name', pending_title['title']),
+                    affiliate_result.get('product_results', {})
+                )
+                
+                if images_result['success']:
+                    print(f"✅ Saved {images_result['images_saved']} Amazon product images")
+                    print(f"📦 Products with images: {images_result['products_with_images']}")
+
+# Step 8: Create video with JSON2Video
         print("🎬 Creating video with JSON2Video...")
         video_result = await run_video_creation(
             self.config,
