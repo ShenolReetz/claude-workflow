@@ -18,6 +18,17 @@ class GoogleDriveAgentMCP:
         self.config = config
         self.drive_server = GoogleDriveMCPServer('/home/claude-workflow/config/google_drive_credentials.json')
         
+
+    def _clean_folder_name(self, name: str) -> str:
+        """Clean folder name for Google Drive"""
+        # Remove problematic characters
+        cleaned = name.replace("'", "")
+        cleaned = cleaned.replace('"', "")
+        cleaned = cleaned.replace("\\", "")
+        cleaned = cleaned.replace("/", "-")
+        # Limit length
+        return cleaned[:60]
+
     async def initialize(self):
         """Initialize the Google Drive service"""
         return await self.drive_server.initialize_drive_service()

@@ -16,6 +16,14 @@ from urllib.parse import quote_plus
 import httpx
 from bs4 import BeautifulSoup
 
+# ScrapingDog integration
+try:
+    from mcp_servers.scrapingdog_amazon_server import ScrapingDogAmazonServer
+    SCRAPINGDOG_AVAILABLE = True
+except ImportError:
+    SCRAPINGDOG_AVAILABLE = False
+    ScrapingDogAmazonServer = None
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -50,6 +58,16 @@ class AmazonAffiliateMCPServer:
             timeout=30.0,
             follow_redirects=True
         )
+        
+        # Initialize ScrapingDog if available
+        self.scrapingdog = None
+        if SCRAPINGDOG_AVAILABLE and config.get('scrapingdog_api_key'):
+            try:
+                self.scrapingdog = ScrapingDogAmazonServer(config)
+                logger.info("✅ ScrapingDog enabled for Amazon searches")
+            except Exception as e:
+                logger.warning(f"Failed to initialize ScrapingDog: {e}")
+
 
     async def rate_limit(self):
         """Implement rate limiting for Amazon requests"""
@@ -93,6 +111,25 @@ class AmazonAffiliateMCPServer:
         Returns:
             Dict with 'asin', 'title', 'url', 'image', 'price' or None if not found
         """
+
+        # Try ScrapingDog first if available
+        if self.scrapingdog:
+            try:
+                logger.info(f"🔍 Using ScrapingDog for: {product_title}")
+                result = await self.scrapingdog.search_product(product_title)
+                if result.get('success'):
+                    return {
+                        'asin': result['asin'],
+                        'title': result['title'],
+                        'price': result.get('price', 'N/A'),
+                        'url': result.get('product_url', ''),
+                        'affiliate_link': result['affiliate_link'],
+                        'image_url': result.get('image_url', '')
+                    }
+            except Exception as e:
+                logger.warning(f"ScrapingDog error: {e}, falling back to direct search")
+        
+        # Original search logic follows
         try:
             await self.rate_limit()
             
