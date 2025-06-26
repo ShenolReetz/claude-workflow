@@ -78,7 +78,49 @@ Framing:
         except Exception as e:
             print(f"Error downloading image: {e}")
             return None
+async def generate_product_image_with_reference(self, product_title: str, product_description: str, reference_image_url: str, style: str) -> Optional[str]:
+        """Generate product image using a reference image for 1:1 accuracy"""
+        
+        try:
+            logger.info(f"🎨 Generating 1:1 image for: {product_title} using reference")
+            
+            # Create the prompt for DALL-E
+            prompt = f"""Create an EXACT photorealistic copy of the product shown in the reference.
+Product Name: {product_title}
+Product Details: {product_description}
+Style Requirements: {style}
 
+CRITICAL INSTRUCTIONS:
+- This must be a 1:1 exact match with the reference product
+- Maintain all logos, brand markings, buttons, and details
+- Use identical angles and lighting as reference
+- Professional product photography on clean white background
+- Ultra-high detail and photorealistic quality
+- Show the EXACT same product model"""
+
+            # Call OpenAI DALL-E API
+            response = self.client.images.generate(
+                model="dall-e-3",
+                prompt=prompt,
+                size="1024x1024",
+                quality="hd",
+                style="natural",
+                n=1
+            )
+            # Get the generated image URL
+            generated_image_url = response.data[0].url
+            
+            logger.info(f"✅ Generated 1:1 product image: {generated_image_url}")
+            return generated_image_url
+            
+        except Exception as e:
+            logger.error(f"Error generating image with reference: {str(e)}")
+            # Fallback to regular generation without reference
+            logger.info("Falling back to regular image generation")
+            return await self.generate_product_image(
+                product_name=product_title,
+                product_rank=1
+            )
 # Test the server
 async def test_image_generation():
     with open('/app/config/api_keys.json', 'r') as f:
