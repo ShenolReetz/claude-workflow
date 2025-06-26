@@ -1,0 +1,108 @@
+import asyncio
+import json
+import sys
+import os
+from datetime import datetime
+
+# Add the project root to Python path
+sys.path.append('/app')
+
+from mcp_servers.airtable_server import AirtableMCPServer
+from mcp_servers.content_generation_server import ContentGenerationMCPServer
+
+class ContentPipelineOrchestrator:
+    def __init__(self):
+        # Load configuration
+        with open('/app/config/api_keys.json', 'r') as f:
+            self.config = json.load(f)
+        
+        # Initialize MCP servers
+        self.airtable_server = AirtableMCPServer(
+            api_key=self.config['airtable_api_key'],
+            base_id=self.config['airtable_base_id'],
+            table_name=self.config['airtable_table_name']
+        )
+        
+        self.content_server = ContentGenerationMCPServer(
+            anthropic_api_key=self.config['anthropic_api_key']
+        )
+        
+    async def run_complete_workflow(self):
+        """Run the complete content generation workflow"""
+        print(f"🚀 Starting content workflow at {datetime.now()}")
+        
+        # Step 1: Get pending title from Airtable
+        print("📋 Getting pending title from Airtable...")
+        pending_title = await self.airtable_server.get_pending_titles()
+        
+        if not pending_title:
+            print("❌ No pending titles found. Exiting.")
+            return
+        
+        print(f"✅ Found title: {pending_title['title']}")
+        
+        # Step 2: Generate SEO keywords
+        print("🔍 Generating SEO keywords...")
+        keywords = await self.content_server.generate_seo_keywords(
+            pending_title['title'], 
+            "Electronics"  # You can make this dynamic later
+        )
+        
+        # Step 3: Optimize title
+        print("🎯 Optimizing title for social media...")
+        optimized_title = await self.content_server.optimize_title(
+            pending_title['title'], 
+            keywords
+        )
+        
+        # Step 4: Generate countdown script
+        print("📝 Generating countdown script...")
+        script_data = await self.content_server.generate_countdown_script(
+            optimized_title, 
+            keywords
+        )
+        
+        # Step 5: Generate blog post
+        #print("📄 Generating blog post...")
+        #blog_post = await self.content_server.generate_blog_post(
+        #    optimized_title, 
+        #    script_data, 
+        #    keywords
+        #)
+        blog_post = "Blog post generation disabled during testing to save tokens."
+        
+        # Step 6: Save everything back to Airtable
+        print("💾 Saving generated content to Airtable...")
+        content_data = {
+            'keywords': keywords,
+            'optimized_title': optimized_title,
+            'script': script_data,
+            'blog_post': blog_post
+        }
+        
+        await self.airtable_server.save_generated_content(
+            pending_title['record_id'], 
+            content_data
+        )
+        
+        # Step 7: Update status to "Done"
+        print("✅ Updating record status to 'Done'...")
+        await self.airtable_server.update_record_status(
+            pending_title['record_id'], 
+            "Processing"
+        )
+        
+        print("🎉 Complete workflow finished successfully!")
+        print(f"📊 Summary:")
+        print(f"   Original: {pending_title['title']}")
+        print(f"   Optimized: {optimized_title}")
+        print(f"   Keywords: {len(keywords)} generated")
+        print(f"   Script: {len(script_data.get('products', []))} products")
+        print(f"   Blog: {len(blog_post)} characters")
+
+async def main():
+    orchestrator = ContentPipelineOrchestrator()
+    await orchestrator.run_complete_workflow()
+
+if __name__ == "__main__":
+    asyncio.run(main())
