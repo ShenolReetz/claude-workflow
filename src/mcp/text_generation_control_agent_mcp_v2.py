@@ -84,7 +84,7 @@ class TextGenerationControlAgentMCP:
                 
                 await self.airtable_server.update_record(record_id, {
                     'TextControlStatus': 'Validated',
-                    'TextControlAttempts': str(attempt)
+                    'GenerationAttempts': attempt
                 })
                 
                 return {
@@ -113,7 +113,7 @@ class TextGenerationControlAgentMCP:
         # Max attempts reached
         await self.airtable_server.update_record(record_id, {
             'TextControlStatus': 'Failed',
-            'TextControlAttempts': str(attempt),
+            'GenerationAttempts': attempt,
             'TextControlIssues': json.dumps(validation_result['products_needing_regeneration'])
         })
         
