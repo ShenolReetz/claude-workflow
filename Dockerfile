@@ -1,27 +1,24 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    curl \
     git \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install Python dependencies
+# Copy requirements first for better Docker layer caching
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy source code
-COPY src/ ./src/
-COPY mcp_servers/ ./mcp_servers/
+# Copy project files
+COPY . .
+
+# Set Python path
+ENV PYTHONPATH=/app
 
 # Create necessary directories
-RUN mkdir -p logs data temp_files
+RUN mkdir -p logs output
 
-# Set environment variables
-ENV PYTHONPATH=/app
-ENV PYTHONUNBUFFERED=1
-
-# Run the workflow
-CMD ["python", "src/workflow_runner.py"]
+CMD ["python3", "src/workflow_runner.py"]

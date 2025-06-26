@@ -1,10 +1,8 @@
-# API Keys and Credentials - NEVER COMMIT THESE
+# API Keys and Sensitive Data
 config/api_keys.json
 config/google_drive_credentials.json
-config/*.json
-!config/*.example.json
-.env
 *.env
+.env*
 
 # Python
 __pycache__/
@@ -12,30 +10,28 @@ __pycache__/
 *$py.class
 *.so
 .Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
 venv/
 env/
-build/
-dist/
-
-# Test files and media
-test_video.mp4
-*.mp4
-*.mp3
-*.jpg
-*.png
-*.wav
-
-# Logs
-*.log
-logs/
-*.log.*
-
-# OS
-.DS_Store
-.DS_Store?
-._*
-Thumbs.db
-ehthumbs.db
+ENV/
+.venv/
 
 # IDE
 .vscode/
@@ -44,13 +40,41 @@ ehthumbs.db
 *.swo
 *~
 
-# Temporary files
+# Logs
+*.log
+logs/
+workflow.log
+
+# Test Files
+test_*
+*_test.py
+tests/
+
+# Temporary Files
 *.tmp
 *.temp
-.cache/
+temp/
+tmp/
 
-# Backup files
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Google Drive Tokens
+token.json
+token.pickle
+
+# Docker
+.dockerignore
+
+# Backup Files
+*.bak
 *.backup
-*.save*
-*.broken
+*~
 
+# Output Files
+output/
+generated/
+videos/
+images/
+audio/

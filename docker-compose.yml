@@ -1,34 +1,31 @@
-version: "3.8"
+version: '3.8'
 
 services:
   claude-workflow:
     build: .
-    container_name: claude-workflow
-    restart: unless-stopped
-    environment:
-      - TZ=Europe/Berlin
-      - PYTHONUNBUFFERED=1
     volumes:
-      - ./config:/app/config:ro
-      - ./logs:/app/logs
-      - ./data:/app/data
-      - ./temp_files:/app/temp_files
       - ./src:/app/src
+      - ./config:/app/config
+      - ./logs:/app/logs
+      - ./output:/app/output
+    environment:
+      - PYTHONPATH=/app
     networks:
-      - claude-network
-      
-  redis:
-    image: redis:7-alpine
-    container_name: claude-redis
-    restart: unless-stopped
+      - workflow-network
+
+  workflow-scheduler:
+    build: .
     volumes:
-      - redis_data:/data
+      - ./src:/app/src
+      - ./config:/app/config
+      - ./logs:/app/logs
+    environment:
+      - PYTHONPATH=/app
+    command: python3 src/workflow_runner.py --scheduled
+    restart: unless-stopped
     networks:
-      - claude-network
+      - workflow-network
 
 networks:
-  claude-network:
+  workflow-network:
     driver: bridge
-
-volumes:
-  redis_data:
