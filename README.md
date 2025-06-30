@@ -197,7 +197,7 @@ python3 src/mcp/wordpress_mcp.py
 ## 🚧 TODO / Next Steps
 
 ### Immediate Priority (Next Session - June 29)
-- [ ] **WordPress MCP Integration** - Connect to workflow_runner.py
+- [ ] **WordPress MCP Integration** - Connect to workflow_runner.py - DONE!
 - [ ] **Complete JSON2Video** - Fix remaining 1% (template format)
 - [ ] **Test Full Pipeline** - Airtable → Video → Blog → Social Ready
 
