@@ -78,3 +78,4 @@ generated/
 videos/
 images/
 audio/
+config/api_keys.json

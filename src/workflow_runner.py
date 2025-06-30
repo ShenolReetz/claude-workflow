@@ -16,6 +16,7 @@ from mcp.json2video_agent_mcp import run_video_creation
 from mcp.amazon_drive_integration import save_amazon_images_to_drive
 from mcp.amazon_images_workflow import download_and_save_amazon_images
 from mcp.google_drive_agent_mcp import upload_video_to_google_drive
+from mcp.wordpress_mcp import WordPressMCP
 
 class ContentPipelineOrchestrator:
     def __init__(self):
@@ -33,7 +34,8 @@ class ContentPipelineOrchestrator:
         self.content_server = ContentGenerationMCPServer(
             anthropic_api_key=self.config['anthropic_api_key']
         )
-        
+        self.wordpress_mcp = WordPressMCP(self.config)
+
     async def run_complete_workflow(self):
         """Run the complete content generation workflow"""
         print(f"🚀 Starting content workflow at {datetime.now()}")
@@ -188,10 +190,17 @@ class ContentPipelineOrchestrator:
             
             if upload_result['success']:
                 print(f"✅ Video uploaded to Google Drive: {upload_result['drive_url']}")
+                
+                # Create WordPress blog post
+                try:
+                    wp_result = await self.wordpress_mcp.create_review_post(pending_title)
+                    if wp_result.get('success'):
+                        print(f"✅ Blog post created: {wp_result.get('post_url')}")
+                except Exception as e:
+                    print(f"❌ Blog post error: {e}") 
+
             else:
                 print(f"❌ Failed to upload video: {upload_result.get('error', 'Unknown error')}")
-        else:
-            print(f"❌ Video creation failed: {video_result.get('error', 'Unknown error')}")
         
         # Step 10: Update status
         print("✅ Updating record status to 'Done'...")
