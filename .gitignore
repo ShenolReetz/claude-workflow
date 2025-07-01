@@ -79,3 +79,33 @@ videos/
 images/
 audio/
 config/api_keys.json
+
+# Config files with secrets
+config/api_keys.json
+config/youtube_token.json
+config/youtube_credentials.json
+config/google_drive_credentials.json
+config/*.json
+
+# But allow example files
+!config/*.example.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Logs
+*.log
+workflow.log
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# OS files
+.DS_Store
+Thumbs.db
