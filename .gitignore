@@ -1,0 +1,43 @@
+# Sensitive configuration files
+config/api_keys.json
+config/youtube_token.json
+config/youtube_credentials.json
+config/google_drive_credentials.json
+config/*.json
+
+# Keep example files
+!config/*.example.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Test files
+test_*.py
+*_test.py
+
+# Backup files
+*.backup
+*.old
