@@ -88,6 +88,15 @@ Success Rate: 100% workflow completion
  TikTok integration
  Batch processing
  Scheduled automation
+ ### High Priority
+- [x] **WordPress Installation** - ✅ Completed
+- [ ] **WordPress Integration** - Connect WordPress MCP to workflow
+- [ ] **JSON2Video Template Integration** - Implement new countdown video template with Amazon reviews
+  - [ ] Update Amazon MCP to scrape review data
+  - [ ] Add review count/rating fields to Airtable
+  - [ ] Integrate new template with workflow_runner.py
+  - [ ] Test with production data
+  - See: [JSON2Video Template Documentation](docs/JSON2Video_Template_Update.md)
 
 📝 License
 MIT License - See LICENSE file for details
