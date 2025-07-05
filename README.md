@@ -88,16 +88,47 @@ Success Rate: 100% workflow completion
  TikTok integration
  Batch processing
  Scheduled automation
- ### High Priority
+## 🚧 TODO / Next Steps
+
+### High Priority
 - [x] **WordPress Installation** - ✅ Completed
 - [ ] **WordPress Integration** - Connect WordPress MCP to workflow
-- [ ] **JSON2Video Template Integration** - Implement new countdown video template with Amazon reviews
-  - [ ] Update Amazon MCP to scrape review data
-  - [ ] Add review count/rating fields to Airtable
-  - [ ] Integrate new template with workflow_runner.py
-  - [ ] Test with production data
+- [x] **JSON2Video Template Integration** - ✅ Completed
+  - [x] Created professional 60-second countdown video template
+  - [x] Added Amazon review counters and rating components
+  - [x] Implemented enhanced scene transitions
+  - [x] Added interactive CTA buttons (Follow, Like, Notify)
+  - [x] Integrated voice narration support
+  - [x] Template saved in `templates/countdown_video_template.json`
   - See: [JSON2Video Template Documentation](docs/JSON2Video_Template_Update.md)
+- [ ] **Update Workflow Integration**
+  - [ ] Modify `json2video_agent_mcp.py` to use new template
+  - [ ] Update Amazon MCP to scrape review count/rating data
+  - [ ] Add review fields to Airtable (ProductNo1-5ReviewCount, ProductNo1-5Rating)
+  - [ ] Test complete video generation with new template
+- [ ] **Full Video Production** - Switch from 8-second test to 60-second full videos
+- [ ] **Add Product Images** - Integrate DALL-E generated images into videos
+- [ ] **Voice Narration** - Add ElevenLabs voice to videos using template
+- [ ] **Social Media Module** - Auto-post to YouTube, TikTok, Instagram
+  - [ ] Facebook Page creation (pending account verification)
+  - [ ] Instagram API integration
+  - [ ] YouTube Data API v3 setup
+  - [ ] TikTok API integration
 
+### Medium Priority
+- [ ] **Batch Processing** - Handle multiple records in parallel
+- [ ] **Scheduled Automation** - Cron job for hourly runs
+- [ ] **Error Recovery** - Retry failed steps automatically
+- [ ] **Cost Tracking** - Monitor API usage and costs
+- [ ] **Performance Metrics** - Track video engagement
+- [ ] **Background Music** - Add royalty-free countdown music library
+
+### Low Priority
+- [ ] **A/B Testing** - Test different title formats
+- [ ] **Multi-language** - Support for non-English content
+- [ ] **Custom Templates** - Different video styles
+- [ ] **Analytics Dashboard** - Track performance metrics
+- [ ] **Video Variations** - Create platform-specific versions (Square for IG, Horizontal for YT)
 📝 License
 MIT License - See LICENSE file for details
 
