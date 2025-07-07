@@ -1,0 +1,41 @@
+# Config files - ONLY allow examples
+config/*.json
+!config/*.example.json
+config/.*
+
+# Backup files
+*.backup
+*.save
+*.bak
+*.tmp
+*~
+
+# Credentials and secrets
+*.key
+*.pem
+*.token
+*.credentials
+.env
+.env.*
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
