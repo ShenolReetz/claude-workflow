@@ -12,9 +12,11 @@ from mcp_servers.airtable_server import AirtableMCPServer
 from mcp.amazon_affiliate_agent_mcp import run_amazon_affiliate_generation
 from mcp_servers.content_generation_server import ContentGenerationMCPServer
 from mcp.text_generation_control_agent_mcp_v2 import run_text_control_with_regeneration
+from mcp_servers.amazon_category_scraper import AmazonCategoryScraper
 from mcp.json2video_agent_mcp import run_video_creation
 from mcp.amazon_drive_integration import save_amazon_images_to_drive
-from mcp.amazon_images_workflow import download_and_save_amazon_images
+from mcp.amazon_images_workflow_v2 import download_and_save_amazon_images_v2
+from mcp.amazon_guided_image_generation import generate_amazon_guided_openai_images
 from mcp.google_drive_agent_mcp import upload_video_to_google_drive
 from mcp.wordpress_mcp import WordPressMCP
 from mcp.youtube_mcp import YouTubeMCP
@@ -35,6 +37,7 @@ class ContentPipelineOrchestrator:
         self.content_server = ContentGenerationMCPServer(
             anthropic_api_key=self.config['anthropic_api_key']
         )
+        self.amazon_scraper = AmazonCategoryScraper(self.config)
         self.wordpress_mcp = WordPressMCP(self.config)
 
     async def run_complete_workflow(self):
@@ -51,28 +54,56 @@ class ContentPipelineOrchestrator:
         
         print(f"✅ Found title: {pending_title['title']}")
         
-        # Step 2: Generate SEO keywords
-        print("🔍 Generating SEO keywords...")
-        keywords = await self.content_server.generate_seo_keywords(
-            pending_title['title'], 
-            "Electronics"  # You can make this dynamic later
+        # Step 2: Scrape Amazon for top 5 products (NEW STRUCTURE)
+        print("🛒 Scraping Amazon for top 5 products based on Reviews × Rating...")
+        amazon_result = await self.amazon_scraper.get_top_5_products(pending_title['title'])
+        
+        if not amazon_result.get('success'):
+            print(f"❌ Amazon scraping failed: {amazon_result.get('error', 'Unknown error')}")
+            return
+        
+        print(f"✅ Found {len(amazon_result['products'])} products")
+        
+        # Save product data to Airtable immediately
+        await self.airtable_server.update_record(
+            pending_title['record_id'], 
+            amazon_result['airtable_data']
         )
         
-        # Step 3: Optimize title
+        # Step 3: Generate multi-platform keywords using product data
+        print("🔍 Generating multi-platform keywords with product data...")
+        multi_keywords = await self.content_server.generate_multi_platform_keywords(
+            pending_title['title'],
+            amazon_result['products']
+        )
+        
+        # Save multi-platform keywords to Airtable
+        print("💾 Saving multi-platform keywords to Airtable...")
+        await self.airtable_server.update_multi_platform_keywords(
+            pending_title['record_id'],
+            multi_keywords
+        )
+        
+        # Keep backward compatibility with existing workflow (use universal keywords)
+        keywords = multi_keywords.get('universal', [])
+        
+        # Step 4: Optimize title using YouTube keywords
         print("🎯 Optimizing title for social media...")
+        youtube_keywords = multi_keywords.get('youtube', keywords)
         optimized_title = await self.content_server.optimize_title(
             pending_title['title'], 
-            keywords
+            youtube_keywords
         )
         
-        # Step 4: Generate countdown script
-        print("📝 Generating countdown script...")
-        script_data = await self.content_server.generate_countdown_script(
+        # Step 5: Generate countdown script with actual product data
+        print("📝 Generating countdown script with real products...")
+        script_data = await self.content_server.generate_countdown_script_with_products(
             optimized_title, 
-            keywords
+            keywords,
+            amazon_result['products']
         )
         
-        # Step 4.5: Text Generation Quality Control
+        # Step 6: Text Generation Quality Control
         print("🎮 Running text generation quality control...")
         
         # First, we need to save the countdown script to Airtable
@@ -95,10 +126,10 @@ class ContentPipelineOrchestrator:
                 'TextControlStatus': 'Validated'
             })
 
-        # Step 5: Generate blog post (disabled for testing)
+        # Step 7: Generate blog post (disabled for testing)
         blog_post = "Blog post generation disabled during testing to save tokens."
         
-        # Step 6: Save everything back to Airtable
+        # Step 8: Save everything back to Airtable
         print("💾 Saving generated content to Airtable...")
         content_data = {
             'optimized_title': optimized_title,
@@ -109,66 +140,38 @@ class ContentPipelineOrchestrator:
             content_data
         )
         
-        # Step 7: Generate Amazon affiliate links
-        print("🔗 Generating Amazon affiliate links...")
-        affiliate_result = await run_amazon_affiliate_generation(
+        # Note: Amazon affiliate links already saved in Step 2
+        
+        # Step 9: Download Amazon product images from scraped data
+        print("📸 Downloading Amazon product images...")
+        images_result = await download_and_save_amazon_images_v2(
             self.config,
-            pending_title['record_id']
+            pending_title['record_id'],
+            pending_title['title'],
+            amazon_result['products']
         )
         
-        if affiliate_result.get('success'):
-            links_count = affiliate_result.get('links_generated', 0)
-            print(f"✅ Generated {links_count} affiliate links")
+        if images_result['success']:
+            print(f"✅ Saved {images_result['images_saved']} Amazon product images")
+            print(f"📦 Products with images: {images_result['products_with_images']}")
+
+        # Step 9b: Generate Amazon-guided OpenAI images
+        print("🎨 Generating Amazon-guided OpenAI images...")
+        openai_result = await generate_amazon_guided_openai_images(
+            self.config,
+            pending_title['record_id'],
+            pending_title['title'],
+            amazon_result['products']
+        )
+        
+        if openai_result['success']:
+            print(f"✅ Generated {openai_result['images_generated']} OpenAI images using Amazon reference")
+            print(f"💾 Saved {openai_result['images_saved']} OpenAI images to Google Drive")
+            print(f"🖼️ Products processed: {openai_result['products_processed']}")
         else:
-            print(f"⚠️ Affiliate link generation had issues: {affiliate_result.get('error', 'Unknown error')}")
-        
-        
-            # Step 7b: Download and save Amazon product images
-            print("📸 Downloading Amazon product images...")
-            
-            products_list = []
-            for i in range(1, 6):
-                product_title = saved_content.get(f'ProductNo{i}Title')
-                if product_title:
-                    products_list.append({
-                        'title': product_title,
-                        'description': saved_content.get(f'ProductNo{i}Description', '')
-                    })
-            
-            amazon_images_result = await save_amazon_images_to_drive(
-                self.config,
-                pending_title['record_id'],
-                video_result.get('project_name', pending_title['title']),
-                products_list
-            )
-            
-            if amazon_images_result['success']:
-                print(f"✅ Saved {amazon_images_result['images_saved']} Amazon product images")
-                
-                for link_info in amazon_images_result.get('affiliate_links', []):
-                    await update_airtable_record(
-                        self.config,
-                        pending_title['record_id'],
-                        {f'ProductNo{link_info["product_num"]}AffiliateLink': link_info['affiliate_link']}
-                    )
+            print(f"⚠️ OpenAI image generation had issues: {openai_result.get('errors', [])}")
 
-
-            # Step 7b: Download Amazon product images if available
-            if affiliate_result.get('product_results'):
-                print("📸 Downloading Amazon product images...")
-                
-                images_result = await download_and_save_amazon_images(
-                    self.config,
-                    pending_title['record_id'],
-                    video_result.get('project_name', pending_title['title']),
-                    affiliate_result.get('product_results', {})
-                )
-                
-                if images_result['success']:
-                    print(f"✅ Saved {images_result['images_saved']} Amazon product images")
-                    print(f"📦 Products with images: {images_result['products_with_images']}")
-
-# Step 8: Create video with JSON2Video
+        # Step 10: Create video with JSON2Video
         print("🎬 Creating video with JSON2Video...")
         video_result = await run_video_creation(
             self.config,
@@ -180,7 +183,7 @@ class ContentPipelineOrchestrator:
         if video_result['success']:
             print(f"✅ Video created successfully!")
             
-            # Step 9: Upload to Google Drive
+            # Step 11: Upload to Google Drive
             print("☁️ Uploading video to Google Drive...")
             upload_result = await upload_video_to_google_drive(
                 self.config,
@@ -214,7 +217,7 @@ class ContentPipelineOrchestrator:
                 # Prepare YouTube title (optimized for Shorts)
                 youtube_prefix = self.config.get('youtube_title_prefix', '')
                 youtube_suffix = self.config.get('youtube_title_suffix', '')
-                youtube_title = f"{youtube_prefix}{pending_title.get("VideoTitle", pending_title.get("Title", pending_title.get("VideoTitle", "")))}{youtube_suffix}"[:100]  # YouTube limit
+                youtube_title = f"{youtube_prefix}{pending_title.get('VideoTitle', pending_title.get('Title', pending_title.get('VideoTitle', "")))}{youtube_suffix}"[:100]  # YouTube limit
                 
                 # Build YouTube description
                 youtube_description = f"{pending_title.get("VideoTitle", pending_title.get("Title", pending_title.get("VideoTitle", "")))}\n\n"
@@ -244,11 +247,12 @@ class ContentPipelineOrchestrator:
                             youtube_description += f"→ {affiliate_link}\n"
                         youtube_description += "\n"
                 
-                # Add keywords as hashtags
-                if keywords:
+                # Add platform-specific keywords as hashtags
+                youtube_kw = multi_keywords.get('youtube', keywords)
+                if youtube_kw:
                     youtube_description += "\n"
-                    # Add up to 10 hashtags
-                    for keyword in keywords[:10]:
+                    # Add up to 10 hashtags from YouTube keywords
+                    for keyword in youtube_kw[:10]:
                         hashtag = keyword.replace(' ', '').replace('-', '')
                         youtube_description += f"#{hashtag} "
                     youtube_description += "\n"
@@ -266,9 +270,9 @@ class ContentPipelineOrchestrator:
                 youtube_tags = self.config.get('youtube_tags', []).copy()
                 youtube_tags.append('shorts')  # Always add shorts tag
                 
-                # Add keywords as tags
-                if keywords:
-                    youtube_tags.extend([k.lower() for k in keywords[:10]])
+                # Add YouTube-specific keywords as tags
+                if youtube_kw:
+                    youtube_tags.extend([k.lower() for k in youtube_kw[:10]])
                 
                 # Remove duplicates and limit tags
                 youtube_tags = list(dict.fromkeys(youtube_tags))[:30]  # YouTube allows max 30 tags

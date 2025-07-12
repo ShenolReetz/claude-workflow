@@ -4,10 +4,14 @@ import openai
 from typing import Dict, List, Optional
 import requests
 import base64
+import logging
+
+logger = logging.getLogger(__name__)
 
 class ImageGenerationMCPServer:
     def __init__(self, openai_api_key: str):
         openai.api_key = openai_api_key
+        self.client = openai.OpenAI(api_key=openai_api_key)
         
     async def generate_product_image(self, product_name: str, product_rank: int) -> Optional[str]:
         """Generate ultra-realistic product image using OpenAI DALL-E"""
@@ -67,6 +71,54 @@ Framing:
         
         return image_urls
     
+    async def generate_all_product_images_with_amazon_reference(self, products: List[Dict]) -> Dict[int, str]:
+        """Generate images for all products using Amazon photos as reference"""
+        image_urls = {}
+        
+        for i, product in enumerate(products, 1):
+            try:
+                product_name = product.get('title', '')
+                amazon_image_url = product.get('image_url', '')
+                
+                if not product_name:
+                    logger.warning(f"No product name for Product {i}")
+                    continue
+                
+                logger.info(f"🖼️ Processing Product {i}: {product_name[:30]}...")
+                
+                if amazon_image_url:
+                    # Use Amazon reference for more accurate generation
+                    product_details = {
+                        'price': product.get('price', ''),
+                        'rating': product.get('rating', ''),
+                        'reviews': product.get('reviews', ''),
+                        'asin': product.get('asin', '')
+                    }
+                    
+                    image_url = await self.generate_product_image_with_amazon_reference(
+                        product_name, i, amazon_image_url, product_details
+                    )
+                else:
+                    # Fallback to regular generation
+                    logger.warning(f"No Amazon image for Product {i}, using regular generation")
+                    image_url = await self.generate_product_image(product_name, i)
+                
+                if image_url:
+                    image_urls[i] = image_url
+                    logger.info(f"✅ Generated image for Product {i}")
+                else:
+                    logger.error(f"❌ Failed to generate image for Product {i}")
+                    
+                # Add delay to avoid rate limits
+                if i < len(products):
+                    await asyncio.sleep(3)
+                    
+            except Exception as e:
+                logger.error(f"❌ Error processing Product {i}: {str(e)}")
+                continue
+        
+        return image_urls
+    
     async def download_and_encode_image(self, image_url: str) -> Optional[str]:
         """Download image and convert to base64 for storage"""
         try:
@@ -78,6 +130,72 @@ Framing:
         except Exception as e:
             print(f"Error downloading image: {e}")
             return None
+    
+    async def generate_product_image_with_amazon_reference(self, product_name: str, product_rank: int, amazon_image_url: str, product_details: Dict = None) -> Optional[str]:
+        """Generate ultra-realistic product image using Amazon photo as reference"""
+        try:
+            logger.info(f"🎨 Generating image for Product #{product_rank}: {product_name} using Amazon reference")
+            
+            # Enhanced prompt that references the Amazon image style and details
+            product_info = ""
+            if product_details:
+                price = product_details.get('price', '')
+                rating = product_details.get('rating', '')
+                reviews = product_details.get('reviews', '')
+                if price: product_info += f" Price: {price}."
+                if rating: product_info += f" Rating: {rating} stars."
+                if reviews: product_info += f" Reviews: {reviews}."
+            
+            prompt = f"""Create an ultra high-resolution, photorealistic vertical (9:16) product image of the EXACT {product_name}.
+
+CRITICAL REQUIREMENTS - Product Accuracy:
+- This must be the EXACT {product_name} model as shown in real Amazon listings
+- Match the authentic product design, colors, textures, materials, and proportions precisely
+- Include all official logos, brand markings, buttons, ports, and design details
+- Maintain the authentic product's true-to-life appearance and scale{product_info}
+
+Technical Specifications:
+- Ultra-realistic commercial product photography quality
+- 9:16 vertical format optimized for mobile/social media
+- Professional studio lighting with soft shadows
+- Clean, modern background with subtle tech-inspired elements
+- Shallow depth of field with natural focus on the product
+
+Visual Style:
+- The {product_name} should be the dominant focal point, elegantly positioned
+- Background features abstract light streaks or glowing lines in premium colors (teal, red, violet, orange, green, blue)
+- Gradient lighting with randomized accent colors creating a high-tech, premium ambiance
+- Top and bottom margins kept clear for potential text overlays
+- Glossy, slightly reflective surface beneath the product
+
+Camera Settings:
+- Simulate DSLR photography (50mm or 85mm lens equivalent)
+- Cinematic angle with professional composition
+- Maximum texture and material detail visibility
+- Commercial advertising grade quality
+
+IMPORTANT: No humans, no extra branding beyond what appears on the actual product, no watermarks, pure professional product photography."""
+
+            logger.info(f"📝 Using enhanced prompt with Amazon reference data")
+            
+            response = self.client.images.generate(
+                model="dall-e-3",
+                prompt=prompt,
+                size="1024x1792",  # 9:16 aspect ratio
+                quality="hd",
+                style="natural",
+                n=1
+            )
+            
+            image_url = response.data[0].url
+            logger.info(f"✅ Generated Amazon-guided image for {product_name}")
+            return image_url
+            
+        except Exception as e:
+            logger.error(f"❌ Error generating Amazon-guided image for {product_name}: {e}")
+            # Fallback to regular generation
+            logger.info("🔄 Falling back to regular image generation")
+            return await self.generate_product_image(product_name, product_rank)
 async def generate_product_image_with_reference(self, product_title: str, product_description: str, reference_image_url: str, style: str) -> Optional[str]:
         """Generate product image using a reference image for 1:1 accuracy"""
         

@@ -195,6 +195,266 @@ class ContentGenerationMCPServer:
         except Exception as e:
             print(f"Error generating blog post: {e}")
             return ""
+    
+    async def generate_seo_keywords_with_products(self, title: str, product_names: List[str]) -> List[str]:
+        """Generate SEO keywords using actual product data"""
+        try:
+            products_str = ', '.join(product_names[:5])
+            
+            prompt = f"""
+            Generate 20 high-impact SEO keywords for this video title: "{title}"
+            Actual products featured: {products_str}
+            
+            Focus on:
+            - YouTube Shorts optimization
+            - TikTok trending keywords  
+            - Amazon product search terms
+            - Product-specific keywords
+            - 2025 trending tech keywords
+            
+            Return as a simple comma-separated list.
+            """
+            
+            response = self.client.messages.create(
+                model="claude-3-5-sonnet-20241022",
+                max_tokens=500,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            
+            keywords_text = response.content[0].text
+            keywords = [k.strip() for k in keywords_text.split(',')]
+            
+            print(f"✅ Generated {len(keywords)} SEO keywords with product data")
+            return keywords
+            
+        except Exception as e:
+            print(f"Error generating keywords with products: {e}")
+            return []
+    
+    async def generate_countdown_script_with_products(self, title: str, keywords: List[str], products: List[Dict]) -> Dict:
+        """Generate countdown script using actual Amazon product data"""
+        try:
+            keywords_str = ', '.join(keywords[:15])
+            
+            # Format products for the prompt
+            products_info = ""
+            for i, product in enumerate(products[:5], 1):
+                products_info += f"#{i}: {product['title']} - Rating: {product['rating']}, Reviews: {product['review_count']}, Price: ${product['price']}\n"
+            
+            prompt = f"""
+            Create a YouTube Shorts script for: "{title}"
+            Keywords to include: {keywords_str}
+            
+            ACTUAL PRODUCTS TO FEATURE:
+            {products_info}
+            
+            STRICT REQUIREMENTS:
+            - TOTAL VIDEO: Under 60 seconds
+            - INTRO: Maximum 5 seconds, extremely attention-grabbing
+            - PRODUCTS: Exactly 5 products, countdown from #5 to #1
+            - EACH PRODUCT: Maximum 9 seconds each
+            - OUTRO: Maximum 5 seconds with clear CTA
+            - USE ACTUAL PRODUCT NAMES AND DETAILS PROVIDED
+            
+            FORMAT - Return as JSON:
+            {{
+                "intro": "Text for intro (5 seconds max)",
+                "products": [
+                    {{
+                        "rank": 5,
+                        "name": "Actual product name",
+                        "script": "Product description script (9 seconds max)",
+                        "price": "Product price",
+                        "rating": "Product rating"
+                    }},
+                    // ... continue for products 4, 3, 2, 1
+                ],
+                "outro": "Text for outro (5 seconds max)"
+            }}
+            
+            SCRIPT WRITING STYLE:
+            - Energetic, fast-paced for Shorts
+            - Use numbers and rankings prominently
+            - Mention key product features quickly
+            - Build excitement toward #1 product
+            - Include price/rating mentions naturally
+            """
+            
+            response = self.client.messages.create(
+                model="claude-3-5-sonnet-20241022",
+                max_tokens=2000,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            
+            script_text = response.content[0].text
+            
+            # Try to parse JSON response
+            try:
+                script_data = json.loads(script_text)
+            except json.JSONDecodeError:
+                # Fallback if JSON parsing fails
+                print("⚠️ Could not parse JSON, creating fallback structure")
+                script_data = {
+                    "intro": "Here are the top 5 products you need to see!",
+                    "products": [],
+                    "outro": "Which product will you choose? Check the links below!"
+                }
+                
+                for i, product in enumerate(products[:5]):
+                    script_data["products"].append({
+                        "rank": 5-i,
+                        "name": product['title'][:50],
+                        "script": f"Coming in at #{5-i}, the {product['title'][:30]} with {product['rating']} stars!",
+                        "price": product['price'],
+                        "rating": product['rating']
+                    })
+            
+            print(f"✅ Generated countdown script with {len(script_data.get('products', []))} products")
+            return script_data
+            
+        except Exception as e:
+            print(f"Error generating countdown script with products: {e}")
+            return {}
+    
+    async def generate_multi_platform_keywords(self, title: str, products: List[Dict]) -> Dict[str, List[str]]:
+        """Generate platform-specific keywords for all social media platforms"""
+        try:
+            # Get product names for context
+            product_names = [p.get('title', '')[:30] for p in products[:5] if p.get('title')]
+            products_str = ', '.join(product_names)
+            
+            prompt = f"""
+            Generate comprehensive keywords for this video across multiple platforms:
+            Title: "{title}"
+            Featured Products: {products_str}
+            
+            Create platform-specific keywords following these EXACT requirements:
+            
+            1. YOUTUBE KEYWORDS (20 keywords):
+            - YouTube search optimization
+            - Include "2025", "best", "top 5", "review"
+            - Product-specific terms
+            - Buyer intent keywords
+            - Format: comma-separated list
+            
+            2. INSTAGRAM HASHTAGS (30 hashtags):
+            - Mix of popular and niche hashtags
+            - Include trending tech hashtags
+            - Product category hashtags
+            - Engagement hashtags (#techfinds #gadgetlover)
+            - Format: space-separated with # symbol
+            - Mix high-volume (1M+) and medium-volume (10K-1M) hashtags
+            
+            3. TIKTOK KEYWORDS (15 keywords):
+            - TikTok discovery algorithm keywords
+            - Trending sounds/challenges related to tech
+            - Gen Z search terms
+            - Short, punchy keywords
+            - Include "POV", "finds", "haul", "musthave"
+            - Format: comma-separated list
+            
+            4. WORDPRESS SEO (15 long-tail keywords):
+            - Long-tail keywords for blog SEO
+            - Question-based keywords
+            - Comparison keywords
+            - Buyer intent phrases
+            - Location-neutral terms
+            - Format: comma-separated list
+            
+            5. UNIVERSAL KEYWORDS (10 core keywords):
+            - Keywords that work on ALL platforms
+            - Brand-neutral terms
+            - Core product categories
+            - Essential search terms
+            - Format: comma-separated list
+            
+            Return as JSON with this EXACT structure:
+            {{
+                "youtube": ["keyword1", "keyword2", ...],
+                "instagram": ["#hashtag1", "#hashtag2", ...],
+                "tiktok": ["keyword1", "keyword2", ...],
+                "wordpress": ["long tail keyword 1", "long tail keyword 2", ...],
+                "universal": ["keyword1", "keyword2", ...]
+            }}
+            """
+            
+            response = self.client.messages.create(
+                model="claude-3-5-sonnet-20241022",
+                max_tokens=2000,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            
+            response_text = response.content[0].text
+            
+            # Parse JSON response
+            try:
+                keywords_data = json.loads(response_text)
+                
+                # Validate and format the response
+                result = {
+                    'youtube': keywords_data.get('youtube', [])[:20],
+                    'instagram': keywords_data.get('instagram', [])[:30],
+                    'tiktok': keywords_data.get('tiktok', [])[:15],
+                    'wordpress': keywords_data.get('wordpress', [])[:15],
+                    'universal': keywords_data.get('universal', [])[:10]
+                }
+                
+                print(f"✅ Generated multi-platform keywords:")
+                print(f"   YouTube: {len(result['youtube'])} keywords")
+                print(f"   Instagram: {len(result['instagram'])} hashtags")
+                print(f"   TikTok: {len(result['tiktok'])} keywords")
+                print(f"   WordPress: {len(result['wordpress'])} keywords")
+                print(f"   Universal: {len(result['universal'])} keywords")
+                
+                return result
+                
+            except json.JSONDecodeError:
+                print("⚠️ Could not parse JSON response, extracting keywords manually")
+                # Fallback parsing logic
+                return self._parse_keywords_fallback(response_text)
+                
+        except Exception as e:
+            print(f"❌ Error generating multi-platform keywords: {e}")
+            return {
+                'youtube': [],
+                'instagram': [],
+                'tiktok': [],
+                'wordpress': [],
+                'universal': []
+            }
+    
+    def _parse_keywords_fallback(self, text: str) -> Dict[str, List[str]]:
+        """Fallback parser for keywords if JSON parsing fails"""
+        result = {
+            'youtube': [],
+            'instagram': [],
+            'tiktok': [],
+            'wordpress': [],
+            'universal': []
+        }
+        
+        # Simple text parsing logic
+        lines = text.split('\n')
+        current_platform = None
+        
+        for line in lines:
+            line_lower = line.lower()
+            if 'youtube' in line_lower:
+                current_platform = 'youtube'
+            elif 'instagram' in line_lower:
+                current_platform = 'instagram'
+            elif 'tiktok' in line_lower:
+                current_platform = 'tiktok'
+            elif 'wordpress' in line_lower:
+                current_platform = 'wordpress'
+            elif 'universal' in line_lower:
+                current_platform = 'universal'
+            elif current_platform and ',' in line:
+                # Parse comma-separated keywords
+                keywords = [k.strip() for k in line.split(',') if k.strip()]
+                result[current_platform].extend(keywords)
+        
+        return result
 
 # Test the server
 async def test_content_generation():
@@ -222,21 +482,6 @@ async def test_content_generation():
     script = await server.generate_countdown_script(optimized_title, keywords)
     if script:
         print(f"Script intro: {script.get('intro', 'N/A')[:50]}...")
-    
-    async def generate_single_product(self, prompt: str) -> str:
-        """Generate a single product based on specific requirements"""
-        try:
-            message = self.anthropic_client.messages.create(
-                model="claude-3-haiku-20240307",
-                max_tokens=200,
-                messages=[
-                    {"role": "user", "content": prompt}
-                ]
-            )
-            return message.content[0].text
-        except Exception as e:
-            logger.error(f"Error generating single product: {e}")
-            return None
 
 
 if __name__ == "__main__":
