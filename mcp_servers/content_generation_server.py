@@ -455,6 +455,371 @@ class ContentGenerationMCPServer:
                 result[current_platform].extend(keywords)
         
         return result
+    
+    async def generate_single_product(self, prompt: str) -> str:
+        """Generate a single product based on specific requirements"""
+        try:
+            response = self.client.messages.create(
+                model="claude-3-haiku-20240307",
+                max_tokens=200,
+                messages=[
+                    {"role": "user", "content": prompt}
+                ]
+            )
+            return response.content[0].text
+        except Exception as e:
+            print(f"Error generating single product: {e}")
+            return None
+    
+    async def generate_optimized_product_descriptions(self, products: List[Dict], universal_keywords: List[str], title: str) -> List[Dict]:
+        """Generate SEO-optimized product descriptions for ProductNo1-5 fields using universal keywords"""
+        try:
+            keywords_str = ', '.join(universal_keywords[:10])
+            
+            # Format products for the prompt
+            products_info = ""
+            for i, product in enumerate(products[:5], 1):
+                products_info += f"Product #{i}: {product.get('title', 'Unknown')} - Price: ${product.get('price', 'N/A')}, Rating: {product.get('rating', 'N/A')}/5\n"
+            
+            prompt = f"""
+            Optimize product titles and descriptions for video content: "{title}"
+            Universal Keywords to integrate: {keywords_str}
+            
+            PRODUCTS TO OPTIMIZE:
+            {products_info}
+            
+            REQUIREMENTS FOR EACH PRODUCT:
+            - TITLE: Keep original product name but add 1-2 power words if needed
+            - DESCRIPTION: Exactly 18-22 words for perfect TTS timing (8-9 seconds)
+            - Include 2-3 universal keywords naturally
+            - Highlight unique selling points and key features
+            - Mention price/rating if compelling
+            - Use action words and benefits-focused language
+            - Avoid generic phrases, be specific
+            
+            OPTIMIZATION GOALS:
+            - Video engagement and retention
+            - Cross-platform discoverability
+            - Clear value proposition
+            - Natural keyword integration
+            
+            Return as JSON array with this structure:
+            [
+                {{
+                    "rank": 5,
+                    "optimized_title": "Enhanced product title",
+                    "optimized_description": "18-22 word description with keywords",
+                    "keywords_used": ["keyword1", "keyword2"],
+                    "word_count": 20,
+                    "estimated_seconds": 8.5,
+                    "selling_points": ["point1", "point2", "point3"]
+                }}
+            ]
+            
+            Order products by rank 5 (least exciting) to 1 (most exciting/best value).
+            """
+            
+            response = self.client.messages.create(
+                model="claude-3-5-sonnet-20241022",
+                max_tokens=2000,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            
+            response_text = response.content[0].text
+            
+            # Parse JSON response
+            try:
+                # Extract JSON from response
+                start_idx = response_text.find('[')
+                end_idx = response_text.rfind(']') + 1
+                if start_idx != -1 and end_idx > start_idx:
+                    json_str = response_text[start_idx:end_idx]
+                    optimized_products = json.loads(json_str)
+                    print(f"✅ Generated {len(optimized_products)} optimized product descriptions")
+                    return optimized_products
+                else:
+                    print("❌ Could not extract JSON from response")
+                    return []
+                    
+            except json.JSONDecodeError as e:
+                print(f"❌ JSON parsing error: {e}")
+                return []
+                
+        except Exception as e:
+            print(f"❌ Error generating optimized product descriptions: {e}")
+            return []
+    
+    async def generate_attention_grabbing_intro(self, title: str, keywords: List[str], hook_style: str = "shocking") -> Dict:
+        """Generate extremely catchy intro hooks for maximum viewer retention"""
+        try:
+            keywords_str = ', '.join(keywords[:8])
+            
+            # Define different hook styles
+            hook_styles = {
+                "shocking": "Start with shocking statistics, surprising facts, or bold claims",
+                "question": "Start with intriguing questions that create curiosity gaps", 
+                "countdown": "Start with urgency and countdown energy",
+                "story": "Start with a relatable problem or story hook",
+                "controversy": "Start with controversial or contrarian takes"
+            }
+            
+            style_instruction = hook_styles.get(hook_style, hook_styles["shocking"])
+            
+            prompt = f"""
+            Create the most attention-grabbing 5-second intro for: "{title}"
+            Keywords to naturally include: {keywords_str}
+            Hook style: {style_instruction}
+            
+            PSYCHOLOGICAL TRIGGERS TO USE:
+            - Curiosity gap (make them wonder what's coming)
+            - Social proof (everyone's talking about this)
+            - Urgency/FOMO (limited time, trending now)
+            - Benefit preview (what they'll gain)
+            - Pattern interrupt (unexpected opening)
+            
+            INTRO REQUIREMENTS:
+            - Exactly 10-15 words (5 seconds max when spoken)
+            - Hook viewers in first 3 seconds
+            - Create strong reason to watch until end
+            - Use power words and emotional triggers
+            - Include numbers/rankings if relevant
+            - End with momentum toward countdown
+            
+            EXAMPLES OF GREAT HOOKS:
+            - "These 5 products are breaking the internet right now!"
+            - "Number 1 will literally save you thousands of dollars!"
+            - "I can't believe Amazon is still selling these for this price!"
+            - "99% of people don't know about these hidden gems!"
+            
+            Return as JSON:
+            {{
+                "intro_text": "The hook text (10-15 words)",
+                "hook_type": "shocking/question/countdown/story/controversy",
+                "psychological_triggers": ["trigger1", "trigger2"],
+                "word_count": 12,
+                "estimated_seconds": 4.8,
+                "retention_score": 85,
+                "alternative_hooks": ["hook2", "hook3"]
+            }}
+            """
+            
+            response = self.client.messages.create(
+                model="claude-3-5-sonnet-20241022",
+                max_tokens=1000,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            
+            response_text = response.content[0].text
+            
+            # Parse JSON response
+            try:
+                start_idx = response_text.find('{')
+                end_idx = response_text.rfind('}') + 1
+                if start_idx != -1 and end_idx > start_idx:
+                    json_str = response_text[start_idx:end_idx]
+                    intro_data = json.loads(json_str)
+                    print(f"✅ Generated attention-grabbing intro: {intro_data.get('intro_text', '')}")
+                    return intro_data
+                else:
+                    print("❌ Could not extract JSON from intro response")
+                    return {}
+                    
+            except json.JSONDecodeError as e:
+                print(f"❌ JSON parsing error for intro: {e}")
+                return {}
+                
+        except Exception as e:
+            print(f"❌ Error generating intro hook: {e}")
+            return {}
+    
+    async def generate_platform_upload_metadata(self, title: str, products: List[Dict], platform_keywords: Dict, affiliate_data: List[Dict] = None) -> Dict:
+        """Generate platform-specific titles and descriptions for upload metadata only"""
+        try:
+            # Get top products for context
+            top_products = [p.get('optimized_title', p.get('title', '')) for p in products[:3]]
+            products_str = ', '.join(top_products)
+            
+            # Format affiliate links for inclusion
+            affiliate_links_text = ""
+            if affiliate_data:
+                affiliate_links_text = "🛒 AFFILIATE LINKS:\n"
+                for i, affiliate in enumerate(affiliate_data[:5], 1):
+                    product_name = affiliate.get('title', f'Product #{i}')
+                    affiliate_url = affiliate.get('affiliate_link', '')
+                    if affiliate_url:
+                        affiliate_links_text += f"#{i}: {product_name}\n{affiliate_url}\n\n"
+                
+                affiliate_links_text += "💡 As an Amazon Associate, I earn from qualifying purchases at no extra cost to you.\n"
+            
+            results = {}
+            
+            # YouTube Metadata
+            youtube_keywords = ', '.join(platform_keywords.get('youtube', [])[:10])
+            youtube_prompt = f"""
+            Create YouTube-optimized metadata for: "{title}"
+            Featured products: {products_str}
+            YouTube keywords: {youtube_keywords}
+            
+            YOUTUBE REQUIREMENTS:
+            - Title: Under 60 characters, clickable, retention-focused
+            - Description: 200-300 words with keywords, hashtags, CTA, and affiliate links
+            - Include product mentions and affiliate disclosure
+            - Use YouTube-specific language and trending terms
+            - Add timestamps for each product (0:05 #5, 0:15 #4, etc.)
+            - Include affiliate links section
+            
+            AFFILIATE LINKS TO INCLUDE:
+            {affiliate_links_text}
+            
+            Return as JSON:
+            {{
+                "title": "YouTube optimized title",
+                "description": "Complete YouTube description with hashtags and affiliate links",
+                "tags": ["tag1", "tag2", "tag3"],
+                "character_count": 58
+            }}
+            """
+            
+            # TikTok Metadata  
+            tiktok_keywords = ', '.join(platform_keywords.get('tiktok', [])[:8])
+            tiktok_prompt = f"""
+            Create TikTok-optimized metadata for: "{title}"
+            Featured products: {products_str}
+            TikTok keywords: {tiktok_keywords}
+            
+            TIKTOK REQUIREMENTS:
+            - Title: Gen Z language, trending slang, under 50 characters
+            - Caption: 2-3 sentences with trending hashtags and "Link in bio for Amazon deals!"
+            - Use TikTok-specific hashtags and discovery terms
+            - Include product mentions and affiliate disclosure
+            - Add call-to-action for bio link
+            
+            AFFILIATE DISCLOSURE:
+            Include: "Amazon affiliate links in bio! 🛒 #amazonfinds #tiktokmademebuyit"
+            
+            Return as JSON:
+            {{
+                "title": "TikTok optimized title",
+                "caption": "TikTok caption with hashtags and bio CTA",
+                "hashtags": ["#hashtag1", "#hashtag2"],
+                "character_count": 45
+            }}
+            """
+            
+            # Instagram Metadata
+            instagram_hashtags = ' '.join(platform_keywords.get('instagram', [])[:15])
+            instagram_prompt = f"""
+            Create Instagram-optimized metadata for: "{title}"
+            Featured products: {products_str}
+            Instagram hashtags: {instagram_hashtags}
+            
+            INSTAGRAM REQUIREMENTS:
+            - Title: Visual storytelling focus, under 55 characters
+            - Caption: Engaging story with call-to-action, hashtags, and "Link in bio!"
+            - Mix popular and niche hashtags for reach
+            - Include product mentions and affiliate disclosure
+            - Add strong call-to-action for bio link
+            
+            AFFILIATE DISCLOSURE:
+            Include: "🛒 Amazon affiliate links in bio! Tap the link for the best deals!"
+            
+            Return as JSON:
+            {{
+                "title": "Instagram optimized title",
+                "caption": "Instagram caption with storytelling and bio CTA",
+                "hashtags": ["#hashtag1", "#hashtag2"],
+                "character_count": 52
+            }}
+            """
+            
+            # WordPress Metadata
+            wordpress_keywords = ', '.join(platform_keywords.get('wordpress', [])[:8])
+            
+            # Format product images for WordPress
+            wordpress_images_html = ""
+            if affiliate_data:
+                for i, affiliate in enumerate(affiliate_data[:5], 1):
+                    product_name = affiliate.get('title', f'Product #{i}')
+                    image_url = affiliate.get('image_url', '')
+                    affiliate_url = affiliate.get('affiliate_link', '')
+                    price = affiliate.get('price', 'N/A')
+                    rating = affiliate.get('rating', 'N/A')
+                    
+                    if image_url and affiliate_url:
+                        wordpress_images_html += f'''
+                        <div class="product-review">
+                            <h3>#{i}: {product_name}</h3>
+                            <img src="{image_url}" alt="{product_name}" style="max-width: 300px; height: auto;" />
+                            <p><strong>Price:</strong> ${price} | <strong>Rating:</strong> {rating}/5</p>
+                            <a href="{affiliate_url}" target="_blank" rel="nofollow" class="affiliate-button">Check Price on Amazon</a>
+                        </div>
+                        '''
+            
+            wordpress_prompt = f"""
+            Create WordPress SEO-optimized content for: "{title}"
+            Featured products: {products_str}
+            WordPress keywords: {wordpress_keywords}
+            
+            WORDPRESS REQUIREMENTS:
+            - Title: Long-tail SEO optimized, under 60 characters
+            - Meta description: 150-160 characters with keywords
+            - Content: 800-1200 word blog post with product reviews
+            - Include product images with affiliate links
+            - Focus on search intent and organic discovery
+            - Include product comparison table
+            - Add FAQ section
+            
+            PRODUCT IMAGES HTML TO INCLUDE:
+            {wordpress_images_html}
+            
+            AFFILIATE DISCLOSURE:
+            Include: "This post contains affiliate links. As an Amazon Associate, I earn from qualifying purchases at no extra cost to you."
+            
+            Return as JSON:
+            {{
+                "title": "WordPress SEO title",
+                "meta_description": "SEO meta description",
+                "content": "Full blog post with HTML, images, and affiliate links",
+                "focus_keywords": ["keyword1", "keyword2"],
+                "character_count": 58
+            }}
+            """
+            
+            # Generate all platform metadata in parallel
+            platforms = [
+                ("youtube", youtube_prompt),
+                ("tiktok", tiktok_prompt), 
+                ("instagram", instagram_prompt),
+                ("wordpress", wordpress_prompt)
+            ]
+            
+            for platform, prompt in platforms:
+                try:
+                    response = self.client.messages.create(
+                        model="claude-3-5-sonnet-20241022",
+                        max_tokens=800,
+                        messages=[{"role": "user", "content": prompt}]
+                    )
+                    
+                    response_text = response.content[0].text
+                    start_idx = response_text.find('{')
+                    end_idx = response_text.rfind('}') + 1
+                    
+                    if start_idx != -1 and end_idx > start_idx:
+                        json_str = response_text[start_idx:end_idx]
+                        platform_data = json.loads(json_str)
+                        results[platform] = platform_data
+                        print(f"✅ Generated {platform} metadata: {platform_data.get('title', '')[:40]}...")
+                    
+                except Exception as e:
+                    print(f"❌ Error generating {platform} metadata: {e}")
+                    results[platform] = {}
+            
+            return results
+                
+        except Exception as e:
+            print(f"❌ Error generating platform metadata: {e}")
+            return {}
 
 # Test the server
 async def test_content_generation():
