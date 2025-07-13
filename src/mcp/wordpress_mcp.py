@@ -99,58 +99,230 @@ class WordPressMCP:
             }
     
     def _generate_post_content(self, data: Dict) -> str:
-        """Generate formatted post content with affiliate links"""
+        """Generate formatted post content with product photos, countdown format, and pros/cons"""
         
         # Start with introduction
+        intro_text = data.get('VideoDescription', 'Check out our top 5 picks for the best products!')
         content = f"""
-        <div class="review-intro">
-            <p>{data.get('VideoDescription', '')}</p>
+        <div class="review-intro" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; margin-bottom: 30px; text-align: center;">
+            <h2 style="color: white; margin-bottom: 15px; font-size: 2.2em;">🔥 Our Top 5 Countdown 🔥</h2>
+            <p style="font-size: 1.2em; margin: 0;">{intro_text}</p>
         </div>
         
-        <h2>Our Top 5 Picks</h2>
+        <div class="countdown-container">
         """
         
-        # Add products
+        # Generate products in countdown order (5 to 1)
+        products_data = []
         for i in range(1, 6):
             title = data.get(f'ProductNo{i}Title')
-            description = data.get(f'ProductNo{i}Description')
-            affiliate_link = data.get(f'ProductNo{i}AffiliateLink')
-            
             if title:
-                content += f"""
-                <div class="product-item" style="border: 2px solid #f0f0f0; padding: 25px; margin: 25px 0; border-radius: 8px; background: #fafafa;">
-                    <h3 style="color: #ff6b00;">#{i}. {title}</h3>
-                    <p>{description or 'Great product with excellent features.'}</p>
-                    <a href="{affiliate_link}" 
-                       class="amazon-button" 
-                       style="display: inline-block; background: #FF9900; color: white; padding: 12px 30px; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 15px;"
-                       target="_blank" 
-                       rel="nofollow noopener sponsored">
-                       Check Price on Amazon
-                    </a>
+                products_data.append({
+                    'rank': i,
+                    'title': title,
+                    'description': data.get(f'ProductNo{i}Description', ''),
+                    'image_url': data.get(f'ProductNo{i}ImageURL', ''),
+                    'affiliate_link': data.get(f'ProductNo{i}AffiliateLink', ''),
+                    'review_count': data.get(f'ProductNo{i}ReviewCount', ''),
+                    'rating': data.get(f'ProductNo{i}Rating', 4.0)
+                })
+        
+        # Display in countdown order (5->1)
+        for countdown_pos, product in enumerate(reversed(products_data), 1):
+            countdown_number = 6 - countdown_pos  # 5, 4, 3, 2, 1
+            is_winner = countdown_number == 1
+            
+            # Generate pros and cons from description
+            pros, cons = self._extract_pros_cons(product['description'])
+            
+            # Special styling for winner
+            border_color = "#FFD700" if is_winner else "#e0e0e0"
+            bg_gradient = "linear-gradient(135deg, #FFD700, #FFA500)" if is_winner else "linear-gradient(135deg, #f8f9fa, #e9ecef)"
+            winner_badge = "🏆 WINNER!" if is_winner else ""
+            
+            content += f"""
+            <div class="product-countdown-item" style="border: 3px solid {border_color}; margin: 40px 0; border-radius: 15px; overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.1); background: {bg_gradient};">
+                
+                <!-- Countdown Header -->
+                <div class="countdown-header" style="background: {'#FFD700' if is_winner else '#667eea'}; color: {'#000' if is_winner else '#fff'}; padding: 20px; text-align: center; position: relative;">
+                    <div style="font-size: 4em; font-weight: bold; line-height: 1;">#{countdown_number}</div>
+                    {f'<div style="background: #FF4444; color: white; padding: 8px 20px; border-radius: 25px; display: inline-block; margin-top: 10px; font-weight: bold;">{winner_badge}</div>' if winner_badge else ''}
                 </div>
-                """
+                
+                <!-- Product Content -->
+                <div class="product-content" style="padding: 30px; background: white;">
+                    
+                    <!-- Product Image and Title Row -->
+                    <div style="display: flex; gap: 30px; align-items: flex-start; margin-bottom: 25px; flex-wrap: wrap;">
+                        
+                        <!-- Product Image -->
+                        <div class="product-image" style="flex: 0 0 300px; text-align: center;">
+                            {f'<img src="{product["image_url"]}" alt="{product["title"]}" style="max-width: 100%; height: auto; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);" />' if product["image_url"] else '<div style="width: 300px; height: 200px; background: #f0f0f0; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #666;">📷 Image Coming Soon</div>'}
+                            
+                            <!-- Rating and Reviews -->
+                            <div style="margin-top: 15px; text-align: center;">
+                                <div class="rating" style="color: #FFD700; font-size: 1.5em; margin-bottom: 5px;">
+                                    {'⭐' * int(float(product.get('rating', 4.0)))}{'☆' * (5 - int(float(product.get('rating', 4.0))))}
+                                    <span style="color: #333; font-size: 0.8em; margin-left: 10px;">{product.get('rating', 4.0)}/5</span>
+                                </div>
+                                {f'<div style="color: #666; font-size: 0.9em;">📝 {product["review_count"]} Reviews</div>' if product.get('review_count') else ''}
+                            </div>
+                        </div>
+                        
+                        <!-- Product Details -->
+                        <div class="product-details" style="flex: 1; min-width: 300px;">
+                            <h3 style="color: #333; font-size: 1.8em; margin-bottom: 15px; line-height: 1.2;">{product['title']}</h3>
+                            <p style="color: #555; font-size: 1.1em; line-height: 1.6; margin-bottom: 20px;">{product['description']}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Pros and Cons Section -->
+                    <div class="pros-cons" style="display: flex; gap: 20px; margin: 25px 0; flex-wrap: wrap;">
+                        
+                        <!-- Pros -->
+                        <div class="pros" style="flex: 1; min-width: 250px; background: #e8f5e8; padding: 20px; border-radius: 10px; border-left: 5px solid #28a745;">
+                            <h4 style="color: #28a745; margin-bottom: 15px; display: flex; align-items: center;">
+                                <span style="margin-right: 10px;">✅</span> PROS
+                            </h4>
+                            <ul style="margin: 0; padding-left: 20px; color: #2d5a2d;">
+                                {self._format_list_items(pros)}
+                            </ul>
+                        </div>
+                        
+                        <!-- Cons -->
+                        <div class="cons" style="flex: 1; min-width: 250px; background: #fdeaea; padding: 20px; border-radius: 10px; border-left: 5px solid #dc3545;">
+                            <h4 style="color: #dc3545; margin-bottom: 15px; display: flex; align-items: center;">
+                                <span style="margin-right: 10px;">❌</span> CONS
+                            </h4>
+                            <ul style="margin: 0; padding-left: 20px; color: #5a2d2d;">
+                                {self._format_list_items(cons)}
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Call to Action -->
+                    <div class="cta-section" style="text-align: center; margin-top: 30px;">
+                        <a href="{product['affiliate_link']}" 
+                           class="amazon-button" 
+                           style="display: inline-block; background: {'#FF4444' if is_winner else '#FF9900'}; color: white; padding: 18px 40px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 1.2em; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: all 0.3s ease;"
+                           target="_blank" 
+                           rel="nofollow noopener sponsored">
+                           {'🏆 GET THE WINNER ON AMAZON' if is_winner else '🛒 CHECK PRICE ON AMAZON'}
+                        </a>
+                        <div style="margin-top: 10px; font-size: 0.9em; color: #666;">
+                            💰 Best Price Guaranteed | ⚡ Fast Prime Shipping
+                        </div>
+                    </div>
+                </div>
+            </div>
+            """
+        
+        # Close countdown container
+        content += """
+        </div>
+        """
         
         # Add video section if available
         video_url = data.get('VideoURL') or data.get('GoogleDriveURL')
         if video_url:
             content += f"""
-            <div class="video-section" style="margin: 40px 0;">
-                <h2>Video Review</h2>
-                <p>Watch our detailed video review:</p>
-                <a href="{video_url}" target="_blank" class="video-link" style="color: #ff6b00;">Watch Video Review</a>
+            <div class="video-section" style="margin: 50px 0; text-align: center; background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); padding: 40px; border-radius: 15px;">
+                <h2 style="color: #333; margin-bottom: 20px;">🎬 Watch Our Video Review</h2>
+                <p style="font-size: 1.2em; margin-bottom: 25px; color: #555;">See all these products in action and get our detailed analysis!</p>
+                <a href="{video_url}" target="_blank" 
+                   style="display: inline-block; background: #FF4444; color: white; padding: 18px 40px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 1.2em; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                   🎥 WATCH FULL REVIEW
+                </a>
             </div>
             """
         
         # Add affiliate disclosure
         content += """
-        <div class="affiliate-disclosure" style="background: #f0f0f0; padding: 20px; border-radius: 5px; margin-top: 40px;">
-            <p><strong>Disclosure:</strong> As an Amazon Associate, we earn from qualifying purchases. 
-            This doesn't affect the price you pay and helps us continue providing honest reviews.</p>
+        <div class="affiliate-disclosure" style="background: linear-gradient(135deg, #f0f2f5, #e6e9ed); padding: 30px; border-radius: 15px; margin-top: 50px; border-left: 5px solid #667eea;">
+            <h3 style="color: #333; margin-bottom: 15px; display: flex; align-items: center;">
+                <span style="margin-right: 10px;">💡</span> Important Disclosure
+            </h3>
+            <p style="color: #555; line-height: 1.6; margin: 0;">
+                <strong>Amazon Associate Disclosure:</strong> We earn from qualifying purchases made through our affiliate links. 
+                This doesn't affect the price you pay and helps us continue providing honest, unbiased reviews. 
+                All opinions are our own based on thorough testing and research.
+            </p>
         </div>
         """
         
         return content
+    
+    def _extract_pros_cons(self, description: str) -> tuple:
+        """Extract pros and cons from product description"""
+        # Simple extraction based on common patterns
+        pros = []
+        cons = []
+        
+        if not description:
+            # Default pros/cons if no description
+            pros = ["High quality build", "Great performance", "Good value for money"]
+            cons = ["Price point may be high", "Limited color options"]
+            return pros, cons
+        
+        # Look for positive keywords
+        positive_keywords = [
+            'excellent', 'great', 'outstanding', 'powerful', 'fast', 'reliable', 
+            'durable', 'efficient', 'premium', 'high-quality', 'versatile',
+            'lightweight', 'compact', 'wireless', 'advanced', 'innovative'
+        ]
+        
+        # Look for potential negative aspects
+        negative_keywords = [
+            'expensive', 'heavy', 'bulky', 'limited', 'short battery',
+            'noisy', 'complex', 'fragile', 'slow', 'compatibility issues'
+        ]
+        
+        # Extract sentences and categorize
+        sentences = description.split('. ')
+        
+        for sentence in sentences:
+            sentence_lower = sentence.lower()
+            
+            # Check for positive aspects
+            for keyword in positive_keywords:
+                if keyword in sentence_lower:
+                    feature = sentence.strip()
+                    if feature and feature not in pros and len(pros) < 4:
+                        pros.append(feature)
+                    break
+        
+        # Add generic pros if none found
+        if not pros:
+            if 'wireless' in description.lower():
+                pros.append("Wireless connectivity")
+            if 'battery' in description.lower():
+                pros.append("Long battery life")
+            if 'performance' in description.lower():
+                pros.append("Excellent performance")
+            if not pros:
+                pros = ["High quality construction", "Reliable performance", "Great value"]
+        
+        # Generate appropriate cons based on product type
+        description_lower = description.lower()
+        if 'premium' in description_lower or 'high-end' in description_lower:
+            cons.append("Higher price point")
+        if 'wireless' in description_lower:
+            cons.append("Requires charging")
+        if 'gaming' in description_lower:
+            cons.append("May be overkill for casual use")
+        
+        # Default cons if none generated
+        if not cons:
+            cons = ["Price may be steep for some", "Limited color options"]
+        
+        return pros[:3], cons[:2]  # Limit to 3 pros, 2 cons
+    
+    def _format_list_items(self, items: list) -> str:
+        """Format list items as HTML"""
+        if not items:
+            return "<li>None specified</li>"
+        
+        return "".join([f"<li>{item}</li>" for item in items])
     
     async def _get_or_create_category(self, category_name: str) -> int:
         """Get category ID or create if doesn't exist"""

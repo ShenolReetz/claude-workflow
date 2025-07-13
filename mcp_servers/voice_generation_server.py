@@ -74,7 +74,7 @@ class VoiceGenerationMCPServer:
 
 # Test the server
 async def test_voice_generation():
-    with open('/app/config/api_keys.json', 'r') as f:
+    with open('/home/claude-workflow/config/api_keys.json', 'r') as f:
         config = json.load(f)
     
     server = VoiceGenerationMCPServer(config['elevenlabs_api_key'])

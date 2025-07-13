@@ -310,11 +310,75 @@ class ContentPipelineOrchestrator:
                 import traceback
                 traceback.print_exc()
         
+        # Upload to TikTok (if enabled and approved)
+        tiktok_enabled = self.config.get('tiktok_enabled', False)
+        if tiktok_enabled and video_result.get('video_url'):
+            print("📱 Uploading to TikTok...")
+            try:
+                from mcp.tiktok_workflow_integration import upload_to_tiktok
+                
+                tiktok_result = await upload_to_tiktok(self.config, pending_title)
+                
+                if tiktok_result.get('success'):
+                    print(f"✅ TikTok upload successful!")
+                    print(f"   Video ID: {tiktok_result.get('video_id')}")
+                    print(f"   Title: {tiktok_result.get('title')}")
+                    
+                    # Update Airtable with TikTok info
+                    tiktok_updates = {
+                        'TikTokURL': f"https://www.tiktok.com/@{self.config.get('tiktok_username', 'user')}/video/{tiktok_result.get('video_id')}"
+                    }
+                    
+                    await self.airtable_server.update_record(pending_title["record_id"], tiktok_updates)
+                    print("✅ Updated Airtable with TikTok URL")
+                    
+                elif tiktok_result.get('skipped'):
+                    print("⏭️  TikTok upload skipped (disabled)")
+                else:
+                    print(f"⚠️  TikTok upload failed: {tiktok_result.get('error')}")
+                    
+            except Exception as e:
+                print(f"❌ TikTok error: {e}")
+                # Continue workflow even if TikTok fails
+                import traceback
+                traceback.print_exc()
+        else:
+            print("⏭️  TikTok upload skipped (disabled or no video URL)")
 
-
-                 # Upload to YouTube Shorts
-                        
- 
+        # Upload to Instagram (if enabled and approved)
+        instagram_enabled = self.config.get('instagram_enabled', False)
+        if instagram_enabled and video_result.get('video_url'):
+            print("📸 Uploading to Instagram Reels...")
+            try:
+                from mcp.instagram_workflow_integration import upload_to_instagram
+                
+                instagram_result = await upload_to_instagram(self.config, pending_title)
+                
+                if instagram_result.get('success'):
+                    print(f"✅ Instagram Reel upload successful!")
+                    print(f"   Media ID: {instagram_result.get('media_id')}")
+                    print(f"   URL: {instagram_result.get('instagram_url')}")
+                    
+                    # Update Airtable with Instagram info
+                    instagram_updates = {
+                        'InstagramURL': instagram_result.get('instagram_url', '')
+                    }
+                    
+                    await self.airtable_server.update_record(pending_title["record_id"], instagram_updates)
+                    print("✅ Updated Airtable with Instagram URL")
+                    
+                elif instagram_result.get('skipped'):
+                    print("⏭️  Instagram upload skipped (disabled)")
+                else:
+                    print(f"⚠️  Instagram upload failed: {instagram_result.get('error')}")
+                    
+            except Exception as e:
+                print(f"❌ Instagram error: {e}")
+                # Continue workflow even if Instagram fails
+                import traceback
+                traceback.print_exc()
+        else:
+            print("⏭️  Instagram upload skipped (disabled or no video URL)")
 
         # Step 10: Update status
         print("✅ Updating record status to 'Done'...")
@@ -322,6 +386,29 @@ class ContentPipelineOrchestrator:
             pending_title['record_id'],
             "Processing"
         )
+        
+        # Final Step: Monitor API Credits
+        credit_monitoring_enabled = self.config.get('credit_monitoring_enabled', True)
+        if credit_monitoring_enabled:
+            print("💰 Monitoring API credits...")
+            try:
+                from mcp_servers.credit_monitor_server import monitor_api_credits
+                
+                credit_result = await monitor_api_credits(self.config)
+                
+                if credit_result.get('alerts'):
+                    print(f"⚠️ {len(credit_result['alerts'])} service(s) have low credits!")
+                    for alert in credit_result['alerts']:
+                        print(f"   {alert['message']}")
+                    print("📧 Email alert sent with top-up links")
+                else:
+                    print(f"✅ All API credits OK (Total: €{credit_result['total_value_eur']:.2f})")
+                    
+            except Exception as e:
+                print(f"❌ Credit monitoring error: {e}")
+                # Don't fail the workflow if monitoring fails
+        else:
+            print("⏭️ Credit monitoring disabled")
         
         print("🎉 Complete workflow finished successfully!")
         print("📊 Summary:")

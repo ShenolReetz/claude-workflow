@@ -1,0 +1,924 @@
+{
+  "comment": "Production video: \ud83d\udd25 Top 5 Car Amplifiers for INS",
+  "resolution": "instagram-story",
+  "quality": "high",
+  "scenes": [
+    {
+      "comment": "Intro scene with animations",
+      "duration": 5,
+      "transition": {
+        "type": "fade",
+        "duration": 1
+      },
+      "elements": [
+        {
+          "type": "shape",
+          "shape": "rectangle",
+          "width": 1080,
+          "height": 1920,
+          "x": 0,
+          "y": 0,
+          "fill-color": {
+            "type": "linear-gradient",
+            "colors": [
+              "#1a1a2e",
+              "#16213e"
+            ],
+            "direction": "vertical"
+          }
+        },
+        {
+          "type": "text",
+          "text": "\ud83d\udd25 Top 5 Car Amplifiers for INSANE Bass in 2025! \ud83d\ude97",
+          "font-family": "Montserrat",
+          "font-weight": "bold",
+          "font-size": 72,
+          "font-color": "#FFFFFF",
+          "text-align": "center",
+          "x": "center",
+          "y": 400,
+          "width": 900,
+          "duration": 5,
+          "animations": [
+            {
+              "type": "scale",
+              "from": 0,
+              "to": 1,
+              "start": 0,
+              "duration": 1,
+              "easing": "easeOutBack"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "Let's count down the best products!",
+          "font-family": "Open Sans",
+          "font-size": 36,
+          "font-color": "#FFD700",
+          "text-align": "center",
+          "x": "center",
+          "y": 600,
+          "width": 800,
+          "start": 1,
+          "duration": 4,
+          "animations": [
+            {
+              "type": "fade",
+              "from": 0,
+              "to": 1,
+              "start": 0,
+              "duration": 1
+            }
+          ]
+        }
+      ],
+      "background-color": "#1a1a2e"
+    },
+    {
+      "comment": "Product #5 - Skar Audio RP-2000.1D",
+      "duration": 10,
+      "transition": {
+        "type": "wipe",
+        "direction": "up",
+        "duration": 0.8
+      },
+      "elements": [
+        {
+          "type": "shape",
+          "shape": "rectangle",
+          "width": 1080,
+          "height": 1920,
+          "x": 0,
+          "y": 0,
+          "fill-color": {
+            "type": "linear-gradient",
+            "colors": [
+              "#16213e",
+              "#0f3460"
+            ],
+            "direction": "diagonal"
+          }
+        },
+        {
+          "type": "text",
+          "text": "#5",
+          "font-family": "Bebas Neue",
+          "font-size": 200,
+          "font-color": "#FFFFFF",
+          "text-align": "center",
+          "x": "center",
+          "y": 100,
+          "opacity": 0.3,
+          "animations": [
+            {
+              "type": "scale",
+              "from": 2,
+              "to": 1,
+              "start": 0,
+              "duration": 0.5,
+              "easing": "easeOutBounce"
+            }
+          ]
+        },
+        {
+          "type": "image",
+          "src": "https://images-na.ssl-images-amazon.com/images/I/91qKx1HLPVL._AC_SL1500_.jpg",
+          "x": "center",
+          "y": 350,
+          "width": 600,
+          "height": 600,
+          "object-fit": "contain",
+          "start": 0.5,
+          "duration": 9.5,
+          "animations": [
+            {
+              "type": "slide",
+              "from": {
+                "x": -1080,
+                "y": 350
+              },
+              "to": {
+                "x": "center",
+                "y": 350
+              },
+              "start": 0,
+              "duration": 0.8,
+              "easing": "easeOutCubic"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "Skar Audio RP-2000.1D",
+          "font-family": "Montserrat",
+          "font-weight": "bold",
+          "font-size": 48,
+          "font-color": "#FFFFFF",
+          "text-align": "center",
+          "x": "center",
+          "y": 1000,
+          "width": 900,
+          "start": 1,
+          "duration": 9,
+          "animations": [
+            {
+              "type": "fade",
+              "from": 0,
+              "to": 1,
+              "start": 0,
+              "duration": 0.5
+            }
+          ]
+        },
+        {
+          "type": "component",
+          "component": "advanced/070",
+          "settings": {
+            "rating": {
+              "value": 4.9,
+              "max_value": 5,
+              "star_size": 48,
+              "star_color": "#FFD700",
+              "empty_star_color": "#333333"
+            }
+          },
+          "x": "center",
+          "y": 1150,
+          "width": 300,
+          "start": 1.5,
+          "duration": 8.5
+        },
+        {
+          "type": "component",
+          "component": "advanced/060",
+          "settings": {
+            "counter": {
+              "value": "12567",
+              "suffix": " Reviews",
+              "animation_duration": 2,
+              "format": "comma",
+              "font_size": 36,
+              "font_color": "#FFD700"
+            }
+          },
+          "x": "center",
+          "y": 1250,
+          "width": 400,
+          "start": 2,
+          "duration": 8
+        },
+        {
+          "type": "text",
+          "text": "The champion! 2000W RMS Class D monoblock with remote bass knob and competition-grade components..",
+          "font-family": "Open Sans",
+          "font-size": 32,
+          "font-color": "#E0E0E0",
+          "text-align": "center",
+          "line-height": 1.4,
+          "x": "center",
+          "y": 1350,
+          "width": 850,
+          "start": 2.5,
+          "duration": 7.5
+        }
+      ]
+    },
+    {
+      "comment": "Product #4 - Alpine MRV-M1200",
+      "duration": 10,
+      "transition": {
+        "type": "slide",
+        "direction": "left",
+        "duration": 0.6
+      },
+      "elements": [
+        {
+          "type": "shape",
+          "shape": "rectangle",
+          "width": 1080,
+          "height": 1920,
+          "x": 0,
+          "y": 0,
+          "fill-color": {
+            "type": "linear-gradient",
+            "colors": [
+              "#16213e",
+              "#0f3460"
+            ],
+            "direction": "diagonal"
+          }
+        },
+        {
+          "type": "text",
+          "text": "#4",
+          "font-family": "Bebas Neue",
+          "font-size": 200,
+          "font-color": "#FFFFFF",
+          "text-align": "center",
+          "x": "center",
+          "y": 100,
+          "opacity": 0.3,
+          "animations": [
+            {
+              "type": "scale",
+              "from": 2,
+              "to": 1,
+              "start": 0,
+              "duration": 0.5,
+              "easing": "easeOutBounce"
+            }
+          ]
+        },
+        {
+          "type": "image",
+          "src": "https://images-na.ssl-images-amazon.com/images/I/61qKx1HLPVL._AC_SL1500_.jpg",
+          "x": "center",
+          "y": 350,
+          "width": 600,
+          "height": 600,
+          "object-fit": "contain",
+          "start": 0.5,
+          "duration": 9.5,
+          "animations": [
+            {
+              "type": "slide",
+              "from": {
+                "x": -1080,
+                "y": 350
+              },
+              "to": {
+                "x": "center",
+                "y": 350
+              },
+              "start": 0,
+              "duration": 0.8,
+              "easing": "easeOutCubic"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "Alpine MRV-M1200",
+          "font-family": "Montserrat",
+          "font-weight": "bold",
+          "font-size": 48,
+          "font-color": "#FFFFFF",
+          "text-align": "center",
+          "x": "center",
+          "y": 1000,
+          "width": 900,
+          "start": 1,
+          "duration": 9,
+          "animations": [
+            {
+              "type": "fade",
+              "from": 0,
+              "to": 1,
+              "start": 0,
+              "duration": 0.5
+            }
+          ]
+        },
+        {
+          "type": "component",
+          "component": "advanced/070",
+          "settings": {
+            "rating": {
+              "value": 4.6,
+              "max_value": 5,
+              "star_size": 48,
+              "star_color": "#FFD700",
+              "empty_star_color": "#333333"
+            }
+          },
+          "x": "center",
+          "y": 1150,
+          "width": 300,
+          "start": 1.5,
+          "duration": 8.5
+        },
+        {
+          "type": "component",
+          "component": "advanced/060",
+          "settings": {
+            "counter": {
+              "value": "4123",
+              "suffix": " Reviews",
+              "animation_duration": 2,
+              "format": "comma",
+              "font_size": 36,
+              "font_color": "#FFD700"
+            }
+          },
+          "x": "center",
+          "y": 1250,
+          "width": 400,
+          "start": 2,
+          "duration": 8
+        },
+        {
+          "type": "text",
+          "text": "Alpine excellence with 1200W RMS, variable bass boost, and sophisticated protection circuitry..",
+          "font-family": "Open Sans",
+          "font-size": 32,
+          "font-color": "#E0E0E0",
+          "text-align": "center",
+          "line-height": 1.4,
+          "x": "center",
+          "y": 1350,
+          "width": 850,
+          "start": 2.5,
+          "duration": 7.5
+        }
+      ]
+    },
+    {
+      "comment": "Product #3 - Kicker CXA1200.1",
+      "duration": 10,
+      "transition": {
+        "type": "slide",
+        "direction": "left",
+        "duration": 0.6
+      },
+      "elements": [
+        {
+          "type": "shape",
+          "shape": "rectangle",
+          "width": 1080,
+          "height": 1920,
+          "x": 0,
+          "y": 0,
+          "fill-color": {
+            "type": "linear-gradient",
+            "colors": [
+              "#16213e",
+              "#0f3460"
+            ],
+            "direction": "diagonal"
+          }
+        },
+        {
+          "type": "text",
+          "text": "#3",
+          "font-family": "Bebas Neue",
+          "font-size": 200,
+          "font-color": "#FFFFFF",
+          "text-align": "center",
+          "x": "center",
+          "y": 100,
+          "opacity": 0.3,
+          "animations": [
+            {
+              "type": "scale",
+              "from": 2,
+              "to": 1,
+              "start": 0,
+              "duration": 0.5,
+              "easing": "easeOutBounce"
+            }
+          ]
+        },
+        {
+          "type": "image",
+          "src": "https://images-na.ssl-images-amazon.com/images/I/71qKx1HLPVL._AC_SL1500_.jpg",
+          "x": "center",
+          "y": 350,
+          "width": 600,
+          "height": 600,
+          "object-fit": "contain",
+          "start": 0.5,
+          "duration": 9.5,
+          "animations": [
+            {
+              "type": "slide",
+              "from": {
+                "x": -1080,
+                "y": 350
+              },
+              "to": {
+                "x": "center",
+                "y": 350
+              },
+              "start": 0,
+              "duration": 0.8,
+              "easing": "easeOutCubic"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "Kicker CXA1200.1",
+          "font-family": "Montserrat",
+          "font-weight": "bold",
+          "font-size": 48,
+          "font-color": "#FFFFFF",
+          "text-align": "center",
+          "x": "center",
+          "y": 1000,
+          "width": 900,
+          "start": 1,
+          "duration": 9,
+          "animations": [
+            {
+              "type": "fade",
+              "from": 0,
+              "to": 1,
+              "start": 0,
+              "duration": 0.5
+            }
+          ]
+        },
+        {
+          "type": "component",
+          "component": "advanced/070",
+          "settings": {
+            "rating": {
+              "value": 4.5,
+              "max_value": 5,
+              "star_size": 48,
+              "star_color": "#FFD700",
+              "empty_star_color": "#333333"
+            }
+          },
+          "x": "center",
+          "y": 1150,
+          "width": 300,
+          "start": 1.5,
+          "duration": 8.5
+        },
+        {
+          "type": "component",
+          "component": "advanced/060",
+          "settings": {
+            "counter": {
+              "value": "5234",
+              "suffix": " Reviews",
+              "animation_duration": 2,
+              "format": "comma",
+              "font_size": 36,
+              "font_color": "#FFD700"
+            }
+          },
+          "x": "center",
+          "y": 1250,
+          "width": 400,
+          "start": 2,
+          "duration": 8
+        },
+        {
+          "type": "text",
+          "text": "Powerful 1200W mono amp with FIT2 technology, optimized for precise bass control and efficiency..",
+          "font-family": "Open Sans",
+          "font-size": 32,
+          "font-color": "#E0E0E0",
+          "text-align": "center",
+          "line-height": 1.4,
+          "x": "center",
+          "y": 1350,
+          "width": 850,
+          "start": 2.5,
+          "duration": 7.5
+        }
+      ]
+    },
+    {
+      "comment": "Product #2 - JL Audio XD1000/1v2",
+      "duration": 10,
+      "transition": {
+        "type": "cross-dissolve",
+        "duration": 0.8
+      },
+      "elements": [
+        {
+          "type": "shape",
+          "shape": "rectangle",
+          "width": 1080,
+          "height": 1920,
+          "x": 0,
+          "y": 0,
+          "fill-color": {
+            "type": "linear-gradient",
+            "colors": [
+              "#16213e",
+              "#0f3460"
+            ],
+            "direction": "diagonal"
+          }
+        },
+        {
+          "type": "text",
+          "text": "#2",
+          "font-family": "Bebas Neue",
+          "font-size": 200,
+          "font-color": "#FFFFFF",
+          "text-align": "center",
+          "x": "center",
+          "y": 100,
+          "opacity": 0.3,
+          "animations": [
+            {
+              "type": "scale",
+              "from": 2,
+              "to": 1,
+              "start": 0,
+              "duration": 0.5,
+              "easing": "easeOutBounce"
+            }
+          ]
+        },
+        {
+          "type": "image",
+          "src": "https://images-na.ssl-images-amazon.com/images/I/81qKx1HLPVL._AC_SL1500_.jpg",
+          "x": "center",
+          "y": 350,
+          "width": 600,
+          "height": 600,
+          "object-fit": "contain",
+          "start": 0.5,
+          "duration": 9.5,
+          "animations": [
+            {
+              "type": "slide",
+              "from": {
+                "x": -1080,
+                "y": 350
+              },
+              "to": {
+                "x": "center",
+                "y": 350
+              },
+              "start": 0,
+              "duration": 0.8,
+              "easing": "easeOutCubic"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "JL Audio XD1000/1v2",
+          "font-family": "Montserrat",
+          "font-weight": "bold",
+          "font-size": 48,
+          "font-color": "#FFFFFF",
+          "text-align": "center",
+          "x": "center",
+          "y": 1000,
+          "width": 900,
+          "start": 1,
+          "duration": 9,
+          "animations": [
+            {
+              "type": "fade",
+              "from": 0,
+              "to": 1,
+              "start": 0,
+              "duration": 0.5
+            }
+          ]
+        },
+        {
+          "type": "component",
+          "component": "advanced/070",
+          "settings": {
+            "rating": {
+              "value": 4.8,
+              "max_value": 5,
+              "star_size": 48,
+              "star_color": "#FFD700",
+              "empty_star_color": "#333333"
+            }
+          },
+          "x": "center",
+          "y": 1150,
+          "width": 300,
+          "start": 1.5,
+          "duration": 8.5
+        },
+        {
+          "type": "component",
+          "component": "advanced/060",
+          "settings": {
+            "counter": {
+              "value": "2891",
+              "suffix": " Reviews",
+              "animation_duration": 2,
+              "format": "comma",
+              "font_size": 36,
+              "font_color": "#FFD700"
+            }
+          },
+          "x": "center",
+          "y": 1250,
+          "width": 400,
+          "start": 2,
+          "duration": 8
+        },
+        {
+          "type": "text",
+          "text": "Compact monoblock with 1000W RMS, NexD2 switching technology, and studio-quality sound reproduction..",
+          "font-family": "Open Sans",
+          "font-size": 32,
+          "font-color": "#E0E0E0",
+          "text-align": "center",
+          "line-height": 1.4,
+          "x": "center",
+          "y": 1350,
+          "width": 850,
+          "start": 2.5,
+          "duration": 7.5
+        }
+      ]
+    },
+    {
+      "comment": "Product #1 - Rockford Fosgate T3000-1bdCP",
+      "duration": 10,
+      "transition": {
+        "type": "zoom",
+        "duration": 0.8
+      },
+      "elements": [
+        {
+          "type": "shape",
+          "shape": "rectangle",
+          "width": 1080,
+          "height": 1920,
+          "x": 0,
+          "y": 0,
+          "fill-color": {
+            "type": "linear-gradient",
+            "colors": [
+              "#FFD700",
+              "#FFA500"
+            ],
+            "direction": "diagonal"
+          }
+        },
+        {
+          "type": "text",
+          "text": "#1",
+          "font-family": "Bebas Neue",
+          "font-size": 200,
+          "font-color": "#000000",
+          "text-align": "center",
+          "x": "center",
+          "y": 100,
+          "opacity": 0.3,
+          "animations": [
+            {
+              "type": "scale",
+              "from": 2,
+              "to": 1,
+              "start": 0,
+              "duration": 0.5,
+              "easing": "easeOutBounce"
+            }
+          ]
+        },
+        {
+          "type": "image",
+          "src": "https://images-na.ssl-images-amazon.com/images/I/71xKx1HLPVL._AC_SL1500_.jpg",
+          "x": "center",
+          "y": 350,
+          "width": 600,
+          "height": 600,
+          "object-fit": "contain",
+          "start": 0.5,
+          "duration": 9.5,
+          "animations": [
+            {
+              "type": "slide",
+              "from": {
+                "x": -1080,
+                "y": 350
+              },
+              "to": {
+                "x": "center",
+                "y": 350
+              },
+              "start": 0,
+              "duration": 0.8,
+              "easing": "easeOutCubic"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "Rockford Fosgate T3000-1bdCP",
+          "font-family": "Montserrat",
+          "font-weight": "bold",
+          "font-size": 48,
+          "font-color": "#000000",
+          "text-align": "center",
+          "x": "center",
+          "y": 1000,
+          "width": 900,
+          "start": 1,
+          "duration": 9,
+          "animations": [
+            {
+              "type": "fade",
+              "from": 0,
+              "to": 1,
+              "start": 0,
+              "duration": 0.5
+            }
+          ]
+        },
+        {
+          "type": "component",
+          "component": "advanced/070",
+          "settings": {
+            "rating": {
+              "value": 4.7,
+              "max_value": 5,
+              "star_size": 48,
+              "star_color": "#FFD700",
+              "empty_star_color": "#333333"
+            }
+          },
+          "x": "center",
+          "y": 1150,
+          "width": 300,
+          "start": 1.5,
+          "duration": 8.5
+        },
+        {
+          "type": "component",
+          "component": "advanced/060",
+          "settings": {
+            "counter": {
+              "value": "3456",
+              "suffix": " Reviews",
+              "animation_duration": 2,
+              "format": "comma",
+              "font_size": 36,
+              "font_color": "#FFD700"
+            }
+          },
+          "x": "center",
+          "y": 1250,
+          "width": 400,
+          "start": 2,
+          "duration": 8
+        },
+        {
+          "type": "text",
+          "text": "Delivers 3000 watts of pure power with advanced thermal management and Class BD technology for the ultimate bass experience..",
+          "font-family": "Open Sans",
+          "font-size": 32,
+          "font-color": "#333333",
+          "text-align": "center",
+          "line-height": 1.4,
+          "x": "center",
+          "y": 1350,
+          "width": 850,
+          "start": 2.5,
+          "duration": 7.5
+        },
+        {
+          "type": "component",
+          "component": "basic/036",
+          "settings": {
+            "badge_text": "\ud83c\udfc6 WINNER",
+            "badge_color": "#FF0000",
+            "text_color": "#FFFFFF",
+            "font_size": 48
+          },
+          "x": "center",
+          "y": 200,
+          "width": 300,
+          "animations": [
+            {
+              "type": "rotate",
+              "from": -10,
+              "to": 10,
+              "duration": 2,
+              "loop": true,
+              "easing": "easeInOutSine"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "comment": "Outro scene with CTA",
+      "duration": 5,
+      "transition": {
+        "type": "cross-dissolve",
+        "duration": 1
+      },
+      "elements": [
+        {
+          "type": "shape",
+          "shape": "rectangle",
+          "width": 1080,
+          "height": 1920,
+          "x": 0,
+          "y": 0,
+          "fill-color": "#1a1a2e"
+        },
+        {
+          "type": "text",
+          "text": "Thanks for Watching!",
+          "font-family": "Montserrat",
+          "font-weight": "bold",
+          "font-size": 64,
+          "font-color": "#FFFFFF",
+          "text-align": "center",
+          "x": "center",
+          "y": 400,
+          "width": 900,
+          "animations": [
+            {
+              "type": "scale",
+              "from": 0.8,
+              "to": 1.2,
+              "start": 0,
+              "duration": 2,
+              "easing": "easeInOutSine",
+              "loop": true
+            }
+          ]
+        },
+        {
+          "type": "component",
+          "component": "basic/027",
+          "settings": {
+            "button_text": "\ud83d\uded2 CHECK LINKS BELOW",
+            "button_color": "#FFD700",
+            "text_color": "#000000",
+            "corner_radius": 30,
+            "font_size": 32
+          },
+          "x": "center",
+          "y": 600,
+          "width": 600,
+          "start": 1,
+          "duration": 4,
+          "animations": [
+            {
+              "type": "pulse",
+              "scale": 1.1,
+              "duration": 1,
+              "loop": true
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "\ud83d\udc4d LIKE | \ud83d\udd14 SUBSCRIBE | \ud83d\udcac COMMENT",
+          "font-family": "Open Sans",
+          "font-size": 28,
+          "font-color": "#FFD700",
+          "text-align": "center",
+          "x": "center",
+          "y": 800,
+          "width": 800,
+          "start": 2,
+          "duration": 3
+        }
+      ]
+    }
+  ]
+}
