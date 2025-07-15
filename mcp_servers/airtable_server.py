@@ -206,6 +206,51 @@ class AirtableMCPServer:
             print(f"Error updating keywords for record {record_id}: {e}")
             return False
 
+    async def update_multi_platform_keywords(self, record_id: str, keywords_data: Dict[str, List[str]]) -> bool:
+        """Update all platform-specific keyword fields"""
+        try:
+            update_fields = {}
+            
+            # Format keywords for each platform
+            if 'youtube' in keywords_data and keywords_data['youtube']:
+                update_fields['YouTubeKeywords'] = ', '.join(keywords_data['youtube'])
+            
+            if 'instagram' in keywords_data and keywords_data['instagram']:
+                # Instagram hashtags - join with spaces, ensure # symbol
+                hashtags = []
+                for tag in keywords_data['instagram']:
+                    if not tag.startswith('#'):
+                        tag = f"#{tag}"
+                    hashtags.append(tag)
+                update_fields['InstagramHashtags'] = ' '.join(hashtags)
+            
+            if 'tiktok' in keywords_data and keywords_data['tiktok']:
+                update_fields['TikTokKeywords'] = ', '.join(keywords_data['tiktok'])
+            
+            if 'wordpress' in keywords_data and keywords_data['wordpress']:
+                update_fields['WordPressSEO'] = ', '.join(keywords_data['wordpress'])
+            
+            if 'universal' in keywords_data and keywords_data['universal']:
+                update_fields['UniversalKeywords'] = ', '.join(keywords_data['universal'])
+            
+            # Update all fields at once
+            if update_fields:
+                self.airtable.update(record_id, update_fields)
+                print(f"✅ Updated {len(update_fields)} platform-specific keyword fields")
+                
+                # Log what was updated
+                for field, value in update_fields.items():
+                    print(f"   {field}: {len(value.split(','))} keywords")
+                
+                return True
+            else:
+                print("⚠️ No keyword data to update")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Error updating multi-platform keywords for record {record_id}: {e}")
+            return False
+
 
 async def test_airtable_server():
     with open('/app/config/api_keys.json', 'r') as f:
@@ -224,6 +269,51 @@ async def test_airtable_server():
         print("   Status:", pending_title['status'])
     else:
         print("❌ No pending titles found")
+
+    async def update_multi_platform_keywords(self, record_id: str, keywords_data: Dict[str, List[str]]) -> bool:
+        """Update all platform-specific keyword fields"""
+        try:
+            update_fields = {}
+            
+            # Format keywords for each platform
+            if 'youtube' in keywords_data and keywords_data['youtube']:
+                update_fields['YouTubeKeywords'] = ', '.join(keywords_data['youtube'])
+            
+            if 'instagram' in keywords_data and keywords_data['instagram']:
+                # Instagram hashtags - join with spaces, ensure # symbol
+                hashtags = []
+                for tag in keywords_data['instagram']:
+                    if not tag.startswith('#'):
+                        tag = f"#{tag}"
+                    hashtags.append(tag)
+                update_fields['InstagramHashtags'] = ' '.join(hashtags)
+            
+            if 'tiktok' in keywords_data and keywords_data['tiktok']:
+                update_fields['TikTokKeywords'] = ', '.join(keywords_data['tiktok'])
+            
+            if 'wordpress' in keywords_data and keywords_data['wordpress']:
+                update_fields['WordPressSEO'] = ', '.join(keywords_data['wordpress'])
+            
+            if 'universal' in keywords_data and keywords_data['universal']:
+                update_fields['UniversalKeywords'] = ', '.join(keywords_data['universal'])
+            
+            # Update all fields at once
+            if update_fields:
+                self.airtable.update(record_id, update_fields)
+                print(f"✅ Updated {len(update_fields)} platform-specific keyword fields")
+                
+                # Log what was updated
+                for field, value in update_fields.items():
+                    print(f"   {field}: {len(value.split(','))} keywords")
+                
+                return True
+            else:
+                print("⚠️ No keyword data to update")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Error updating multi-platform keywords for record {record_id}: {e}")
+            return False
 
 if __name__ == "__main__":
     asyncio.run(test_airtable_server())

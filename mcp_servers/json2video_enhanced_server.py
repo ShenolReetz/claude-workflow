@@ -121,7 +121,7 @@ class JSON2VideoEnhancedMCPServer:
                 countdown_number=i,  # Countdown number (5-1)
                 title=product_title,
                 description=record_data.get(f'ProductNo{i}Description', ''),
-                image_url=record_data.get(f'ProductNo{i}ImageURL', ''),
+                image_url=record_data.get(f'ProductNo{i}Photo', ''),
                 review_count=record_data.get(f'ProductNo{i}ReviewCount', '0'),
                 rating=record_data.get(f'ProductNo{i}Rating', 4.0),
                 is_winner=(i == 1)  # Special effects for #1
@@ -536,13 +536,13 @@ if __name__ == "__main__":
         'VideoTitle': '🔥 Top 5 Gaming Headsets in 2025! 🎮',
         'ProductNo1Title': 'SteelSeries Arctis Nova Pro',
         'ProductNo1Description': 'Premium wireless gaming headset with active noise cancellation and hi-res audio.',
-        'ProductNo1ImageURL': 'https://example.com/headset1.jpg',
+        'ProductNo1Photo': 'https://example.com/headset1.jpg',
         'ProductNo1ReviewCount': '15234',
         'ProductNo1Rating': 4.8,
         
         'ProductNo2Title': 'Razer BlackShark V2 Pro',
         'ProductNo2Description': 'Ultra-lightweight wireless headset with THX Spatial Audio.',
-        'ProductNo2ImageURL': 'https://example.com/headset2.jpg',
+        'ProductNo2Photo': 'https://example.com/headset2.jpg',
         'ProductNo2ReviewCount': '9876',
         'ProductNo2Rating': 4.6,
         

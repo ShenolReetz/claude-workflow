@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 This is an automated video content creation pipeline that generates "Top 5" product videos with affiliate monetization. It integrates multiple AI services to create YouTube-style content automatically from Airtable topics.
 
-**Current Status: v2.5 - Multi-Platform Production Ready**
+**Current Status: v2.6 - Voice Generation Integration Complete**
 - ✅ Enhanced video generation with reviews and ratings
 - ✅ WordPress integration with product photos and countdown format
 - ✅ YouTube Shorts automation
@@ -13,6 +13,9 @@ This is an automated video content creation pipeline that generates "Top 5" prod
 - ✅ Instagram Reels integration (ready for API approval)
 - ✅ API credit monitoring with email alerts
 - ✅ 90+ keywords per video across 5 platforms
+- ✅ ElevenLabs voice generation integration
+- ✅ Product category extraction for improved Amazon scraping
+- ✅ Flow control and validation system
 
 ## Development Commands
 
@@ -41,12 +44,13 @@ python3 src/test_google_drive.py
 python3 src/test_wordpress.py
 python3 src/test_youtube.py
 
-# Test new v2.5 features
+# Test new v2.6 features
 python3 src/test_enhanced_video_generation.py
 python3 src/test_enhanced_wordpress.py
 python3 src/test_credit_monitoring.py
 python3 src/test_tiktok_validation.py
 python3 src/test_instagram_validation.py
+python3 src/test_voice_workflow_integration.py
 
 # Test specific MCP servers
 python3 mcp_servers/test_airtable.py
@@ -76,6 +80,8 @@ The project uses a microservices architecture with MCP servers:
 - **Google Drive MCP** (`mcp_servers/google_drive_server.py`) - Video storage and organization
 - **Voice Generation MCP** (`mcp_servers/voice_generation_server.py`) - ElevenLabs voice synthesis
 - **Image Generation MCP** (`mcp_servers/image_generation_server.py`) - DALL-E product images
+- **Product Category Extractor MCP** (`mcp_servers/product_category_extractor_server.py`) - Marketing title to search term conversion
+- **Flow Control MCP** (`mcp_servers/flow_control_server.py`) - Workflow validation and control
 - **TikTok MCP** (`mcp_servers/tiktok_server.py`) - TikTok Reels upload (ready for approval)
 - **Instagram MCP** (`mcp_servers/instagram_server.py`) - Instagram Reels upload (ready for approval)
 - **Credit Monitor MCP** (`mcp_servers/credit_monitor_server.py`) - API credit monitoring with email alerts
@@ -83,19 +89,26 @@ The project uses a microservices architecture with MCP servers:
 ### Workflow Orchestrator
 Main orchestrator: `src/workflow_runner.py` (class: `ContentPipelineOrchestrator`)
 
-Workflow stages (v2.5):
+Workflow stages (v2.6):
 1. Fetch pending titles from Airtable
-2. Generate multi-platform SEO keywords (90+ keywords across 5 platforms)
-3. Search Amazon products and generate affiliate links
-4. Generate Amazon-guided OpenAI product images
-5. Create enhanced video using JSON2Video (with reviews, ratings, animations)
-6. Upload video to Google Drive
-7. Create WordPress blog post with product photos and countdown format
-8. Upload to YouTube Shorts
-9. Upload to TikTok (when approved)
-10. Upload to Instagram Reels (when approved)
-11. Monitor API credits and send email alerts
-12. Update Airtable with all URLs and completion status
+2. Extract clean product category from marketing title using Claude AI
+3. Search Amazon products using extracted category and generate affiliate links
+4. Generate multi-platform SEO keywords (90+ keywords across 5 platforms)
+5. Generate countdown script with actual product data
+6. Run text generation quality control with retry logic
+7. Download Amazon product images from scraped data
+8. Generate Amazon-guided OpenAI product images
+9. Generate voice text for intro, outro, and all products
+10. Create voice narration using ElevenLabs (intro, outro, 5 products)
+11. Upload voice files to Google Drive
+12. Create enhanced video using JSON2Video (with reviews, ratings, voice)
+13. Upload video to Google Drive
+14. Create WordPress blog post with product photos and countdown format
+15. Upload to YouTube Shorts
+16. Upload to TikTok (when approved)
+17. Upload to Instagram Reels (when approved)
+18. Monitor API credits and send email alerts
+19. Update Airtable with all URLs and completion status
 
 ### Agent Classes
 Located in `src/mcp/`:
@@ -146,7 +159,7 @@ Configuration file: `config/api_keys.json`
 
 ## Important Implementation Notes
 
-### Current State (v2.5)
+### Current State (v2.6)
 - ✅ Multi-platform workflow runs end-to-end successfully
 - ✅ Enhanced JSON2Video templates with reviews and ratings
 - ✅ WordPress integration with product photos and countdown format
@@ -154,13 +167,16 @@ Configuration file: `config/api_keys.json`
 - ✅ API credit monitoring with email alerts
 - ✅ 90+ keywords across 5 platforms (YouTube, TikTok, Instagram, WordPress, Universal)
 - ✅ Amazon-guided OpenAI image generation
+- ✅ ElevenLabs voice generation fully integrated
+- ✅ Product category extraction for improved Amazon scraping
+- ✅ Flow control and validation system
 - ⏳ TikTok integration ready (pending API approval)
 - ⏳ Instagram integration ready (pending API approval)
-- ⏳ ElevenLabs voice generation ready (disabled for cost control)
+- ⚠️ Google Drive OAuth2 needed for voice file uploads
 
 ### Current Issues & Status
-- 🚨 JSON2Video: 0 credits remaining (needs top-up)
-- 🚨 ScrapingDog: 0 credits remaining (needs top-up)
+- ✅ JSON2Video: €39.40 remaining (~197 videos, 11,854 seconds)
+- ✅ ScrapingDog: €198.87 remaining (198,870 requests)
 - ✅ ElevenLabs: €32.32 remaining (179,537 characters)
 - ⚠️ OpenAI: API auth needs verification
 
@@ -199,13 +215,13 @@ Configuration file: `config/api_keys.json`
 - **YouTube**: Shorts automation
 
 ### ⏳ Ready for Activation
-- **ElevenLabs**: Voice generation (€32.32 credits available)
 - **TikTok**: Reels upload (awaiting API approval)
 - **Instagram**: Reels upload (awaiting API approval)
 
 ### 🚨 Needs Attention
-- **JSON2Video**: Add credits immediately
-- **ScrapingDog**: Add credits immediately
+- **Google Drive**: OAuth2 authentication for voice file uploads (service account quota exceeded)
+- **Airtable**: Missing voice MP3 fields (IntroMp3, OutroMp3, Product1-5Mp3)
+- **OpenAI**: Verify API authentication for image generation
 
 ## Cost Management
 - **Credit Monitoring**: Email alerts when ≤ €10 remaining

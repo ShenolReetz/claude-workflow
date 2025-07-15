@@ -124,9 +124,15 @@ class AmazonCategoryScraper:
                         if not asin:
                             continue
                         
-                        # Title
-                        title_elem = product.select_one('h2 a span')
-                        title = title_elem.text.strip() if title_elem else ''
+                        # Title - try multiple selectors for robustness
+                        title = ''
+                        title_selectors = ['h2 span', '.a-link-normal span', 'h2 a span', 'h2']
+                        for selector in title_selectors:
+                            title_elem = product.select_one(selector)
+                            if title_elem:
+                                title = title_elem.text.strip()
+                                if title:  # Only use if we got actual text
+                                    break
                         
                         # Price
                         price_elem = product.select_one('.a-price-whole')
@@ -198,8 +204,21 @@ class AmazonCategoryScraper:
                 # Add to Airtable fields
                 airtable_data[f'ProductNo{i}Title'] = product['title']
                 airtable_data[f'ProductNo{i}AffiliateLink'] = product['affiliate_link']
-                airtable_data[f'ProductNo{i}ImageURL'] = product['image_url']
-                airtable_data[f'ProductNo{i}Price'] = product['price']
+                airtable_data[f'ProductNo{i}Photo'] = product['image_url']
+                # Convert price to number format for Airtable
+                price_str = product['price']
+                if isinstance(price_str, str):
+                    # Remove $ symbol and convert to float
+                    price_clean = price_str.replace('$', '').replace(',', '')
+                    try:
+                        price_num = float(price_clean)
+                        airtable_data[f'ProductNo{i}Price'] = price_num
+                    except ValueError:
+                        # If conversion fails, store as 0
+                        airtable_data[f'ProductNo{i}Price'] = 0.0
+                        logger.warning(f"Could not convert price '{price_str}' to number, using 0.0")
+                else:
+                    airtable_data[f'ProductNo{i}Price'] = product['price']
                 airtable_data[f'ProductNo{i}Rating'] = str(product['rating'])
                 airtable_data[f'ProductNo{i}Reviews'] = str(product['review_count'])
                 airtable_data[f'ProductNo{i}Score'] = str(product['review_score'])

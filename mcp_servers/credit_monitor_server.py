@@ -263,15 +263,22 @@ class CreditMonitorMCPServer:
             
             if response.status_code == 200:
                 data = response.json()
-                credits_remaining = data.get('credits', 0)
-                credits_eur = credits_remaining * self.pricing['json2video']['credit']
+                
+                # JSON2Video uses "remaining_quota" with "time" in seconds
+                remaining_quota = data.get('remaining_quota', {})
+                time_seconds = remaining_quota.get('time', 0)
+                
+                # Convert seconds to videos (assuming 60 seconds per video)
+                video_count = time_seconds // 60
+                credits_eur = video_count * self.pricing['json2video']['credit']
                 
                 return {
                     'status': 'success',
-                    'credits_remaining': credits_remaining,
+                    'time_seconds': time_seconds,
+                    'estimated_videos': video_count,
                     'value_eur': credits_eur,
                     'top_up_url': 'https://json2video.com/pricing',
-                    'details': f"Credits: {credits_remaining} remaining"
+                    'details': f"Time: {time_seconds:,}s (~{video_count} videos)"
                 }
             else:
                 return {
@@ -302,15 +309,22 @@ class CreditMonitorMCPServer:
             
             if response.status_code == 200:
                 data = response.json()
-                requests_remaining = data.get('requests_remaining', 0)
+                
+                # ScrapingDog response format: requestLimit, requestUsed
+                request_limit = data.get('requestLimit', 0)
+                request_used = data.get('requestUsed', 0)
+                requests_remaining = request_limit - request_used
+                
                 requests_eur = requests_remaining * self.pricing['scrapingdog']['request']
                 
                 return {
                     'status': 'success',
+                    'request_limit': request_limit,
+                    'request_used': request_used,
                     'requests_remaining': requests_remaining,
                     'value_eur': requests_eur,
                     'top_up_url': 'https://scrapingdog.com/pricing',
-                    'details': f"Requests: {requests_remaining:,} remaining"
+                    'details': f"Requests: {requests_remaining:,} remaining ({request_used:,}/{request_limit:,} used)"
                 }
             else:
                 return {

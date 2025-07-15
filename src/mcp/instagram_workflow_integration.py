@@ -37,10 +37,10 @@ class InstagramWorkflowIntegration:
             return {"enabled": False, "skipped": True}
         
         try:
-            # Get video data
-            video_url = airtable_record.get('VideoURL') or airtable_record.get('GoogleDriveURL')
+            # Get video data from FinalVideo field
+            video_url = airtable_record.get('FinalVideo')
             if not video_url:
-                return {"success": False, "error": "No video URL found"}
+                return {"success": False, "error": "No final video URL found"}
             
             # Generate Instagram-optimized caption
             caption = self._generate_instagram_caption(airtable_record)
@@ -168,7 +168,7 @@ class InstagramWorkflowIntegration:
         
         # Try to get the first available product image
         for i in range(1, 6):
-            image_url = airtable_record.get(f'ProductNo{i}ImageURL')
+            image_url = airtable_record.get(f'ProductNo{i}Photo')
             if image_url:
                 return image_url
         
@@ -222,9 +222,9 @@ async def test_instagram_integration():
         'VideoURL': 'https://example.com/test-video.mp4',
         'InstagramHashtags': '#gaming #headsets #tech #reels #top5 #mustbuy #gamingsetup',
         'ProductNo1Title': 'SteelSeries Arctis Nova Pro',
-        'ProductNo1ImageURL': 'https://example.com/headset1.jpg',
+        'ProductNo1Photo': 'https://example.com/headset1.jpg',
         'ProductNo2Title': 'Razer BlackShark V2 Pro',
-        'ProductNo2ImageURL': 'https://example.com/headset2.jpg',
+        'ProductNo2Photo': 'https://example.com/headset2.jpg',
         'record_id': 'test123'
     }
     
