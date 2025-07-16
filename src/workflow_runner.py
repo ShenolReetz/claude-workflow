@@ -16,6 +16,7 @@ from mcp_servers.amazon_category_scraper import AmazonCategoryScraper
 from mcp_servers.product_category_extractor_server import ProductCategoryExtractorMCPServer
 from mcp_servers.flow_control_server import FlowControlMCPServer
 from mcp_servers.voice_generation_server import VoiceGenerationMCPServer
+from mcp_servers.amazon_product_validator import AmazonProductValidator
 from mcp.json2video_agent_mcp import run_video_creation
 from mcp.amazon_drive_integration import save_amazon_images_to_drive
 from mcp.amazon_images_workflow_v2 import download_and_save_amazon_images_v2
@@ -46,416 +47,493 @@ class ContentPipelineOrchestrator:
         self.flow_control = FlowControlMCPServer()
         self.voice_generator = VoiceGenerationMCPServer(self.config['elevenlabs_api_key'])
         self.amazon_scraper = AmazonCategoryScraper(self.config)
+        self.amazon_validator = AmazonProductValidator(self.config)
         self.wordpress_mcp = WordPressMCP(self.config)
 
     async def run_complete_workflow(self):
-        """Run the complete content generation workflow"""
+        """Run the complete content generation workflow with multiple title processing"""
         print(f"🚀 Starting content workflow at {datetime.now()}")
         
-        # Step 1: Get pending title from Airtable
-        print("📋 Getting pending title from Airtable...")
-        pending_title = await self.airtable_server.get_pending_titles()
+        max_attempts = 5  # Try up to 5 titles before giving up
+        attempt = 0
         
-        if not pending_title:
-            print("❌ No pending titles found. Exiting.")
-            return
-        
-        print(f"✅ Found title: {pending_title['title']}")
-        
-        # Step 2: Extract clean product category from marketing title
-        print("🔍 Extracting product category from marketing title...")
-        category_result = await self.category_extractor.extract_product_category(pending_title['title'])
-        
-        if not category_result.get('success'):
-            print(f"❌ Category extraction failed: {category_result.get('error', 'Unknown error')}")
-            return
-        
-        clean_category = category_result['primary_category']
-        print(f"✅ Extracted category: {clean_category}")
-        print(f"🎯 Alternative terms: {', '.join(category_result['search_terms'][:3])}")
-        
-        # Step 3: Scrape Amazon for top 5 products using clean category
-        print("🛒 Scraping Amazon for top 5 products based on Reviews × Rating...")
-        
-        # Try multiple search terms if needed
-        search_terms = [clean_category] + category_result['search_terms']
-        amazon_result = None
-        
-        for term in search_terms[:3]:  # Try first 3 terms
-            print(f"🔍 Trying search term: {term}")
-            amazon_result = await self.amazon_scraper.get_top_5_products(term)
+        while attempt < max_attempts:
+            attempt += 1
+            print(f"\n{'='*60}")
+            print(f"📋 ATTEMPT {attempt}/{max_attempts}: Getting pending title from Airtable...")
+            print('='*60)
             
-            if amazon_result.get('success'):
-                print(f"✅ Found {len(amazon_result['products'])} products with term: {term}")
-                break
+            # Step 1: Get pending title from Airtable
+            pending_title = await self.airtable_server.get_pending_titles()
+            
+            if not pending_title:
+                print("❌ No more pending titles found. Exiting.")
+                return
+            
+            print(f"✅ Found title: {pending_title['title']}")
+            
+            # Step 1.5: Validate title has sufficient Amazon products BEFORE processing
+            print("🔍 Validating title has sufficient Amazon products...")
+            validation_result = await self.amazon_validator.validate_title_for_amazon(pending_title['title'])
+            
+            if not validation_result['valid']:
+                print(f"❌ Title validation FAILED: {validation_result['validation_message']}")
+                print(f"💡 Suggested improvements:")
+                print(f"   - Try broader categories (e.g., 'audio equipment' instead of 'marine subwoofers')")
+                print(f"   - Check alternative terms: {', '.join(validation_result['alternative_terms'][:3])}")
+                
+                # Mark title as failed in Airtable
+                await self.airtable_server.update_record(
+                    pending_title['record_id'],
+                    {
+                        'Status': 'Completed',
+                        'ValidationIssues': f"Only {validation_result['product_count']} products found on Amazon. Need minimum 5 products for Top 5 video."
+                    }
+                )
+                
+                print(f"⏭️  Moving to next title (attempt {attempt}/{max_attempts})")
+                continue  # Try next title
+            
+            print(f"✅ Title validation PASSED: {validation_result['validation_message']}")
+            print(f"🎯 Best search term: {validation_result['primary_search_term']}")
+            print(f"📊 Confidence: {validation_result['confidence']:.2f}")
+            
+            # If we get here, we found a valid title - process it
+            success = await self.process_single_title(pending_title, validation_result)
+            
+            if success:
+                print(f"🎉 Workflow completed successfully for: {pending_title['title']}")
+                return
             else:
-                print(f"❌ Failed with term '{term}': {amazon_result.get('error', 'Unknown error')}")
+                print(f"❌ Workflow failed for: {pending_title['title']}")
+                print(f"⏭️  Moving to next title (attempt {attempt}/{max_attempts})")
+                continue
         
-        if not amazon_result or not amazon_result.get('success'):
-            print(f"❌ Amazon scraping failed with all search terms")
-            return
+        print(f"❌ Failed to process any title after {max_attempts} attempts")
+        return
+    
+    async def process_single_title(self, pending_title: dict, validation_result: dict):
+        """Process a single validated title through the complete workflow"""
         
-        print(f"✅ Found {len(amazon_result['products'])} products")
-        
-        # Save product data to Airtable immediately
-        await self.airtable_server.update_record(
-            pending_title['record_id'], 
-            amazon_result['airtable_data']
-        )
-        
-        # Step 3: Generate multi-platform keywords using product data
-        print("🔍 Generating multi-platform keywords with product data...")
-        multi_keywords = await self.content_server.generate_multi_platform_keywords(
-            pending_title['title'],
-            amazon_result['products']
-        )
-        
-        # Save multi-platform keywords to Airtable
-        print("💾 Saving multi-platform keywords to Airtable...")
-        await self.airtable_server.update_multi_platform_keywords(
-            pending_title['record_id'],
-            multi_keywords
-        )
-        
-        # Keep backward compatibility with existing workflow (use universal keywords)
-        keywords = multi_keywords.get('universal', [])
-        
-        # Step 4: Optimize title using YouTube keywords
-        print("🎯 Optimizing title for social media...")
-        youtube_keywords = multi_keywords.get('youtube', keywords)
-        optimized_title = await self.content_server.optimize_title(
-            pending_title['title'], 
-            youtube_keywords
-        )
-        
-        # Step 5: Generate countdown script with actual product data
-        print("📝 Generating countdown script with real products...")
-        script_data = await self.content_server.generate_countdown_script_with_products(
-            optimized_title, 
-            keywords,
-            amazon_result['products']
-        )
-        
-        # Step 6: Text Generation Quality Control
-        print("🎮 Running text generation quality control...")
-        
-        # First, we need to save the countdown script to Airtable
-        await self._save_countdown_to_airtable(pending_title['record_id'], script_data)
-        
-        # Now run quality control
-        control_result = await run_text_control_with_regeneration(self.config, pending_title['record_id'])
-        
-        if not control_result['success']:
-            print(f"❌ Text control failed after {control_result.get('attempts', 0)} attempts")
-            print(f"Issues: {control_result.get('error', 'Unknown error')}")
-            # Continue anyway but log the issue
-            await self.airtable_server.update_record(pending_title['record_id'], {
-                'TextControlStatus': 'Failed',
-                'Status': 'Processing'  # Keep processing but note the failure
-            })
-        elif control_result['all_valid']:
-            print(f"✅ Text validated after {control_result['attempts']} attempt(s)")
-            await self.airtable_server.update_record(pending_title['record_id'], {
-                'TextControlStatus': 'Validated'
-            })
-
-        # Step 7: Generate blog post (disabled for testing)
-        blog_post = "Blog post generation disabled during testing to save tokens."
-        
-        # Step 8: Save everything back to Airtable
-        print("💾 Saving generated content to Airtable...")
-        content_data = {
-            'optimized_title': optimized_title,
-            'script': script_data,
-        }
-        await self.airtable_server.save_generated_content(
-            pending_title['record_id'],
-            content_data
-        )
-        
-        # Step 8b: Generate voice text for narration
-        print("📝 Generating voice text for narration...")
-        voice_text_data = await self.generate_voice_text(script_data, optimized_title)
-        
-        # Save voice text to Airtable
-        await self.airtable_server.update_record(pending_title['record_id'], voice_text_data)
-        
-        # Note: Amazon affiliate links already saved in Step 2
-        
-        # Step 9: Download Amazon product images from scraped data
-        print("📸 Downloading Amazon product images...")
-        images_result = await download_and_save_amazon_images_v2(
-            self.config,
-            pending_title['record_id'],
-            pending_title['title'],
-            amazon_result['products']
-        )
-        
-        if images_result['success']:
-            print(f"✅ Saved {images_result['images_saved']} Amazon product images")
-            print(f"📦 Products with images: {images_result['products_with_images']}")
-
-        # Step 9b: Generate Amazon-guided OpenAI images
-        print("🎨 Generating Amazon-guided OpenAI images...")
-        openai_result = await generate_amazon_guided_openai_images(
-            self.config,
-            pending_title['record_id'],
-            pending_title['title'],
-            amazon_result['products']
-        )
-        
-        if openai_result['success']:
-            print(f"✅ Generated {openai_result['images_generated']} OpenAI images using Amazon reference")
-            print(f"💾 Saved {openai_result['images_saved']} OpenAI images to Google Drive")
-            print(f"🖼️ Products processed: {openai_result['products_processed']}")
-        else:
-            print(f"⚠️ OpenAI image generation had issues: {openai_result.get('errors', [])}")
-
-        # Step 10: Generate voice narration with ElevenLabs
-        print("🎤 Generating voice narration with ElevenLabs...")
-        # Get updated record with voice text
-        updated_record = await self.airtable_server.get_record_by_id(pending_title['record_id'])
-        voice_result = await self.generate_voice_narration(pending_title['record_id'], updated_record)
-        
-        if voice_result['success']:
-            print(f"✅ Generated {voice_result['voices_generated']} voice files")
-            print(f"💾 Saved {voice_result['voices_saved']} voice files to Google Drive")
+        try:
+            print(f"\n🎬 PROCESSING: {pending_title['title']}")
+            print('='*60)
             
-            # Update Airtable with voice URLs
-            await self.airtable_server.update_record(pending_title['record_id'], voice_result['airtable_updates'])
-        else:
-            print(f"⚠️ Voice generation had issues: {voice_result.get('errors', [])}")
-        
-        # Step 11: Create video with JSON2Video (with voice)
-        print("🎬 Creating video with JSON2Video...")
-        video_result = await run_video_creation(
-            self.config,
-            pending_title['record_id']
-        )
-        
-        print(f"🔍 DEBUG: video_result = {video_result}")
-        
-        if video_result['success']:
-            print(f"✅ Video created successfully!")
+            # Step 2: Extract clean product category from marketing title
+            print("🔍 Extracting product category from marketing title...")
+            category_result = await self.category_extractor.extract_product_category(pending_title['title'])
             
-            # Step 11: Upload to Google Drive
-            print("☁️ Uploading video to Google Drive...")
-            upload_result = await upload_video_to_google_drive(
+            if not category_result.get('success'):
+                print(f"❌ Category extraction failed: {category_result.get('error', 'Unknown error')}")
+                return False
+            
+            clean_category = category_result['primary_category']
+            print(f"✅ Extracted category: {clean_category}")
+            print(f"🎯 Alternative terms: {', '.join(category_result['search_terms'][:3])}")
+            
+            # Step 3: Scrape Amazon for top 5 products using VALIDATED search term
+            print("🛒 Scraping Amazon for top 5 products based on Reviews × Rating...")
+            
+            # Use the validated search term first, then fallback to category extraction
+            validated_term = validation_result['primary_search_term']
+            print(f"🎯 Using validated search term: {validated_term}")
+            
+            amazon_result = await self.amazon_scraper.get_top_5_products(validated_term)
+            
+            if not amazon_result.get('success'):
+                print(f"❌ Amazon scraping failed with validated term: {amazon_result.get('error', 'Unknown error')}")
+                
+                # Fallback to category extraction terms
+                search_terms = [clean_category] + category_result['search_terms']
+                for term in search_terms[:3]:
+                    print(f"🔍 Fallback trying: {term}")
+                    amazon_result = await self.amazon_scraper.get_top_5_products(term)
+                    
+                    if amazon_result.get('success'):
+                        print(f"✅ Found {len(amazon_result['products'])} products with fallback term: {term}")
+                        break
+                    else:
+                        print(f"❌ Failed with term '{term}': {amazon_result.get('error', 'Unknown error')}")
+                
+                if not amazon_result or not amazon_result.get('success'):
+                    print(f"❌ Amazon scraping failed with all search terms")
+                    return
+            
+            print(f"✅ Found {len(amazon_result['products'])} products")
+            
+            # Save product data to Airtable immediately
+            await self.airtable_server.update_record(
+                pending_title['record_id'], 
+                amazon_result['airtable_data']
+            )
+            
+            # Step 3: Generate multi-platform keywords using product data
+            print("🔍 Generating multi-platform keywords with product data...")
+            multi_keywords = await self.content_server.generate_multi_platform_keywords(
+                pending_title['title'],
+                amazon_result['products']
+            )
+            
+            # Save multi-platform keywords to Airtable
+            print("💾 Saving multi-platform keywords to Airtable...")
+            await self.airtable_server.update_multi_platform_keywords(
+                pending_title['record_id'],
+                multi_keywords
+            )
+            
+            # Keep backward compatibility with existing workflow (use universal keywords)
+            keywords = multi_keywords.get('universal', [])
+            
+            # Step 4: Optimize title using YouTube keywords
+            print("🎯 Optimizing title for social media...")
+            youtube_keywords = multi_keywords.get('youtube', keywords)
+            optimized_title = await self.content_server.optimize_title(
+                pending_title['title'], 
+                youtube_keywords
+            )
+            
+            # Step 5: Generate countdown script with actual product data
+            print("📝 Generating countdown script with real products...")
+            script_data = await self.content_server.generate_countdown_script_with_products(
+                optimized_title, 
+                keywords,
+                amazon_result['products']
+            )
+            
+            # Step 6: Text Generation Quality Control
+            print("🎮 Running text generation quality control...")
+            
+            # First, we need to save the countdown script to Airtable
+            await self._save_countdown_to_airtable(pending_title['record_id'], script_data)
+            
+            # Now run quality control
+            control_result = await run_text_control_with_regeneration(self.config, pending_title['record_id'])
+            
+            if not control_result['success']:
+                print(f"❌ Text control failed after {control_result.get('attempts', 0)} attempts")
+                print(f"Issues: {control_result.get('error', 'Unknown error')}")
+                # Continue anyway but log the issue
+                await self.airtable_server.update_record(pending_title['record_id'], {
+                    'TextControlStatus': 'Failed',
+                    'Status': 'Processing'  # Keep processing but note the failure
+                })
+            elif control_result['all_valid']:
+                print(f"✅ Text validated after {control_result['attempts']} attempt(s)")
+                await self.airtable_server.update_record(pending_title['record_id'], {
+                    'TextControlStatus': 'Validated'
+                })
+
+            # Step 7: Generate blog post for WordPress
+            print("📝 Generating blog post for WordPress...")
+            blog_post = await self.content_server.generate_blog_post(
+                optimized_title,
+                keywords,
+                amazon_result['products']
+            )
+            
+            # Step 8: Save everything back to Airtable
+            print("💾 Saving generated content to Airtable...")
+            content_data = {
+                'optimized_title': optimized_title,
+                'script': script_data,
+            }
+            await self.airtable_server.save_generated_content(
+                pending_title['record_id'],
+                content_data
+            )
+            
+            # Step 8b: Generate voice text for narration
+            print("📝 Generating voice text for narration...")
+            voice_text_data = await self.generate_voice_text(script_data, optimized_title)
+            
+            # Save voice text to Airtable
+            await self.airtable_server.update_record(pending_title['record_id'], voice_text_data)
+            
+            # Note: Amazon affiliate links already saved in Step 2
+            
+            # Step 9: Download Amazon product images from scraped data
+            print("📸 Downloading Amazon product images...")
+            images_result = await download_and_save_amazon_images_v2(
                 self.config,
-                video_result['video_url'],
-                video_result.get('project_name', f'Video_{pending_title["record_id"]}'),
+                pending_title['record_id'],
+                pending_title['title'],
+                amazon_result['products']
+            )
+            
+            if images_result['success']:
+                print(f"✅ Saved {images_result['images_saved']} Amazon product images")
+                print(f"📦 Products with images: {images_result['products_with_images']}")
+
+            # Step 9b: Generate Amazon-guided OpenAI images
+            print("🎨 Generating Amazon-guided OpenAI images...")
+            openai_result = await generate_amazon_guided_openai_images(
+                self.config,
+                pending_title['record_id'],
+                pending_title['title'],
+                amazon_result['products']
+            )
+            
+            if openai_result['success']:
+                print(f"✅ Generated {openai_result['images_generated']} OpenAI images using Amazon reference")
+                print(f"💾 Saved {openai_result['images_saved']} OpenAI images to Google Drive")
+                print(f"🖼️ Products processed: {openai_result['products_processed']}")
+            else:
+                print(f"⚠️ OpenAI image generation had issues: {openai_result.get('errors', [])}")
+
+            # Step 10: Generate voice narration with ElevenLabs
+            print("🎤 Generating voice narration with ElevenLabs...")
+            # Get updated record with voice text
+            updated_record = await self.airtable_server.get_record_by_id(pending_title['record_id'])
+            voice_result = await self.generate_voice_narration(pending_title['record_id'], updated_record)
+            
+            if voice_result['success']:
+                print(f"✅ Generated {voice_result['voices_generated']} voice files")
+                print(f"💾 Saved {voice_result['voices_saved']} voice files to Google Drive")
+                
+                # Update Airtable with voice URLs
+                await self.airtable_server.update_record(pending_title['record_id'], voice_result['airtable_updates'])
+            else:
+                print(f"⚠️ Voice generation had issues: {voice_result.get('errors', [])}")
+            
+            # Step 11: Create ENHANCED video with JSON2Video (with sound, transitions, background photos)
+            print("🎬 Creating ENHANCED video with JSON2Video...")
+            print("✨ Features: Sound integration, smooth transitions, background photos, reviews & ratings")
+            video_result = await run_video_creation(
+                self.config,
                 pending_title['record_id']
             )
             
-            if upload_result['success']:
-                print(f"✅ Video uploaded to Google Drive: {upload_result['drive_url']}")
+            print(f"🔍 DEBUG: video_result = {video_result}")
+            
+            if video_result['success']:
+                print(f"✅ Video created successfully!")
                 
-                # Update Airtable with final video URL (Google Drive)
-                await self.airtable_server.update_record(pending_title['record_id'], {
-                    'FinalVideo': upload_result['drive_url']
-                })
+                # Step 11: Upload to Google Drive
+                print("☁️ Uploading video to Google Drive...")
+                upload_result = await upload_video_to_google_drive(
+                    self.config,
+                    video_result['video_url'],
+                    video_result.get('project_name', f'Video_{pending_title["record_id"]}'),
+                    pending_title['record_id']
+                )
                 
-                # Create WordPress blog post
+                if upload_result['success']:
+                    print(f"✅ Video uploaded to Google Drive: {upload_result['drive_url']}")
+                    
+                    # Update Airtable with final video URL (Google Drive)
+                    await self.airtable_server.update_record(pending_title['record_id'], {
+                        'FinalVideo': upload_result['drive_url']
+                    })
+                    
+                    # Create WordPress blog post
+                    try:
+                        wp_result = await self.wordpress_mcp.create_review_post(pending_title)
+                        if wp_result.get('success'):
+                            print(f"✅ Blog post created: {wp_result.get('post_url')}")
+                    except Exception as e:
+                        print(f"❌ Blog post error: {e}")
+
+            # Upload to YouTube (if enabled)
+            youtube_enabled = self.config.get('youtube_enabled', False)
+            if youtube_enabled and video_result.get('video_url'):
+                print("📹 Uploading to YouTube Shorts...")
                 try:
-                    wp_result = await self.wordpress_mcp.create_review_post(pending_title)
-                    if wp_result.get('success'):
-                        print(f"✅ Blog post created: {wp_result.get('post_url')}")
-                except Exception as e:
-                    print(f"❌ Blog post error: {e}")
-
-        # Upload to YouTube (if enabled)
-        youtube_enabled = self.config.get('youtube_enabled', False)
-        if youtube_enabled and video_result.get('video_url'):
-            print("📹 Uploading to YouTube Shorts...")
-            try:
-                # Initialize YouTube MCP
-                self.youtube_mcp = YouTubeMCP(
-                    credentials_path=self.config.get('youtube_credentials', '/home/claude-workflow/config/youtube_credentials.json'),
-                    token_path=self.config.get('youtube_token', '/home/claude-workflow/config/youtube_token.json')
-                )
-                
-                # Prepare YouTube title (optimized for Shorts)
-                youtube_prefix = self.config.get('youtube_title_prefix', '')
-                youtube_suffix = self.config.get('youtube_title_suffix', '')
-                youtube_title = f"{youtube_prefix}{pending_title.get('VideoTitle', pending_title.get('Title', pending_title.get('VideoTitle', "")))}{youtube_suffix}"[:100]  # YouTube limit
-                
-                # Build YouTube description
-                youtube_description = f"{pending_title.get("VideoTitle", pending_title.get("Title", pending_title.get("VideoTitle", "")))}\n\n"
-                
-                # Add timestamps (for 8-second test videos)
-                youtube_description += "⏱️ Timestamps:\n"
-                youtube_description += "0:00 Intro\n"
-                youtube_description += "0:02 Products\n"
-                youtube_description += "0:06 Outro\n\n"
-                
-                # Add products with affiliate links
-                youtube_description += "🛒 Featured Products:\n\n"
-                products_found = False
-                
-                for i in range(1, 6):
-                    product_title = pending_title.get(f'ProductNo{i}Title', '')
-                    product_desc = pending_title.get(f'ProductNo{i}Description', '')
-                    affiliate_link = pending_title.get(f'ProductNo{i}AffiliateLink', '')
+                    # Initialize YouTube MCP
+                    self.youtube_mcp = YouTubeMCP(
+                        credentials_path=self.config.get('youtube_credentials', '/home/claude-workflow/config/youtube_credentials.json'),
+                        token_path=self.config.get('youtube_token', '/home/claude-workflow/config/youtube_token.json')
+                    )
                     
-                    if product_title:
-                        products_found = True
-                        youtube_description += f"#{i} {product_title}\n"
-                        if product_desc:
-                            # Add first 100 chars of description
-                            youtube_description += f"{product_desc[:100]}...\n"
-                        if affiliate_link:
-                            youtube_description += f"→ {affiliate_link}\n"
+                    # Prepare YouTube title (optimized for Shorts)
+                    youtube_prefix = self.config.get('youtube_title_prefix', '')
+                    youtube_suffix = self.config.get('youtube_title_suffix', '')
+                    youtube_title = f"{youtube_prefix}{pending_title.get('VideoTitle', pending_title.get('Title', pending_title.get('VideoTitle', "")))}{youtube_suffix}"[:100]  # YouTube limit
+                    
+                    # Build YouTube description
+                    youtube_description = f"{pending_title.get('VideoTitle', pending_title.get('Title', pending_title.get('VideoTitle', '')))}\n\n"
+                    
+                    # Add timestamps (for 8-second test videos)
+                    youtube_description += "⏱️ Timestamps:\n"
+                    youtube_description += "0:00 Intro\n"
+                    youtube_description += "0:02 Products\n"
+                    youtube_description += "0:06 Outro\n\n"
+                    
+                    # Add products with affiliate links
+                    youtube_description += "🛒 Featured Products:\n\n"
+                    products_found = False
+                    
+                    for i in range(1, 6):
+                        product_title = pending_title.get(f'ProductNo{i}Title', '')
+                        product_desc = pending_title.get(f'ProductNo{i}Description', '')
+                        affiliate_link = pending_title.get(f'ProductNo{i}AffiliateLink', '')
+                        
+                        if product_title:
+                            products_found = True
+                            youtube_description += f"#{i} {product_title}\n"
+                            if product_desc:
+                                # Add first 100 chars of description
+                                youtube_description += f"{product_desc[:100]}...\n"
+                            if affiliate_link:
+                                youtube_description += f"→ {affiliate_link}\n"
+                            youtube_description += "\n"
+                    
+                    # Add platform-specific keywords as hashtags
+                    youtube_kw = multi_keywords.get('youtube', keywords)
+                    if youtube_kw:
                         youtube_description += "\n"
-                
-                # Add platform-specific keywords as hashtags
-                youtube_kw = multi_keywords.get('youtube', keywords)
-                if youtube_kw:
-                    youtube_description += "\n"
-                    # Add up to 10 hashtags from YouTube keywords
-                    for keyword in youtube_kw[:10]:
-                        hashtag = keyword.replace(' ', '').replace('-', '')
-                        youtube_description += f"#{hashtag} "
-                    youtube_description += "\n"
-                
-                # Add shorts hashtag
-                shorts_tag = self.config.get('youtube_shorts_tag', '#shorts')
-                youtube_description += f"\n{shorts_tag}\n"
-                
-                # Add disclaimer
-                youtube_description += "\n" + "="*50 + "\n"
-                youtube_description += "As an Amazon Associate I earn from qualifying purchases.\n"
-                youtube_description += "="*50
-                
-                # Prepare tags
-                youtube_tags = self.config.get('youtube_tags', []).copy()
-                youtube_tags.append('shorts')  # Always add shorts tag
-                
-                # Add YouTube-specific keywords as tags
-                if youtube_kw:
-                    youtube_tags.extend([k.lower() for k in youtube_kw[:10]])
-                
-                # Remove duplicates and limit tags
-                youtube_tags = list(dict.fromkeys(youtube_tags))[:30]  # YouTube allows max 30 tags
-                
-                # Upload video
-                youtube_result = await self.youtube_mcp.upload_video(
-                    video_path=video_result.get('video_url'),
-                    title=youtube_title,
-                    description=youtube_description[:5000],  # YouTube limit
-                    tags=youtube_tags,
-                    category_id=self.config.get('youtube_category', '22'),  # People & Blogs
-                    privacy_status=self.config.get('youtube_privacy', 'private')
-                )
-                
-                if youtube_result.get('success'):
-                    print(f"✅ YouTube upload successful!")
-                    print(f"   URL: {youtube_result['video_url']}")
-                    print(f"   Title: {youtube_result['title']}")
+                        # Add up to 10 hashtags from YouTube keywords
+                        for keyword in youtube_kw[:10]:
+                            hashtag = keyword.replace(' ', '').replace('-', '')
+                            youtube_description += f"#{hashtag} "
+                        youtube_description += "\n"
                     
-                    # Update Airtable with YouTube info
-                    youtube_updates = {
-                        'YouTubeURL': youtube_result['video_url']
-                    }
+                    # Add shorts hashtag
+                    shorts_tag = self.config.get('youtube_shorts_tag', '#shorts')
+                    youtube_description += f"\n{shorts_tag}\n"
                     
-                    await self.airtable_server.update_record(pending_title["record_id"], youtube_updates)
-                    print("✅ Updated Airtable with YouTube URL")
+                    # Add disclaimer
+                    youtube_description += "\n" + "="*50 + "\n"
+                    youtube_description += "As an Amazon Associate I earn from qualifying purchases.\n"
+                    youtube_description += "="*50
                     
-                else:
-                    print(f"⚠️ YouTube upload failed: {youtube_result.get('error')}")
-                    # Don't fail the whole workflow
+                    # Prepare tags
+                    youtube_tags = self.config.get('youtube_tags', []).copy()
+                    youtube_tags.append('shorts')  # Always add shorts tag
                     
-            except Exception as e:
-                print(f"❌ YouTube error: {e}")
-                # Continue workflow even if YouTube fails
-                import traceback
-                traceback.print_exc()
-        
-        # ⏸️ TikTok Upload - TEMPORARILY DISABLED (API Review Pending)
-        # TODO: Uncomment this section once TikTok API is approved
-        print("⏸️  TikTok upload temporarily disabled (API approval pending)")
-        
-        # # Upload to TikTok (if enabled and approved)
-        # tiktok_enabled = self.config.get('tiktok_enabled', False)
-        # if tiktok_enabled and video_result.get('video_url'):
-        #     print("📱 Uploading to TikTok...")
-        #     try:
-        #         from mcp.tiktok_workflow_integration import upload_to_tiktok
-        #         
-        #         tiktok_result = await upload_to_tiktok(self.config, pending_title)
-        #         
-        #         if tiktok_result.get('success'):
-        #             print(f"✅ TikTok upload successful!")
-        #             print(f"   Video ID: {tiktok_result.get('video_id')}")
-        #             print(f"   Title: {tiktok_result.get('title')}")
-        #             
-        #             # Update Airtable with TikTok info
-        #             tiktok_updates = {
-        #                 'TikTokURL': f"https://www.tiktok.com/@{self.config.get('tiktok_username', 'user')}/video/{tiktok_result.get('video_id')}"
-        #             }
-        #             
-        #             await self.airtable_server.update_record(pending_title["record_id"], tiktok_updates)
-        #             print("✅ Updated Airtable with TikTok URL")
-        #             
-        #         elif tiktok_result.get('skipped'):
-        #             print("⏭️  TikTok upload skipped (disabled)")
-        #         else:
-        #             print(f"⚠️  TikTok upload failed: {tiktok_result.get('error')}")
-        #             
-        #     except Exception as e:
-        #         print(f"❌ TikTok error: {e}")
-        #         # Continue workflow even if TikTok fails
-        #         import traceback
-        #         traceback.print_exc()
-        # else:
-        #     print("⏭️  TikTok upload skipped (disabled or no video URL)")
+                    # Add YouTube-specific keywords as tags
+                    if youtube_kw:
+                        youtube_tags.extend([k.lower() for k in youtube_kw[:10]])
+                    
+                    # Remove duplicates and limit tags
+                    youtube_tags = list(dict.fromkeys(youtube_tags))[:30]  # YouTube allows max 30 tags
+                    
+                    # Upload video
+                    youtube_result = await self.youtube_mcp.upload_video(
+                        video_path=video_result.get('video_url'),
+                        title=youtube_title,
+                        description=youtube_description[:5000],  # YouTube limit
+                        tags=youtube_tags,
+                        category_id=self.config.get('youtube_category', '22'),  # People & Blogs
+                        privacy_status=self.config.get('youtube_privacy', 'private')
+                    )
+                    
+                    if youtube_result.get('success'):
+                        print(f"✅ YouTube upload successful!")
+                        print(f"   URL: {youtube_result['video_url']}")
+                        print(f"   Title: {youtube_result['title']}")
+                        
+                        # Update Airtable with YouTube info
+                        youtube_updates = {
+                            'YouTubeURL': youtube_result['video_url']
+                        }
+                        
+                        await self.airtable_server.update_record(pending_title["record_id"], youtube_updates)
+                        print("✅ Updated Airtable with YouTube URL")
+                        
+                    else:
+                        print(f"⚠️ YouTube upload failed: {youtube_result.get('error')}")
+                        # Don't fail the whole workflow
+                        
+                except Exception as e:
+                    print(f"❌ YouTube error: {e}")
+                    # Continue workflow even if YouTube fails
+                    import traceback
+                    traceback.print_exc()
+            
+            # TikTok Upload - DISABLED (API still in review)
+            print("⏸️  TikTok upload disabled (API still in review)")
 
-        # Upload to Instagram (if enabled and approved)
-        instagram_enabled = self.config.get('instagram_enabled', False)
-        if instagram_enabled and video_result.get('video_url'):
-            print("📸 Uploading to Instagram Reels...")
-            try:
-                from mcp.instagram_workflow_integration import upload_to_instagram
-                
-                # Update pending_title with final video URL for Instagram
-                pending_title['FinalVideo'] = upload_result['drive_url']
-                
-                instagram_result = await upload_to_instagram(self.config, pending_title)
-                
-                if instagram_result.get('success'):
-                    print(f"✅ Instagram Reel upload successful!")
-                    print(f"   Media ID: {instagram_result.get('media_id')}")
-                    print(f"   URL: {instagram_result.get('instagram_url')}")
+            # Upload to Instagram (if enabled and approved)
+            instagram_enabled = self.config.get('instagram_enabled', False)
+            if instagram_enabled and video_result.get('video_url'):
+                print("📸 Uploading to Instagram Reels...")
+                try:
+                    from mcp.instagram_workflow_integration import upload_to_instagram
                     
-                    # Update Airtable with Instagram info
-                    instagram_updates = {
-                        'InstagramURL': instagram_result.get('instagram_url', '')
-                    }
+                    # Update pending_title with final video URL for Instagram
+                    pending_title['FinalVideo'] = upload_result['drive_url']
                     
-                    await self.airtable_server.update_record(pending_title["record_id"], instagram_updates)
-                    print("✅ Updated Airtable with Instagram URL")
+                    instagram_result = await upload_to_instagram(self.config, pending_title)
                     
-                elif instagram_result.get('skipped'):
-                    print("⏭️  Instagram upload skipped (disabled)")
-                else:
-                    print(f"⚠️  Instagram upload failed: {instagram_result.get('error')}")
-                    
-            except Exception as e:
-                print(f"❌ Instagram error: {e}")
-                # Continue workflow even if Instagram fails
-                import traceback
-                traceback.print_exc()
-        else:
-            print("⏭️  Instagram upload skipped (disabled or no video URL)")
+                    if instagram_result.get('success'):
+                        print(f"✅ Instagram Reel upload successful!")
+                        print(f"   Media ID: {instagram_result.get('media_id')}")
+                        print(f"   URL: {instagram_result.get('instagram_url')}")
+                        
+                        # Update Airtable with Instagram info
+                        instagram_updates = {
+                            'InstagramURL': instagram_result.get('instagram_url', '')
+                        }
+                        
+                        await self.airtable_server.update_record(pending_title["record_id"], instagram_updates)
+                        print("✅ Updated Airtable with Instagram URL")
+                        
+                    elif instagram_result.get('skipped'):
+                        print("⏭️  Instagram upload skipped (disabled)")
+                    else:
+                        print(f"⚠️  Instagram upload failed: {instagram_result.get('error')}")
+                        
+                except Exception as e:
+                    print(f"❌ Instagram error: {e}")
+                    # Continue workflow even if Instagram fails
+                    import traceback
+                    traceback.print_exc()
+            else:
+                print("⏭️  Instagram upload skipped (disabled or no video URL)")
 
-        # Step 10: Update status
-        print("✅ Updating record status to 'Done'...")
-        await self.airtable_server.update_record_status(
-            pending_title['record_id'],
-            "Processing"
-        )
-        
-        # Final Step: Monitor API Credits
-        credit_monitoring_enabled = self.config.get('credit_monitoring_enabled', True)
+            # Step 10: Update status
+            print("✅ Updating record status to 'Done'...")
+            await self.airtable_server.update_record_status(
+                pending_title['record_id'],
+                "Processing"
+            )
+            
+            # Final Step: Monitor API Credits
+            credit_monitoring_enabled = self.config.get('credit_monitoring_enabled', True)
+            if credit_monitoring_enabled:
+                print("💰 Monitoring API credits...")
+                try:
+                    from mcp_servers.credit_monitor_server import monitor_api_credits
+                    
+                    credit_result = await monitor_api_credits(self.config)
+                    
+                    if credit_result.get('alerts'):
+                        print(f"⚠️ {len(credit_result['alerts'])} service(s) have low credits!")
+                        for alert in credit_result['alerts']:
+                            print(f"   {alert['message']}")
+                        print("📧 Email alert sent with top-up links")
+                    else:
+                        print(f"✅ All API credits OK (Total: €{credit_result['total_value_eur']:.2f})")
+                        
+                except Exception as e:
+                    print(f"❌ Credit monitoring error: {e}")
+                    # Don't fail the workflow if monitoring fails
+            else:
+                print("⏭️ Credit monitoring disabled")
+            
+            print("🎉 Complete workflow finished successfully!")
+            print("📊 Summary:")
+            print(f"   Original: {pending_title['title']}")
+            print(f"   Optimized: {optimized_title}")
+            print(f"   Products: {len(script_data.get('products', []))}")
+            
+            return True
+            
+        except Exception as e:
+            print(f"❌ Workflow failed: {e}")
+            import traceback
+            traceback.print_exc()
+            
+            # Update Airtable with failure status
+            await self.airtable_server.update_record(
+                pending_title['record_id'],
+                {
+                    'Status': 'Failed',
+                    'ValidationIssues': f'Workflow failed: {str(e)}'
+                }
+            )
+            
+            return False
     
     async def generate_voice_text(self, script_data: dict, optimized_title: str) -> dict:
         """Generate voice text for intro, outro, and products"""
@@ -464,17 +542,22 @@ class ContentPipelineOrchestrator:
             
             # Generate intro voice text
             intro_text = f"Welcome back to Tech Reviews! Today we're counting down {optimized_title.lower()}!"
-            voice_text_data['IntroVoiceText'] = intro_text
+            voice_text_data['IntroHook'] = intro_text
             
             # Generate outro voice text
             outro_text = "That's our countdown! Which product caught your attention? Let us know in the comments below and don't forget to subscribe for more tech reviews!"
-            voice_text_data['OutroVoiceText'] = outro_text
+            voice_text_data['OutroCallToAction'] = outro_text
             
-            # Generate product voice text
+            # Generate product voice text - store in VideoScript as combined content
             products = script_data.get('products', [])
+            product_voice_texts = []
             for i, product in enumerate(products[:5], 1):
                 product_text = f"Number {6-i}. {product.get('title', 'Product')}. {product.get('description', 'Great product for your needs.')}"
-                voice_text_data[f'ProductNo{i}VoiceText'] = product_text
+                product_voice_texts.append(product_text)
+            
+            # Store all product voice texts in VideoScript field
+            if product_voice_texts:
+                voice_text_data['VideoScript'] = '\n\n'.join([intro_text, *product_voice_texts, outro_text])
             
             print(f"✅ Generated voice text for {len(products)} products")
             return voice_text_data
@@ -495,36 +578,37 @@ class ContentPipelineOrchestrator:
             }
             
             # Generate voice for intro
-            intro_text = record_data.get('IntroVoiceText', 'Welcome to our top 5 product review!')
+            intro_text = record_data.get('IntroHook', 'Welcome to our top 5 product review!')
             if intro_text:
                 intro_voice = await self.voice_generator.generate_voice_from_text(intro_text, 'intro')
                 if intro_voice:
                     # Save to Google Drive and get URL
                     intro_url = await self.save_voice_to_drive(intro_voice, f"{record_id}_intro.mp3")
-                    results['airtable_updates']['IntroVoiceURL'] = intro_url
+                    results['airtable_updates']['IntroMp3'] = intro_url
                     results['voices_generated'] += 1
                     results['voices_saved'] += 1
             
             # Generate voice for outro
-            outro_text = record_data.get('OutroVoiceText', 'Thanks for watching! Don\'t forget to subscribe!')
+            outro_text = record_data.get('OutroCallToAction', 'Thanks for watching! Don\'t forget to subscribe!')
             if outro_text:
                 outro_voice = await self.voice_generator.generate_voice_from_text(outro_text, 'outro')
                 if outro_voice:
                     # Save to Google Drive and get URL
                     outro_url = await self.save_voice_to_drive(outro_voice, f"{record_id}_outro.mp3")
-                    results['airtable_updates']['OutroVoiceURL'] = outro_url
+                    results['airtable_updates']['OutroMp3'] = outro_url
                     results['voices_generated'] += 1
                     results['voices_saved'] += 1
             
             # Generate voice for each product
             for i in range(1, 6):
-                product_text = record_data.get(f'ProductNo{i}VoiceText', '')
+                # Use existing product description for voice generation
+                product_text = record_data.get(f'ProductNo{i}Description', '')
                 if product_text:
                     product_voice = await self.voice_generator.generate_voice_from_text(product_text, 'products')
                     if product_voice:
                         # Save to Google Drive and get URL
                         product_url = await self.save_voice_to_drive(product_voice, f"{record_id}_product{i}.mp3")
-                        results['airtable_updates'][f'ProductNo{i}VoiceURL'] = product_url
+                        results['airtable_updates'][f'Product{i}Mp3'] = product_url
                         results['voices_generated'] += 1
                         results['voices_saved'] += 1
             
@@ -605,32 +689,6 @@ class ContentPipelineOrchestrator:
         except Exception as e:
             print(f"❌ Error saving voice to Google Drive: {e}")
             return f"https://drive.google.com/file/d/voice_{filename}/view"
-        if credit_monitoring_enabled:
-            print("💰 Monitoring API credits...")
-            try:
-                from mcp_servers.credit_monitor_server import monitor_api_credits
-                
-                credit_result = await monitor_api_credits(self.config)
-                
-                if credit_result.get('alerts'):
-                    print(f"⚠️ {len(credit_result['alerts'])} service(s) have low credits!")
-                    for alert in credit_result['alerts']:
-                        print(f"   {alert['message']}")
-                    print("📧 Email alert sent with top-up links")
-                else:
-                    print(f"✅ All API credits OK (Total: €{credit_result['total_value_eur']:.2f})")
-                    
-            except Exception as e:
-                print(f"❌ Credit monitoring error: {e}")
-                # Don't fail the workflow if monitoring fails
-        else:
-            print("⏭️ Credit monitoring disabled")
-        
-        print("🎉 Complete workflow finished successfully!")
-        print("📊 Summary:")
-        print(f"   Original: {pending_title['title']}")
-        print(f"   Optimized: {optimized_title}")
-        print(f"   Products: {len(script_data.get('products', []))}")
         
     async def _save_countdown_to_airtable(self, record_id: str, script_data: dict):
         """Save countdown script products to Airtable"""

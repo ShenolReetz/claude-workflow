@@ -17,7 +17,7 @@ sys.path.append('/home/claude-workflow')
 
 # Import your existing servers (following your pattern)
 from mcp_servers.airtable_server import AirtableMCPServer
-from mcp_servers.json2video_server import JSON2VideoMCPServer
+from mcp_servers.json2video_enhanced_server import JSON2VideoEnhancedMCPServer
 
 class JSON2VideoAgentMCP:
     """Controls the video creation workflow logic"""
@@ -32,8 +32,8 @@ class JSON2VideoAgentMCP:
             table_name=config['airtable_table_name']
         )
 
-        # Initialize the JSON2Video MCP Server
-        self.json2video_server = JSON2VideoMCPServer(config['json2video_api_key'])
+        # Initialize the Enhanced JSON2Video MCP Server (with sound, transitions, backgrounds)
+        self.json2video_server = JSON2VideoEnhancedMCPServer(config['json2video_api_key'])
 
     async def create_video_from_record(self, record_id: str) -> Dict:
         """
@@ -83,10 +83,11 @@ class JSON2VideoAgentMCP:
             project_name = video_title.replace('🔥', '').replace('🚗', '').strip()
             project_name = project_name[:50]  # Limit length
             
-            print(f"🎬 Creating video: {project_name}")
+            print(f"🎬 Creating ENHANCED video: {project_name}")
+            print(f"✨ Features: Sound, Transitions, Background Photos, Reviews, Ratings")
 
-            # Create TEST video (8 seconds) to save costs
-            video_result = await self.json2video_server.create_test_video(fields)
+            # Create ENHANCED PRODUCTION video (60 seconds) with all advanced features
+            video_result = await self.json2video_server.create_production_video(fields)
 
             if video_result['success']:
                 print(f"✅ Video creation started. Movie ID: {video_result['movie_id']}")

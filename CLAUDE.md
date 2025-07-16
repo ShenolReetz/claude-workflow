@@ -5,12 +5,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 This is an automated video content creation pipeline that generates "Top 5" product videos with affiliate monetization. It integrates multiple AI services to create YouTube-style content automatically from Airtable topics.
 
-**Current Status: v2.9 - FULL PRODUCTION MODE ACTIVE**
+**Current Status: v3.0 - ENHANCED VIDEO PRODUCTION ACTIVE**
+- ✅ **ENHANCED JSON2VIDEO INTEGRATION** (Sound, transitions, background photos)
+- ✅ **PROFESSIONAL VIDEO TEMPLATES** (Ken Burns effects, animations, transitions)
 - ✅ **COMPLETE END-TO-END WORKFLOW** (Golf GPS Units successfully processed)
 - ✅ **FULL 60-SECOND VIDEOS** (Intro + 5 Products + Outro)
 - ✅ **COMPLETE VOICE NARRATION** (ElevenLabs for all segments)
 - ✅ **ALL TIMEOUTS REMOVED** (Uninterrupted workflow execution)
-- ✅ **PRODUCTION VIDEO TEMPLATES** (Reviews, ratings, voice integration)
+- ✅ **ADVANCED VISUAL EFFECTS** (5 transition types, winner badges, star ratings)
 - ✅ **AIRTABLE FIELD MAPPING FIXED** (ProductNo1-5Photo correctly updated)
 - ✅ **GOOGLE DRIVE INTEGRATION** (Voice files, images, videos all uploaded)
 - ✅ Enhanced video generation with reviews and ratings
@@ -87,7 +89,7 @@ The project uses a microservices architecture with MCP servers:
 - **Content Generation MCP** (`mcp_servers/content_generation_server.py`) - Claude AI content creation
 - **Amazon Affiliate MCP** (`mcp_servers/amazon_affiliate_server.py`) - Product search and affiliate links
 - **JSON2Video MCP** (`mcp_servers/json2video_server.py`) - Video creation via JSON2Video API
-- **JSON2Video Enhanced** (`mcp_servers/json2video_enhanced_server.py`) - 60s videos with reviews/ratings
+- **JSON2Video Enhanced** (`mcp_servers/json2video_enhanced_server.py`) - **ACTIVE**: Professional videos with sound, transitions, background photos
 - **Google Drive MCP** (`mcp_servers/google_drive_server.py`) - Video storage and organization
 - **Voice Generation MCP** (`mcp_servers/voice_generation_server.py`) - ElevenLabs voice synthesis
 - **Image Generation MCP** (`mcp_servers/image_generation_server.py`) - DALL-E product images
@@ -100,7 +102,7 @@ The project uses a microservices architecture with MCP servers:
 ### Workflow Orchestrator
 Main orchestrator: `src/workflow_runner.py` (class: `ContentPipelineOrchestrator`)
 
-Workflow stages (v2.9):
+Workflow stages (v3.0):
 1. Fetch pending titles from Airtable (top-to-bottom order)
 2. Validate title has minimum 5 Amazon products (skip if insufficient)
 3. Extract clean product category from marketing title using Claude AI
@@ -113,7 +115,7 @@ Workflow stages (v2.9):
 10. Generate voice text for intro, outro, and all products
 11. Create voice narration using ElevenLabs (intro, outro, 5 products)
 12. Upload voice files to Google Drive
-13. Create enhanced video using JSON2Video (with reviews, ratings, voice)
+13. Create ENHANCED video using JSON2Video (sound, transitions, background photos, reviews, ratings)
 14. Upload video to Google Drive
 15. Create WordPress blog post with product photos and countdown format
 16. Upload to YouTube Shorts (token refresh needed)
@@ -171,11 +173,13 @@ Configuration file: `config/api_keys.json`
 
 ## Important Implementation Notes
 
-### Current State (v2.9 - Full Production Active)
+### Current State (v3.0 - Enhanced Video Production Active)
+- ✅ **ENHANCED JSON2VIDEO SERVER ACTIVE** (Sound, transitions, background photos)
+- ✅ **PROFESSIONAL VIDEO EFFECTS** (Ken Burns, animations, 5 transition types)
+- ✅ **INTERACTIVE COMPONENTS** (Star ratings, review counters, winner badges)
 - ✅ **COMPLETE END-TO-END WORKFLOW VALIDATED** (Golf GPS Units processed successfully)
 - ✅ **FULL 60-SECOND PRODUCTION VIDEOS** (No more test limitations)
 - ✅ **ALL TIMEOUTS COMPLETELY REMOVED** (Uninterrupted execution)
-- ✅ **PRODUCTION JSON2Video TEMPLATES** (Full intro + 5 products + outro)
 - ✅ **AIRTABLE FIELD MAPPING CORRECTED** (ProductNo1-5Photo properly updated)
 - ✅ Enhanced JSON2Video templates with reviews and ratings
 - ✅ WordPress integration with product photos and countdown format
@@ -242,6 +246,9 @@ Configuration file: `config/api_keys.json`
 - ✅ **Voice Field Mapping**: All voice fields now correctly map to existing Airtable structure
 - ✅ **Title Processing Order**: Workflow processes titles top-to-bottom as intended
 - ✅ **Google Drive Initialization**: Fixed "'bool' object has no attribute 'files'" error
+- ✅ **Enhanced JSON2Video Integration**: Upgraded to advanced server with sound, transitions, backgrounds
+- ✅ **Professional Video Effects**: Ken Burns effects, 5 transition types, winner badges, star ratings
+- ✅ **Interactive Components**: Review counters, animated ratings, CTA buttons
 - ✅ **ProductNo1-5Photo Fields**: Fixed field mapping from DriveImageURL to ProductNo1-5Photo
 - ✅ **Production Mode**: Changed from test videos to full 60-second production videos
 - ✅ **Timeout Removal**: Eliminated all timeout constraints for uninterrupted workflow

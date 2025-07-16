@@ -523,6 +523,39 @@ class JSON2VideoEnhancedMCPServer:
         logger.error("❌ Video generation timeout")
         return None
     
+    async def check_video_status(self, project_id: str) -> Dict[str, Any]:
+        """Check video status - compatible with agent interface"""
+        try:
+            response = await self.client.get(
+                f"{self.base_url}/movies",
+                params={"project": project_id}
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                movie_data = data.get('movie', {})
+                status = movie_data.get('status', '')
+                progress = movie_data.get('progress', 0)
+                
+                return {
+                    'success': True,
+                    'status': status,
+                    'progress': progress,
+                    'download_url': movie_data.get('url', '') if status == 'done' else None,
+                    'message': movie_data.get('message', '')
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': f"API error: {response.status_code} - {response.text}"
+                }
+                
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
     async def close(self):
         """Close the HTTP client"""
         await self.client.aclose()
