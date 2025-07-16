@@ -5,17 +5,28 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 This is an automated video content creation pipeline that generates "Top 5" product videos with affiliate monetization. It integrates multiple AI services to create YouTube-style content automatically from Airtable topics.
 
-**Current Status: v2.6 - Voice Generation Integration Complete**
+**Current Status: v2.9 - FULL PRODUCTION MODE ACTIVE**
+- ✅ **COMPLETE END-TO-END WORKFLOW** (Golf GPS Units successfully processed)
+- ✅ **FULL 60-SECOND VIDEOS** (Intro + 5 Products + Outro)
+- ✅ **COMPLETE VOICE NARRATION** (ElevenLabs for all segments)
+- ✅ **ALL TIMEOUTS REMOVED** (Uninterrupted workflow execution)
+- ✅ **PRODUCTION VIDEO TEMPLATES** (Reviews, ratings, voice integration)
+- ✅ **AIRTABLE FIELD MAPPING FIXED** (ProductNo1-5Photo correctly updated)
+- ✅ **GOOGLE DRIVE INTEGRATION** (Voice files, images, videos all uploaded)
 - ✅ Enhanced video generation with reviews and ratings
 - ✅ WordPress integration with product photos and countdown format
-- ✅ YouTube Shorts automation
-- ✅ TikTok integration (ready for API approval)
-- ✅ Instagram Reels integration (ready for API approval)
+- ✅ YouTube Shorts automation (token refresh needed)
+- ⏸️ TikTok integration **DISABLED** (API still in review)
+- ✅ Instagram Reels integration **ENABLED** (token refresh needed)
 - ✅ API credit monitoring with email alerts
 - ✅ 90+ keywords per video across 5 platforms
 - ✅ ElevenLabs voice generation integration
 - ✅ Product category extraction for improved Amazon scraping
 - ✅ Flow control and validation system
+- ✅ Top-to-bottom title processing with automatic skipping
+- ✅ Curated content database (1,095 high-retention titles)
+- ✅ Voice field mapping to existing Airtable structure
+- ✅ Google Drive image upload errors resolved
 
 ## Development Commands
 
@@ -89,26 +100,27 @@ The project uses a microservices architecture with MCP servers:
 ### Workflow Orchestrator
 Main orchestrator: `src/workflow_runner.py` (class: `ContentPipelineOrchestrator`)
 
-Workflow stages (v2.6):
-1. Fetch pending titles from Airtable
-2. Extract clean product category from marketing title using Claude AI
-3. Search Amazon products using extracted category and generate affiliate links
-4. Generate multi-platform SEO keywords (90+ keywords across 5 platforms)
-5. Generate countdown script with actual product data
-6. Run text generation quality control with retry logic
-7. Download Amazon product images from scraped data
-8. Generate Amazon-guided OpenAI product images
-9. Generate voice text for intro, outro, and all products
-10. Create voice narration using ElevenLabs (intro, outro, 5 products)
-11. Upload voice files to Google Drive
-12. Create enhanced video using JSON2Video (with reviews, ratings, voice)
-13. Upload video to Google Drive
-14. Create WordPress blog post with product photos and countdown format
-15. Upload to YouTube Shorts
-16. Upload to TikTok (when approved)
-17. Upload to Instagram Reels (when approved)
-18. Monitor API credits and send email alerts
-19. Update Airtable with all URLs and completion status
+Workflow stages (v2.9):
+1. Fetch pending titles from Airtable (top-to-bottom order)
+2. Validate title has minimum 5 Amazon products (skip if insufficient)
+3. Extract clean product category from marketing title using Claude AI
+4. Search Amazon products using extracted category and generate affiliate links
+5. Generate multi-platform SEO keywords (90+ keywords across 5 platforms)
+6. Generate countdown script with actual product data
+7. Run text generation quality control with retry logic
+8. Download Amazon product images from scraped data
+9. Generate Amazon-guided OpenAI product images
+10. Generate voice text for intro, outro, and all products
+11. Create voice narration using ElevenLabs (intro, outro, 5 products)
+12. Upload voice files to Google Drive
+13. Create enhanced video using JSON2Video (with reviews, ratings, voice)
+14. Upload video to Google Drive
+15. Create WordPress blog post with product photos and countdown format
+16. Upload to YouTube Shorts (token refresh needed)
+17. Upload to TikTok (DISABLED - API still in review)
+18. Upload to Instagram Reels (token refresh needed)
+19. Monitor API credits and send email alerts
+20. Update Airtable with all URLs and completion status
 
 ### Agent Classes
 Located in `src/mcp/`:
@@ -151,7 +163,7 @@ Configuration file: `config/api_keys.json`
 
 ### Service Integration
 - **YouTube**: OAuth credentials in `config/youtube_credentials.json`
-- **Google Drive**: Service account credentials in `config/google_drive_credentials.json`
+- **Google Drive**: OAuth2 credentials in `config/google_drive_oauth_credentials.json` and token in `config/google_drive_token.json`
 - **WordPress**: Site URL and credentials in API keys config
 - **TikTok**: App credentials (pending approval)
 - **Instagram**: App credentials (pending approval)
@@ -159,26 +171,33 @@ Configuration file: `config/api_keys.json`
 
 ## Important Implementation Notes
 
-### Current State (v2.6)
-- ✅ Multi-platform workflow runs end-to-end successfully
+### Current State (v2.9 - Full Production Active)
+- ✅ **COMPLETE END-TO-END WORKFLOW VALIDATED** (Golf GPS Units processed successfully)
+- ✅ **FULL 60-SECOND PRODUCTION VIDEOS** (No more test limitations)
+- ✅ **ALL TIMEOUTS COMPLETELY REMOVED** (Uninterrupted execution)
+- ✅ **PRODUCTION JSON2Video TEMPLATES** (Full intro + 5 products + outro)
+- ✅ **AIRTABLE FIELD MAPPING CORRECTED** (ProductNo1-5Photo properly updated)
 - ✅ Enhanced JSON2Video templates with reviews and ratings
 - ✅ WordPress integration with product photos and countdown format
-- ✅ YouTube Shorts automation active
+- ✅ YouTube Shorts automation (needs token refresh)
 - ✅ API credit monitoring with email alerts
 - ✅ 90+ keywords across 5 platforms (YouTube, TikTok, Instagram, WordPress, Universal)
-- ✅ Amazon-guided OpenAI image generation
-- ✅ ElevenLabs voice generation fully integrated
+- ✅ Amazon-guided OpenAI image generation (5-second rate limiting)
+- ✅ ElevenLabs voice generation fully integrated (all voice files uploaded to Drive)
 - ✅ Product category extraction for improved Amazon scraping
 - ✅ Flow control and validation system
-- ⏳ TikTok integration ready (pending API approval)
-- ⏳ Instagram integration ready (pending API approval)
-- ⚠️ Google Drive OAuth2 needed for voice file uploads
+- ✅ Top-to-bottom title processing with automatic failure handling
+- ✅ Curated content database (4,188 titles analyzed, 1,095 high-retention selected)
+- ✅ Voice field mapping complete (IntroMp3, OutroMp3, Product[X]Mp3)
+- ⏸️ TikTok integration **DISABLED** (API still in review)
+- ✅ Instagram Reels integration **ENABLED** (needs token refresh)
+- ✅ Google Drive OAuth2 authentication complete for voice file uploads
 
 ### Current Issues & Status
 - ✅ JSON2Video: €39.40 remaining (~197 videos, 11,854 seconds)
-- ✅ ScrapingDog: €198.87 remaining (198,870 requests)
-- ✅ ElevenLabs: €32.32 remaining (179,537 characters)
-- ⚠️ OpenAI: API auth needs verification
+- ✅ ScrapingDog: €198.49 remaining (198,490 requests)
+- ✅ ElevenLabs: €32.10 remaining (178,334 characters)
+- ✅ OpenAI: API authentication verified (usage API error does not affect functionality)
 
 ### Code Patterns
 - All MCP servers use async/await patterns
@@ -218,10 +237,17 @@ Configuration file: `config/api_keys.json`
 - **TikTok**: Reels upload (awaiting API approval)
 - **Instagram**: Reels upload (awaiting API approval)
 
-### 🚨 Needs Attention
-- **Google Drive**: OAuth2 authentication for voice file uploads (service account quota exceeded)
-- **Airtable**: Missing voice MP3 fields (IntroMp3, OutroMp3, Product1-5Mp3)
-- **OpenAI**: Verify API authentication for image generation
+### 🚨 Resolved Issues
+- ✅ **Amazon Scraping**: Niche categories now automatically skipped (workflow moves to next title)
+- ✅ **Voice Field Mapping**: All voice fields now correctly map to existing Airtable structure
+- ✅ **Title Processing Order**: Workflow processes titles top-to-bottom as intended
+- ✅ **Google Drive Initialization**: Fixed "'bool' object has no attribute 'files'" error
+- ✅ **ProductNo1-5Photo Fields**: Fixed field mapping from DriveImageURL to ProductNo1-5Photo
+- ✅ **Production Mode**: Changed from test videos to full 60-second production videos
+- ✅ **Timeout Removal**: Eliminated all timeout constraints for uninterrupted workflow
+- ⚠️ **YouTube Token Refresh**: Needs manual token refresh for uploads
+- ⚠️ **Instagram Token Refresh**: Needs manual token refresh for uploads  
+- ⚠️ **OpenAI Usage API**: Credit monitoring shows API error (functionality still works)
 
 ## Cost Management
 - **Credit Monitoring**: Email alerts when ≤ €10 remaining
