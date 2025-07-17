@@ -276,6 +276,13 @@ python3 -m py_compile [production_file].py  # Verify rollback
 - **✅ VERIFIED:** Both Test and Production workflows now select titles sequentially by lowest ID
 - **✅ WORKFLOW CONFIRMED:** Test workflow completed successfully with ID-based selection
 
+### Text-to-Speech Timing Validation System
+- **✅ IMPLEMENTED:** Complete text validation system with dual-flow architecture
+- **✅ AUTO-APPROVAL:** Test environment auto-approves all validations for speed
+- **✅ PRODUCTION VALIDATION:** Production performs actual TTS timing validation
+- **✅ REGENERATION:** Failed validations trigger automatic text regeneration
+- **✅ VIDEO PREREQUISITE:** Video generation blocked until all 12 status columns are "Approved"
+
 ### Title Processing Enhancement
 - Sequential processing from top to bottom (ID: 1, 2, 3... 4188)
 - No more random title selection - predictable, ordered processing
@@ -300,9 +307,36 @@ python3 -m py_compile [production_file].py  # Verify rollback
 - Enhanced documentation and comments
 
 ### Development Environment Configuration
-- **Bash timeout extended to 1 hour** for full workflow monitoring
+- **Bash timeout set to 20 minutes** for workflow monitoring (user repeatedly requested this)
 - Test workflow optimizations for rapid development cycles
 - Comprehensive error handling and logging
+
+### Text-to-Speech Timing Validation Status Columns
+**CRITICAL:** The following 12 Airtable columns must be updated with validation status:
+
+📊 **Video Content Status Columns (5-second limit):**
+- `VideoTitleStatus` → Validates: VideoTitle field
+- `VideoDescriptionStatus` → Validates: VideoDescription field
+
+📦 **Product Content Status Columns (9-second limit each):**
+- `ProductNo1TitleStatus` → Validates: ProductNo1Title field
+- `ProductNo1DescriptionStatus` → Validates: ProductNo1Description field
+- `ProductNo2TitleStatus` → Validates: ProductNo2Title field
+- `ProductNo2DescriptionStatus` → Validates: ProductNo2Description field
+- `ProductNo3TitleStatus` → Validates: ProductNo3Title field
+- `ProductNo3DescriptionStatus` → Validates: ProductNo3Description field
+- `ProductNo4TitleStatus` → Validates: ProductNo4Title field
+- `ProductNo4DescriptionStatus` → Validates: ProductNo4Description field
+- `ProductNo5TitleStatus` → Validates: ProductNo5Title field
+- `ProductNo5DescriptionStatus` → Validates: ProductNo5Description field
+
+**Status Values:**
+- `"Approved"` - Text fits within timing requirements
+- `"Rejected"` - Text exceeds timing limits (triggers regeneration in production)
+- `"Pending"` - Awaiting validation or during regeneration process
+
+**Test Environment:** All columns auto-populated with "Approved" for speed
+**Production Environment:** Actual validation with regeneration for failed fields
 
 ## Future Roadmap
 

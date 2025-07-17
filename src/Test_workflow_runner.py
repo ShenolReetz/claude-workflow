@@ -8,27 +8,31 @@ from datetime import datetime
 # Add the project root to Python path
 sys.path.append('/home/claude-workflow')
 
-from mcp_servers.airtable_server import AirtableMCPServer
-from src.mcp.amazon_affiliate_agent_mcp import run_amazon_affiliate_generation
-from mcp_servers.content_generation_server import ContentGenerationMCPServer
-from src.mcp.text_generation_control_agent_mcp_v2 import run_text_control_with_regeneration
-from mcp_servers.amazon_category_scraper import AmazonCategoryScraper
-from mcp_servers.product_category_extractor_server import ProductCategoryExtractorMCPServer
-from mcp_servers.flow_control_server import FlowControlMCPServer
-from mcp_servers.voice_generation_server import VoiceGenerationMCPServer
-from mcp_servers.amazon_product_validator import AmazonProductValidator
-from src.mcp.json2video_agent_mcp import run_video_creation
-from src.mcp.amazon_drive_integration import save_amazon_images_to_drive
-from src.mcp.amazon_images_workflow_v2 import download_and_save_amazon_images_v2
-from src.mcp.amazon_guided_image_generation import generate_amazon_guided_openai_images
-from src.mcp.google_drive_agent_mcp import upload_video_to_google_drive
-from src.mcp.wordpress_mcp import WordPressMCP
-from src.mcp.youtube_mcp import YouTubeMCP
-from src.mcp.voice_timing_optimizer import VoiceTimingOptimizer
-from src.mcp.intro_image_generator import generate_intro_image_for_workflow
-from src.mcp.outro_image_generator import generate_outro_image_for_workflow
-from src.mcp.platform_content_generator import generate_platform_content_for_workflow
-from src.mcp.text_length_validation_with_regeneration_agent_mcp import run_text_validation_with_regeneration
+from mcp_servers.Test_airtable_server import AirtableMCPServer
+from src.mcp.Test_amazon_affiliate_agent_mcp import run_amazon_affiliate_generation
+from mcp_servers.Test_content_generation_server import ContentGenerationMCPServer
+from src.mcp.Test_text_generation_control_agent_mcp_v2 import run_text_control_with_regeneration
+from mcp_servers.Test_amazon_category_scraper import AmazonCategoryScraper
+from mcp_servers.Test_product_category_extractor_server import ProductCategoryExtractorMCPServer
+from mcp_servers.Test_flow_control_server import FlowControlMCPServer
+from mcp_servers.Test_voice_generation_server import VoiceGenerationMCPServer
+from mcp_servers.Test_amazon_product_validator import AmazonProductValidator
+from src.mcp.Test_json2video_agent_mcp import run_video_creation
+from src.mcp.Test_amazon_drive_integration import save_amazon_images_to_drive
+from src.mcp.Test_amazon_images_workflow_v2 import download_and_save_amazon_images_v2
+from src.mcp.Test_amazon_guided_image_generation import generate_amazon_guided_openai_images
+from src.mcp.Test_google_drive_agent_mcp import upload_video_to_google_drive
+from src.mcp.Test_wordpress_mcp import WordPressMCP
+from src.mcp.Test_youtube_mcp import YouTubeMCP
+from src.mcp.Test_voice_timing_optimizer import VoiceTimingOptimizer
+from src.mcp.Test_intro_image_generator import generate_intro_image_for_workflow
+from src.mcp.Test_outro_image_generator import generate_outro_image_for_workflow
+from src.mcp.Test_platform_content_generator import generate_platform_content_for_workflow
+from src.mcp.Test_video_prerequisite_control_agent_mcp import VideoPrerequisiteControlAgentMCP
+from mcp_servers.Test_default_photo_manager import TestDefaultPhotoManager
+from mcp_servers.Test_default_audio_manager import TestDefaultAudioManager
+from mcp_servers.Test_default_text_validation_manager import TestDefaultTextValidationManager
+from src.mcp.Test_text_length_validation_agent_mcp import run_text_length_validation
 
 class ContentPipelineOrchestrator:
     def __init__(self):
@@ -54,6 +58,10 @@ class ContentPipelineOrchestrator:
         self.amazon_scraper = AmazonCategoryScraper(self.config)
         self.amazon_validator = AmazonProductValidator(self.config)
         self.wordpress_mcp = WordPressMCP(self.config)
+        self.video_prerequisite_control = VideoPrerequisiteControlAgentMCP(self.config)
+        self.default_photo_manager = TestDefaultPhotoManager()
+        self.default_audio_manager = TestDefaultAudioManager()
+        self.default_text_validation_manager = TestDefaultTextValidationManager()
 
     async def run_complete_workflow(self):
         """Run the complete content generation workflow with multiple title processing"""
@@ -172,15 +180,110 @@ class ContentPipelineOrchestrator:
                 amazon_result['airtable_data']
             )
             
-            # Step 2.5: Generate Amazon affiliate links for products
-            print("🔗 Generating Amazon affiliate links...")
-            affiliate_result = await run_amazon_affiliate_generation(self.config, pending_title['record_id'])
+            # Step 2.75: Populate Airtable with default photos (TEST MODE)
+            print("🖼️ TEST MODE: Populating Airtable with default photos...")
+            default_photo_updates = self.default_photo_manager.populate_airtable_with_default_photos(
+                amazon_result, 
+                clean_category
+            )
             
-            if affiliate_result['success']:
-                print(f"✅ Generated {affiliate_result['affiliate_links_generated']} affiliate links")
+            if default_photo_updates:
+                await self.airtable_server.update_record(
+                    pending_title['record_id'],
+                    default_photo_updates
+                )
+                print(f"✅ TEST MODE: Updated {len(default_photo_updates)} photo fields with default URLs")
+            
+            # Step 2.8: Populate Airtable with default audio (TEST MODE)
+            print("🎵 TEST MODE: Populating Airtable with default audio files...")
+            default_audio_updates = self.default_audio_manager.populate_airtable_with_default_audio(
+                amazon_result,
+                clean_category
+            )
+            
+            if default_audio_updates:
+                await self.airtable_server.update_record(
+                    pending_title['record_id'],
+                    default_audio_updates
+                )
+                print(f"✅ TEST MODE: Updated {len(default_audio_updates)} audio fields with default URLs")
+                print("🎵 All audio clips are 2 seconds with 2 words each")
+            
+            # Step 2.85: Populate Airtable with default text validation status (TEST MODE)
+            print("⏱️ TEST MODE: Pre-populating text validation status columns...")
+            default_text_validation_result = await self.default_text_validation_manager.populate_default_validation_status(
+                self.airtable_server,
+                pending_title['record_id']
+            )
+            
+            if default_text_validation_result.get('success'):
+                print(f"✅ TEST MODE: Pre-populated {default_text_validation_result['columns_updated']} text validation status columns")
+                print(f"📝 All validation status columns set to: {default_text_validation_result['status_value']}")
             else:
-                print(f"❌ Affiliate link generation failed: {affiliate_result.get('error', 'Unknown error')}")
-                # Continue processing - affiliate links are not critical to video creation
+                print(f"❌ TEST MODE: Failed to populate text validation status columns")
+            
+            # Step 2.5: Populate Airtable with default affiliate links (TEST MODE)
+            print("🔗 TEST MODE: Populating default affiliate links...")
+            from mcp_servers.Test_default_affiliate_manager import TestDefaultAffiliateManager
+            affiliate_manager = TestDefaultAffiliateManager()
+            
+            # Get the current record to detect category
+            current_record = await self.airtable_server.get_record_by_id(pending_title['record_id'])
+            category = None  # Let the affiliate manager detect from title
+            
+            affiliate_updates = affiliate_manager.populate_airtable_with_default_affiliates(
+                current_record, category
+            )
+            
+            if affiliate_updates:
+                try:
+                    await self.airtable_server.update_record(
+                        pending_title['record_id'],
+                        affiliate_updates
+                    )
+                    print(f"✅ TEST MODE: Populated {len(affiliate_updates)} affiliate fields with default data")
+                    print(f"💸 Cost savings: Avoided Amazon scraping API calls")
+                except Exception as e:
+                    print(f"⚠️ Some affiliate fields may not exist in Airtable schema: {e}")
+                    # Try with reduced field set (only essential affiliate links)
+                    essential_updates = {k: v for k, v in affiliate_updates.items() if 'AffiliateLink' in k}
+                    if essential_updates:
+                        try:
+                            await self.airtable_server.update_record(
+                                pending_title['record_id'],
+                                essential_updates
+                            )
+                            print(f"✅ TEST MODE: Populated {len(essential_updates)} essential affiliate link fields")
+                        except Exception as e2:
+                            print(f"❌ Failed to update even essential affiliate fields: {e2}")
+            
+            # Step 2.6: Populate Airtable with default WordPress content (TEST MODE)
+            print("📝 TEST MODE: Populating default WordPress content...")
+            from mcp_servers.Test_default_wordpress_manager import TestDefaultWordPressManager
+            wordpress_manager = TestDefaultWordPressManager()
+            
+            # Get the current record to detect category
+            current_record = await self.airtable_server.get_record_by_id(pending_title['record_id'])
+            category = None  # Let the WordPress manager detect from title
+            
+            wordpress_updates = wordpress_manager.populate_airtable_with_default_wordpress(
+                current_record, category
+            )
+            
+            if wordpress_updates:
+                try:
+                    await self.airtable_server.update_record(
+                        pending_title['record_id'],
+                        wordpress_updates
+                    )
+                    print(f"✅ TEST MODE: Populated {len(wordpress_updates)} WordPress fields with default content")
+                    print(f"💰 Token savings: ~1000+ tokens (typical WordPress generation cost)")
+                except Exception as e:
+                    print(f"⚠️ Some WordPress fields may not exist in Airtable schema: {e}")
+            
+            # Step 2.7: Generate Amazon affiliate links for products (SKIPPED IN TEST MODE)
+            print("🔗 TEST MODE: Skipping affiliate link generation (using defaults)...")
+            affiliate_result = {'success': True, 'affiliate_links_generated': 5, 'source': 'TEST_MODE_DEFAULTS'}
             
             # Step 3: Generate multi-platform keywords using product data
             print("🔍 Generating multi-platform keywords with product data...")
@@ -238,27 +341,10 @@ class ContentPipelineOrchestrator:
                     'TextControlStatus': 'Validated'
                 })
 
-            # Step 6.5: Text Length Validation with Regeneration - Validate and fix timing issues
-            print("⏱️ Validating text length for TTS timing compliance with intelligent regeneration...")
-            try:
-                text_validation_result = await run_text_validation_with_regeneration(
-                    record_id=pending_title['record_id']
-                )
-                
-                if text_validation_result.get('success'):
-                    if text_validation_result.get('all_approved'):
-                        print(f"✅ All text fields validated and approved for TTS timing compliance")
-                    elif text_validation_result.get('has_rejections'):
-                        print(f"⚠️ Some text fields still exceed timing limits after regeneration attempts")
-                        print(f"📝 Review the rejected fields - they may need manual adjustment")
-                    else:
-                        print(f"✅ Text validation completed with mixed results")
-                else:
-                    print(f"❌ Text validation with regeneration failed: {text_validation_result.get('error', 'Unknown error')}")
-                    # Continue workflow even if validation fails
-            except Exception as e:
-                print(f"❌ Error during text validation with regeneration: {str(e)}")
-                # Continue workflow even if validation fails
+            # Step 6.5: Text Length Validation - TEST MODE: Skip validation (already pre-populated)
+            print("⏱️ TEST MODE: Skipping text length validation (already pre-populated as 'Approved')...")
+            print("✅ All text validation status columns were pre-populated with 'Approved' status")
+            print("📝 In production, this step will perform actual TTS timing validation")
 
             # Step 7: Generate blog post for WordPress
             print("📝 Generating blog post for WordPress...")
@@ -288,8 +374,8 @@ class ContentPipelineOrchestrator:
             
             # Note: Amazon affiliate links saved in Step 2.5
             
-            # Step 9: Download Amazon product images from scraped data
-            print("📸 Downloading Amazon product images...")
+            # Step 9: TEST MODE - Skip Amazon image downloads (already have default photos)
+            print("📸 TEST MODE: Skipping Amazon image downloads (using default photos)...")
             images_result = await download_and_save_amazon_images_v2(
                 self.config,
                 pending_title['record_id'],
@@ -298,11 +384,11 @@ class ContentPipelineOrchestrator:
             )
             
             if images_result['success']:
-                print(f"✅ Saved {images_result['images_saved']} Amazon product images")
+                print(f"✅ TEST MODE: Simulated {images_result['images_saved']} Amazon product images")
                 print(f"📦 Products with images: {images_result['products_with_images']}")
 
-            # Step 9b: Generate Amazon-guided OpenAI images
-            print("🎨 Generating Amazon-guided OpenAI images...")
+            # Step 9b: TEST MODE - Skip OpenAI image generation (using default photos)
+            print("🎨 TEST MODE: Skipping OpenAI image generation (using default photos)...")
             openai_result = await generate_amazon_guided_openai_images(
                 self.config,
                 pending_title['record_id'],
@@ -311,14 +397,14 @@ class ContentPipelineOrchestrator:
             )
             
             if openai_result['success']:
-                print(f"✅ Generated {openai_result['images_generated']} OpenAI images using Amazon reference")
-                print(f"💾 Saved {openai_result['images_saved']} OpenAI images to Google Drive")
+                print(f"✅ TEST MODE: Simulated {openai_result['images_generated']} OpenAI images")
+                print(f"💾 Skipped image generation and saving")
                 print(f"🖼️ Products processed: {openai_result['products_processed']}")
             else:
-                print(f"⚠️ OpenAI image generation had issues: {openai_result.get('errors', [])}")
+                print(f"⚠️ TEST MODE simulation had issues: {openai_result.get('errors', [])}")
             
-            # Step 9c: Generate intro image featuring all products
-            print("🖼️ Generating intro image featuring all 5 products...")
+            # Step 9c: TEST MODE - Skip intro image generation (using default photo)
+            print("🖼️ TEST MODE: Skipping intro image generation (using default photo)...")
             intro_image_result = await generate_intro_image_for_workflow(
                 self.config,
                 pending_title['record_id'],
@@ -328,13 +414,13 @@ class ContentPipelineOrchestrator:
             )
             
             if intro_image_result['success']:
-                print(f"✅ Generated intro image featuring {intro_image_result['products_featured']} products")
-                print(f"🎨 Image URL: {intro_image_result['image_url']}")
+                print(f"✅ TEST MODE: Using default intro photo")
+                print(f"🎨 Default photo URL: {intro_image_result['image_url']}")
             else:
-                print(f"⚠️ Intro image generation failed: {intro_image_result.get('error', 'Unknown error')}")
+                print(f"⚠️ TEST MODE intro photo failed: {intro_image_result.get('error', 'Unknown error')}")
             
-            # Step 9d: Generate outro image with social media elements
-            print("🎬 Generating outro image with social media elements...")
+            # Step 9d: TEST MODE - Skip outro image generation (using default photo)
+            print("🎬 TEST MODE: Skipping outro image generation (using default photo)...")
             outro_image_result = await generate_outro_image_for_workflow(
                 self.config,
                 pending_title['record_id'],
@@ -342,10 +428,10 @@ class ContentPipelineOrchestrator:
             )
             
             if outro_image_result['success']:
-                print(f"✅ Generated outro image with social media elements")
-                print(f"🎨 Image URL: {outro_image_result['image_url']}")
+                print(f"✅ TEST MODE: Using default outro photo")
+                print(f"🎨 Default photo URL: {outro_image_result['image_url']}")
             else:
-                print(f"⚠️ Outro image generation failed: {outro_image_result.get('error', 'Unknown error')}")
+                print(f"⚠️ TEST MODE outro photo failed: {outro_image_result.get('error', 'Unknown error')}")
             
             # Step 9e: Generate platform-specific titles and descriptions
             print("🎯 Generating platform-specific content with SEO optimization...")
@@ -363,48 +449,49 @@ class ContentPipelineOrchestrator:
             else:
                 print(f"⚠️ Platform content generation failed: {platform_content_result.get('error', 'Unknown error')}")
 
-            # Step 10: Generate voice narration with ElevenLabs
-            print("🎤 Generating voice narration with ElevenLabs...")
+            # Step 10: TEST MODE - Skip voice generation (already have default audio)
+            print("🎤 TEST MODE: Skipping voice generation (using default audio files)...")
             # Get updated record with voice text
             updated_record = await self.airtable_server.get_record_by_id(pending_title['record_id'])
             voice_result = await self.generate_voice_narration(pending_title['record_id'], updated_record)
             
             if voice_result['success']:
-                print(f"✅ Generated {voice_result['voices_generated']} voice files")
-                print(f"💾 Saved {voice_result['voices_saved']} voice files to Google Drive")
-                
-                # Update Airtable with voice URLs
-                print(f"🔍 DEBUG: Updating Airtable with voice URLs: {voice_result['airtable_updates']}")
-                await self.airtable_server.update_record(pending_title['record_id'], voice_result['airtable_updates'])
-                print(f"✅ Updated Airtable with {len(voice_result['airtable_updates'])} voice URLs")
+                print(f"✅ TEST MODE: Simulated {voice_result['voices_generated']} voice files")
+                print(f"💾 Skipped ElevenLabs generation and Google Drive upload")
+                print(f"🎵 Using default 2-second audio clips instead")
             else:
-                print(f"⚠️ Voice generation had issues: {voice_result.get('errors', [])}")
+                print(f"⚠️ TEST MODE voice simulation had issues: {voice_result.get('errors', [])}")
             
-            # Step 10.5: Validate video production prerequisites
-            print("🔍 Validating video production prerequisites...")
-            from src.mcp.video_prerequisite_control_agent_mcp import validate_video_production_prerequisites
-            
-            prerequisite_result = await validate_video_production_prerequisites(
-                self.config, 
+            # Step 10.5: Video Prerequisite Control - Validate all prerequisites before video generation
+            print("🎯 Validating video production prerequisites...")
+            prerequisite_result = await self.video_prerequisite_control.validate_and_update_video_production_status(
                 pending_title['record_id']
             )
             
             if not prerequisite_result['video_production_ready']:
-                print(f"❌ Video production prerequisites not satisfied!")
-                print(f"🔧 Issues: {prerequisite_result['validation_summary']['errors']}")
-                print(f"⏸️ Skipping video creation for this record")
-                await self.airtable_server.update_record(pending_title['record_id'], {
-                    'Status': 'Prerequisites Failed',
-                    'VideoProductionRDY': 'Pending'
-                })
-                return {
-                    'success': False,
-                    'error': 'Video production prerequisites not satisfied',
-                    'prerequisite_issues': prerequisite_result['validation_summary']['errors']
-                }
+                print("❌ Video production prerequisites NOT satisfied!")
+                print("🔧 Missing requirements:")
+                for error in prerequisite_result['validation_summary']['errors']:
+                    print(f"   - {error}")
+                
+                # Update Airtable with validation failure
+                await self.airtable_server.update_record(
+                    pending_title['record_id'],
+                    {
+                        'Status': 'Validation Failed',
+                        'ValidationIssues': '; '.join(prerequisite_result['validation_summary']['errors'])
+                    }
+                )
+                return False
             
-            print(f"✅ Video production prerequisites satisfied!")
-            print(f"🎯 All {prerequisite_result['validation_summary']['checks_passed']}/{prerequisite_result['validation_summary']['total_checks']} checks passed")
+            print("✅ Video production prerequisites satisfied!")
+            print(f"🎬 VideoProductionRDY status updated to: {prerequisite_result['video_production_status']}")
+            print(f"📊 Validation rate: {prerequisite_result['validation_summary']['success_rate']:.1f}%")
+            
+            # Check if VideoProductionRDY is actually 'Ready' before proceeding
+            if not await self.video_prerequisite_control.check_video_production_readiness(pending_title['record_id']):
+                print("❌ VideoProductionRDY status is not 'Ready' - cannot proceed with video generation")
+                return False
             
             # Step 11: Create ENHANCED video with JSON2Video (with sound, transitions, background photos)
             print("🎬 Creating ENHANCED video with JSON2Video...")
@@ -559,7 +646,7 @@ class ContentPipelineOrchestrator:
             if instagram_enabled and video_result.get('video_url'):
                 print("📸 Uploading to Instagram Reels...")
                 try:
-                    from src.mcp.instagram_workflow_integration import upload_to_instagram
+                    from src.mcp.Test_instagram_workflow_integration import upload_to_instagram
                     
                     # Update pending_title with final video URL for Instagram
                     pending_title['FinalVideo'] = upload_result['drive_url']
@@ -647,7 +734,7 @@ class ContentPipelineOrchestrator:
             return False
     
     async def generate_voice_text(self, script_data: dict, optimized_title: str) -> dict:
-        """Generate voice text for intro, outro, and products with optimized timing"""
+        """Generate voice text for intro, outro, and products (TEST MODE: 2 words for 2-second scenes)"""
         try:
             voice_text_data = {}
             optimizer = VoiceTimingOptimizer()
@@ -656,18 +743,16 @@ class ContentPipelineOrchestrator:
             intro_constraints = optimizer.generate_intro_constraints()
             outro_constraints = optimizer.generate_outro_constraints()
             
-            # Generate intro voice text (13-15 words for 5 seconds)
-            intro_text = f"Welcome! Today we're counting down {optimized_title.lower()}. Let's discover the best!"
-            intro_analysis = optimizer.analyze_text_timing(intro_text, 5)
-            if not intro_analysis['is_good_fit']:
-                print(f"⚠️ Intro text needs adjustment: {intro_analysis['word_count']} words (target: {intro_analysis['optimal_word_count']})")
+            # Generate intro voice text (TEST MODE: 2 words for 2 seconds)
+            intro_text = "Welcome! Today"  # First 2 words for 2-second scene
+            intro_analysis = optimizer.analyze_text_timing(intro_text, 2)
+            print(f"🎵 TEST MODE: Intro text limited to 2 words: '{intro_text}'")
             voice_text_data['IntroHook'] = intro_text
             
-            # Generate outro voice text (13-15 words for 5 seconds)
-            outro_text = "Thanks for watching! Subscribe for more reviews and comment your favorite below!"
-            outro_analysis = optimizer.analyze_text_timing(outro_text, 5)
-            if not outro_analysis['is_good_fit']:
-                print(f"⚠️ Outro text needs adjustment: {outro_analysis['word_count']} words (target: {outro_analysis['optimal_word_count']})")
+            # Generate outro voice text (TEST MODE: 2 words for 2 seconds)
+            outro_text = "Thanks! Subscribe"  # First 2 words for 2-second scene
+            outro_analysis = optimizer.analyze_text_timing(outro_text, 2)
+            print(f"🎵 TEST MODE: Outro text limited to 2 words: '{outro_text}'")
             voice_text_data['OutroCallToAction'] = outro_text
             
             # Generate product voice text - store in VideoScript as combined content
@@ -676,17 +761,14 @@ class ContentPipelineOrchestrator:
             product_constraints = optimizer.generate_product_constraints()
             
             for i, product in enumerate(products[:5], 1):
-                # Format: "Number X. [Product Name]. [Description]" - aim for 26 words total
+                # TEST MODE: Format "Number X" - only 2 words for 2-second scenes
                 rank_number = 6 - i  # Countdown from 5 to 1
-                product_title = product.get('title', 'Product')
-                product_desc = product.get('description', 'Great product for your needs.')
                 
-                # Analyze current product text
-                product_text = f"Number {rank_number}. {product_title}. {product_desc}"
-                product_analysis = optimizer.analyze_text_timing(product_text, 10)
+                # Limit to exactly 2 words for 2-second scenes
+                product_text = f"Number {rank_number}"
+                product_analysis = optimizer.analyze_text_timing(product_text, 2)
                 
-                if not product_analysis['is_good_fit']:
-                    print(f"⚠️ Product {rank_number} text needs adjustment: {product_analysis['word_count']} words (target: {product_analysis['optimal_word_count']})")
+                print(f"🎵 TEST MODE: Product {rank_number} text limited to 2 words: '{product_text}'")
                 
                 product_voice_texts.append(product_text)
             
@@ -694,7 +776,7 @@ class ContentPipelineOrchestrator:
             if product_voice_texts:
                 voice_text_data['VideoScript'] = '\n\n'.join([intro_text, *product_voice_texts, outro_text])
             
-            print(f"✅ Generated voice text for {len(products)} products")
+            print(f"✅ TEST MODE: Generated 2-word voice text for {len(products)} products")
             return voice_text_data
             
         except Exception as e:
@@ -702,51 +784,22 @@ class ContentPipelineOrchestrator:
             return {}
     
     async def generate_voice_narration(self, record_id: str, record_data: dict) -> dict:
-        """Generate voice narration for intro, outro, and all products"""
+        """Generate voice narration (TEST MODE: Uses default audio files)"""
         try:
+            print(f"🎵 TEST MODE: Voice generation skipped - using default audio files")
+            
             results = {
                 'success': True,
-                'voices_generated': 0,
-                'voices_saved': 0,
-                'airtable_updates': {},
-                'errors': []
+                'voices_generated': 7,  # Simulate 7 voices (intro + 5 products + outro)
+                'voices_saved': 7,      # Simulate all saved
+                'airtable_updates': {}, # No updates needed - already done in default audio step
+                'errors': [],
+                'test_mode': True,
+                'generation_skipped': True
             }
             
-            # Generate voice for intro
-            intro_text = record_data.get('IntroHook', '') or record_data.get('fields', {}).get('IntroHook', 'Welcome to our top 5 product review!')
-            if intro_text:
-                intro_voice = await self.voice_generator.generate_voice_from_text(intro_text, 'intro')
-                if intro_voice:
-                    # Save to Google Drive and get URL
-                    intro_url = await self.save_voice_to_drive(intro_voice, f"{record_id}_intro.mp3")
-                    results['airtable_updates']['IntroMp3'] = intro_url
-                    results['voices_generated'] += 1
-                    results['voices_saved'] += 1
-            
-            # Generate voice for outro
-            outro_text = record_data.get('OutroCallToAction', '') or record_data.get('fields', {}).get('OutroCallToAction', 'Thanks for watching! Don\'t forget to subscribe!')
-            if outro_text:
-                outro_voice = await self.voice_generator.generate_voice_from_text(outro_text, 'outro')
-                if outro_voice:
-                    # Save to Google Drive and get URL
-                    outro_url = await self.save_voice_to_drive(outro_voice, f"{record_id}_outro.mp3")
-                    results['airtable_updates']['OutroMp3'] = outro_url
-                    results['voices_generated'] += 1
-                    results['voices_saved'] += 1
-            
-            # Generate voice for each product
-            for i in range(1, 6):
-                # Use existing product description for voice generation (check both direct and fields)
-                product_text = record_data.get(f'ProductNo{i}Description', '') or record_data.get('fields', {}).get(f'ProductNo{i}Description', '')
-                print(f"🔍 DEBUG: Product{i} text: {product_text[:50] if product_text else 'EMPTY'}")
-                if product_text:
-                    product_voice = await self.voice_generator.generate_voice_from_text(product_text, 'products')
-                    if product_voice:
-                        # Save to Google Drive and get URL
-                        product_url = await self.save_voice_to_drive(product_voice, f"{record_id}_product{i}.mp3")
-                        results['airtable_updates'][f'Product{i}Mp3'] = product_url
-                        results['voices_generated'] += 1
-                        results['voices_saved'] += 1
+            print(f"✅ TEST MODE: Simulated voice generation for intro, outro, and 5 products")
+            print(f"🎵 All default audio files are 2-second clips with 2 words each")
             
             return results
             
@@ -757,7 +810,8 @@ class ContentPipelineOrchestrator:
                 'voices_generated': 0,
                 'voices_saved': 0,
                 'airtable_updates': {},
-                'errors': [str(e)]
+                'errors': [str(e)],
+                'test_mode': True
             }
     
     async def save_voice_to_drive(self, voice_base64: str, filename: str) -> str:
