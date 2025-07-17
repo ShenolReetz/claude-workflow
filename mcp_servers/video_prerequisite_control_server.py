@@ -207,7 +207,7 @@ class VideoPrerequisiteControlMCPServer:
         """Validate all text timing status columns are set to 'Approved'"""
         logger.info("🔍 Validating text timing status columns")
         
-        # EXACT COLUMN NAMES FROM ToDo.md - CRITICAL FOR VIDEO GENERATION
+        # ALL 12 COLUMNS FROM ToDo.md - CRITICAL FOR VIDEO GENERATION
         required_status_columns = [
             # Video content columns (5 second limit)
             'VideoTitleStatus',        # → Validates: VideoTitle field
@@ -233,21 +233,14 @@ class VideoPrerequisiteControlMCPServer:
         for status_column in required_status_columns:
             status_value = airtable_record.get(status_column)
             
-            if status_value == "Approved":
+            if status_value == "Ready":
                 continue  # This is what we want
-            elif status_value == "Rejected":
-                rejected_fields.append(status_column)
             elif status_value == "Pending":
                 pending_fields.append(status_column)
             else:
                 missing_approved_status.append(status_column)
         
-        # Check for any non-approved statuses
-        if rejected_fields:
-            self.errors.append(f"Text timing REJECTED (exceeds limits): {rejected_fields}")
-            logger.error(f"❌ Text timing validation failed - REJECTED fields: {rejected_fields}")
-            return False
-        
+        # Check for any non-ready statuses
         if pending_fields:
             self.errors.append(f"Text timing PENDING (awaiting validation): {pending_fields}")
             logger.warning(f"⏳ Text timing validation pending - PENDING fields: {pending_fields}")
@@ -258,7 +251,7 @@ class VideoPrerequisiteControlMCPServer:
             logger.error(f"❌ Text timing validation failed - MISSING status: {missing_approved_status}")
             return False
         
-        logger.info(f"✅ Text timing status validated - all {len(required_status_columns)} columns are 'Approved'")
+        logger.info(f"✅ Text timing status validated - all {len(required_status_columns)} columns are 'Ready'")
         return True
     
     async def check_video_production_ready(self, airtable_record: Dict[str, Any]) -> Dict[str, Any]:

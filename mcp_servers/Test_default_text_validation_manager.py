@@ -16,8 +16,8 @@ class TestDefaultTextValidationManager:
     """Manager for pre-populating text validation status columns in test mode"""
     
     def __init__(self):
-        # All text validation status columns that should be pre-populated
-        # EXACT COLUMN NAMES FROM ToDo.md - DO NOT CHANGE
+        # Text validation status columns - ALL 12 COLUMNS FROM ToDo.md
+        # All columns exist in Airtable with "Approved", "Rejected", "Pending" values
         self.validation_status_columns = [
             # Video content columns (5 second limit)
             'VideoTitleStatus',        # → Validates: VideoTitle field
@@ -36,12 +36,13 @@ class TestDefaultTextValidationManager:
             'ProductNo5DescriptionStatus', # → Validates: ProductNo5Description field
         ]
         
-        # Default approved status
-        self.default_status = "Approved"
+        # Default ready status for all text validation columns
+        # Options: "Pending" and "Ready" (only 2 options)
+        self.default_status = "Ready"
     
     async def populate_default_validation_status(self, airtable_server, record_id: str) -> Dict[str, Any]:
         """
-        Populate all text validation status columns with 'Approved' for test speed optimization
+        Populate all text validation status columns with 'Ready' for test speed optimization
         
         Args:
             airtable_server: Airtable MCP server instance
@@ -54,7 +55,7 @@ class TestDefaultTextValidationManager:
         print(f"📝 TEST MODE: Pre-populating text validation status columns...")
         
         try:
-            # Create updates dict with all status columns set to "Approved"
+            # Create updates dict with all status columns set to "Ready"
             updates = {}
             for column in self.validation_status_columns:
                 updates[column] = self.default_status

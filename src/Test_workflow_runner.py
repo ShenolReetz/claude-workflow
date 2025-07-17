@@ -209,19 +209,6 @@ class ContentPipelineOrchestrator:
                 print(f"✅ TEST MODE: Updated {len(default_audio_updates)} audio fields with default URLs")
                 print("🎵 All audio clips are 2 seconds with 2 words each")
             
-            # Step 2.85: Populate Airtable with default text validation status (TEST MODE)
-            print("⏱️ TEST MODE: Pre-populating text validation status columns...")
-            default_text_validation_result = await self.default_text_validation_manager.populate_default_validation_status(
-                self.airtable_server,
-                pending_title['record_id']
-            )
-            
-            if default_text_validation_result.get('success'):
-                print(f"✅ TEST MODE: Pre-populated {default_text_validation_result['columns_updated']} text validation status columns")
-                print(f"📝 All validation status columns set to: {default_text_validation_result['status_value']}")
-            else:
-                print(f"❌ TEST MODE: Failed to populate text validation status columns")
-            
             # Step 2.5: Populate Airtable with default affiliate links (TEST MODE)
             print("🔗 TEST MODE: Populating default affiliate links...")
             from mcp_servers.Test_default_affiliate_manager import TestDefaultAffiliateManager
@@ -448,6 +435,19 @@ class ContentPipelineOrchestrator:
                 print("📊 Platform-specific content and analytics saved to Airtable")
             else:
                 print(f"⚠️ Platform content generation failed: {platform_content_result.get('error', 'Unknown error')}")
+
+            # Step 9.5: Populate Airtable with default text validation status (TEST MODE)
+            print("⏱️ TEST MODE: Pre-populating text validation status columns...")
+            default_text_validation_result = await self.default_text_validation_manager.populate_default_validation_status(
+                self.airtable_server,
+                pending_title['record_id']
+            )
+            
+            if default_text_validation_result.get('success'):
+                print(f"✅ TEST MODE: Pre-populated {default_text_validation_result['columns_updated']} text validation status columns")
+                print(f"📝 All validation status columns set to: {default_text_validation_result['status_value']}")
+            else:
+                print(f"❌ TEST MODE: Failed to populate text validation status columns")
 
             # Step 10: TEST MODE - Skip voice generation (already have default audio)
             print("🎤 TEST MODE: Skipping voice generation (using default audio files)...")
