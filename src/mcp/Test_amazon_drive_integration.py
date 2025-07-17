@@ -6,8 +6,8 @@ from googleapiclient.http import MediaInMemoryUpload
 import sys
 sys.path.append('/home/claude-workflow')
 
-from mcp_servers.enhanced_amazon_scraper import EnhancedAmazonScraper
-from src.mcp.google_drive_agent_mcp import GoogleDriveAgentMCP
+from mcp_servers.Test_enhanced_amazon_scraper import EnhancedAmazonScraper
+from src.mcp.Test_google_drive_agent_mcp import GoogleDriveAgentMCP
 
 logger = logging.getLogger(__name__)
 

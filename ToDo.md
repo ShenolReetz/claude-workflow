@@ -1,122 +1,242 @@
-# ToDo List - Tomorrow's Development Tasks
+# Project TODO List
 
-## 🎬 JSON2Video Structure Improvements
+## Current Session Break - Resume Tasks
 
-### Video Template Enhancements
-- [x] **Enhanced Server Integration**: ✅ **COMPLETED** - Integrated JSON2VideoEnhancedMCPServer into workflow
-- [x] **Product Background Photos**: ✅ **COMPLETED** - Ken Burns effects and gradient overlays implemented
-- [x] **Dynamic Photo Integration**: ✅ **COMPLETED** - Product images display during countdown with animations
-- [x] **Visual Timing Optimization**: ✅ **COMPLETED** - 10-second product segments with synchronized animations
-- [x] **Professional Transitions**: ✅ **COMPLETED** - 5 different transition types (wipe, slide, dissolve, zoom, fade)
-- [x] **Reviews & Ratings Display**: ✅ **COMPLETED** - Star ratings and review counters with animations
+### 🎯 **PRIORITY: Text-to-Speech Timing Validation MCP**
 
-### Audio Integration 
-- [x] **Voice File Integration**: ✅ **COMPLETED** - ElevenLabs voice narration support built-in
-- [x] **Audio Sync**: ✅ **COMPLETED** - Voice segments timed with visual elements
-- [ ] **Background Music**: Consider adding subtle background music that doesn't interfere with voice narration
+#### **Context:**
+Video scenes have strict timing requirements:
+- **Intro:** 5 seconds max
+- **Outro:** 5 seconds max  
+- **Products:** 9 seconds max each
 
-## 📝 Text Generation Optimization
+All titles and descriptions are converted to audio via Text-to-Speech and must fit within these scene durations.
 
-### Content Length Calibration
-- [ ] **Intro Text Timing**: Generate intro text that fits exactly 5 seconds of speech
-- [ ] **Product Description Length**: Optimize product descriptions for 10-second voice segments
-- [ ] **Outro Text Timing**: Generate outro text that fits exactly 5 seconds of speech
-- [ ] **Voice Pacing Analysis**: Analyze ElevenLabs speech speed to calibrate text length accurately
+#### **Required MCP Implementation:**
 
-### Content Quality Improvements
-- [ ] **Ground-Up Text Generation**: Rebuild text generation from scratch for better quality and timing
-- [ ] **Platform-Specific Optimization**: Ensure text works well across all platforms (YouTube, Instagram, WordPress)
-- [ ] **Engagement Optimization**: Improve hook phrases and call-to-action effectiveness
+##### **1. Create Text Length Validation MCP Server**
+- **File:** `mcp_servers/text_length_validation_server.py`
+- **Purpose:** Validate text length against TTS timing requirements
+- **Functionality:**
+  - Calculate estimated TTS duration for given text
+  - Compare against scene timing limits (5s intro/outro, 9s products)
+  - Return validation status: "Approved" or "TooLong"
 
-## 🎤 ElevenLabs Voice File Management
+##### **2. Create Text Length Validation MCP Agent**  
+- **File:** `src/mcp/text_length_validation_agent_mcp.py`
+- **Purpose:** Orchestrate text validation workflow
+- **Functionality:**
+  - Fetch content from Airtable
+  - Validate all text fields via MCP server
+  - Update Airtable status columns with results
 
-### Airtable Integration
-- [ ] **Voice URL Storage**: Save ElevenLabs reference links in Airtable for each voice file
-- [ ] **File Organization**: Implement systematic naming convention for voice files
-- [ ] **Voice Quality Tracking**: Add fields to track voice generation success/failure
-- [ ] **Voice File Backup**: Ensure all voice files are properly backed up in Google Drive
+##### **3. Airtable Status Column Updates**
+The MCP must update these **existing** Airtable columns with `"Approved"` value when validation passes:
 
-### Voice Generation Improvements
-- [ ] **Voice Consistency**: Ensure consistent voice across intro, products, and outro
-- [ ] **Audio Quality**: Optimize voice generation settings for clarity and engagement
-- [ ] **Pronunciation Accuracy**: Handle technical product names and specifications correctly
+**Video Content Columns (5 second limit):**
+- **`VideoTitleStatus`** - Based on `VideoTitle` length validation
+- **`VideoDescriptionStatus`** - Based on `VideoDescription` length validation
 
-## 🖼️ Visual Content Enhancements
+**Product Content Columns (9 second limit each):**
+- **`ProductNo1TitleStatus`** - Based on `ProductNo1Title` length validation
+- **`ProductNo1DescriptionStatus`** - Based on `ProductNo1Description` length validation
+- **`ProductNo2TitleStatus`** - Based on `ProductNo2Title` length validation
+- **`ProductNo2DescriptionStatus`** - Based on `ProductNo2Description` length validation
+- **`ProductNo3TitleStatus`** - Based on `ProductNo3Title` length validation
+- **`ProductNo3DescriptionStatus`** - Based on `ProductNo3Description` length validation
+- **`ProductNo4TitleStatus`** - Based on `ProductNo4Title` length validation
+- **`ProductNo4DescriptionStatus`** - Based on `ProductNo4Description` length validation
+- **`ProductNo5TitleStatus`** - Based on `ProductNo5Title` length validation
+- **`ProductNo5DescriptionStatus`** - Based on `ProductNo5Description` length validation
 
-### Intro Photo Generation
-- [ ] **All-Products Intro Image**: Generate intro photo featuring all 5 products from the Top 5 list
-- [ ] **Visual Composition**: Create appealing layout showing all products in single intro frame
-- [ ] **Brand Consistency**: Ensure intro image matches overall video aesthetic
-- [ ] **OpenAI Integration**: Use DALL-E to create compelling intro visuals
+**Status Values:** 
+- `"Approved"` - Text fits within timing requirements
+- `"Pending"` - Awaiting validation or needs processing
+- `"Rejected"` - Text exceeds maximum scene duration (needs shortening)
 
-### Image Quality Control
-- [ ] **Photo Resolution**: Ensure all images meet JSON2Video quality requirements
-- [ ] **Aspect Ratio Optimization**: Optimize images for vertical video format (9:16)
-- [ ] **Visual Consistency**: Maintain consistent style across all product images
+**EXACT COLUMN NAMES FOR IMPLEMENTATION:**
 
-## 🔗 Affiliate Link Integration
+📊 **Video Content Status Columns (5-second limit):**
+```
+VideoTitleStatus        → Validates: VideoTitle field
+VideoDescriptionStatus  → Validates: VideoDescription field
+```
 
-### Airtable Storage
-- [ ] **Affiliate Link Fields**: Ensure all Amazon affiliate links are properly saved in Airtable
-- [ ] **Product Ratings Storage**: Save product ratings in ProductNo1-5Rating fields in Airtable
-- [ ] **Product Reviews Storage**: Save product review counts in ProductNo1-5Reviews fields in Airtable
-- [ ] **Link Validation**: Implement validation to ensure affiliate links are working
-- [ ] **Revenue Tracking**: Add fields to track affiliate link performance
+📦 **Product Content Status Columns (9-second limit each):**
+```
+ProductNo1TitleStatus       → Validates: ProductNo1Title field
+ProductNo1DescriptionStatus → Validates: ProductNo1Description field
+ProductNo2TitleStatus       → Validates: ProductNo2Title field
+ProductNo2DescriptionStatus → Validates: ProductNo2Description field
+ProductNo3TitleStatus       → Validates: ProductNo3Title field
+ProductNo3DescriptionStatus → Validates: ProductNo3Description field
+ProductNo4TitleStatus       → Validates: ProductNo4Title field
+ProductNo4DescriptionStatus → Validates: ProductNo4Description field
+ProductNo5TitleStatus       → Validates: ProductNo5Title field
+ProductNo5DescriptionStatus → Validates: ProductNo5Description field
+```
 
-### Social Media Integration
-- [ ] **YouTube Descriptions**: Add affiliate links to YouTube video descriptions
-- [ ] **Instagram Captions**: Include affiliate links in Instagram post captions
-- [ ] **WordPress Posts**: Embed affiliate links naturally in blog post content
-- [ ] **TikTok Integration**: Prepare affiliate links for TikTok when API is approved
+📋 **Total Status Columns to Update:** 12 columns
 
-## ⚡ System Performance Optimizations
+🔄 **Status Update Workflow:**
+1. **Initial State:** All columns start as `"Pending"` or empty
+2. **Validation Process:** Each text field is validated against timing requirements
+3. **Status Assignment:**
+   - `"Approved"` → Text fits within timing requirements
+   - `"Rejected"` → Text exceeds timing limits (triggers regeneration)
+   - `"Pending"` → Awaiting validation or during regeneration process
+4. **Regeneration Cycle:** Failed fields → "Pending" → Regenerate → Re-validate → "Approved"/"Rejected"
+5. **Final State:** All columns should be either "Approved" or "Rejected"
 
-### Timeout Removal
-- [ ] **Complete Timeout Elimination**: Remove ALL remaining timeout constraints from the system
-- [ ] **Uninterrupted Workflow**: Ensure full end-to-end flow can run without interruptions
-- [ ] **Error Handling**: Improve error handling without relying on timeouts
-- [ ] **Process Monitoring**: Add better logging for long-running operations
+#### **4. Technical Implementation Details**
 
-### API Integration Fixes
-- [ ] **YouTube Token Refresh**: Fix YouTube API token refresh issues
-- [ ] **Instagram Access Token**: Resolve Instagram API authentication problems
-- [ ] **Error Recovery**: Implement better retry logic for API failures
+##### **Text-to-Speech Duration Calculation:**
+- Use average speaking rate: ~150-180 words per minute
+- Calculate: `(word_count / speaking_rate) * 60 = seconds`
+- Add buffer for natural speech pauses (10-20%)
 
-## 🔄 Workflow Quality Assurance
+##### **Validation Logic:**
+```python
+def validate_text_timing(text: str, max_seconds: int) -> str:
+    """
+    Validate if text fits within timing requirements
+    Returns: "Approved", "Pending", or "Rejected"
+    """
+    word_count = len(text.split())
+    speaking_rate = 150  # words per minute
+    estimated_seconds = (word_count / speaking_rate) * 60 * 1.2  # 20% buffer
+    
+    return "Approved" if estimated_seconds <= max_seconds else "Rejected"
+```
 
-### End-to-End Testing
-- [ ] **Complete Flow Validation**: Test entire workflow from Airtable to final video
-- [ ] **Multi-Platform Testing**: Verify content works across all platforms
-- [ ] **Quality Metrics**: Implement automated quality checking for generated content
+##### **Field Validation Mapping:**
+```python
+validation_fields = {
+    # Video fields (5 second limit)
+    'VideoTitle': {'column': 'VideoTitleStatus', 'max_seconds': 5},
+    'VideoDescription': {'column': 'VideoDescriptionStatus', 'max_seconds': 5},
+    
+    # Product fields (9 second limit each)
+    'ProductNo1Title': {'column': 'ProductNo1TitleStatus', 'max_seconds': 9},
+    'ProductNo1Description': {'column': 'ProductNo1DescriptionStatus', 'max_seconds': 9},
+    'ProductNo2Title': {'column': 'ProductNo2TitleStatus', 'max_seconds': 9},
+    'ProductNo2Description': {'column': 'ProductNo2DescriptionStatus', 'max_seconds': 9},
+    'ProductNo3Title': {'column': 'ProductNo3TitleStatus', 'max_seconds': 9},
+    'ProductNo3Description': {'column': 'ProductNo3DescriptionStatus', 'max_seconds': 9},
+    'ProductNo4Title': {'column': 'ProductNo4TitleStatus', 'max_seconds': 9},
+    'ProductNo4Description': {'column': 'ProductNo4DescriptionStatus', 'max_seconds': 9},
+    'ProductNo5Title': {'column': 'ProductNo5TitleStatus', 'max_seconds': 9},
+    'ProductNo5Description': {'column': 'ProductNo5DescriptionStatus', 'max_seconds': 9},
+}
+```
 
-### Documentation Updates
-- [ ] **Process Documentation**: Update workflow documentation with new improvements
-- [ ] **API Documentation**: Document all API integrations and requirements
-- [ ] **Troubleshooting Guide**: Create guide for common issues and solutions
+#### **5. Workflow Integration**
+
+##### **Production Workflow Integration:**
+- Add step in `src/workflow_runner.py` after content generation
+- Integrate before video generation to ensure timing compliance
+- Position: After text generation, before audio generation
+
+##### **Test Workflow Integration:**
+- Create `mcp_servers/Test_text_length_validation_server.py`
+- Create `src/mcp/Test_text_length_validation_agent_mcp.py`
+- Add step in `src/Test_workflow_runner.py`
+- Test with existing 2-word default audio (should always pass validation)
+
+#### **6. Error Handling & Remediation**
+
+##### **When Text is Rejected:**
+- Log specific field that failed validation
+- Provide word count and estimated duration
+- Suggest text truncation or regeneration
+- Option to trigger content regeneration with shorter prompts
+
+##### **Logging Example:**
+```
+❌ ProductNo3Description rejected: 45 words, ~18.5 seconds (limit: 9 seconds)
+✅ VideoTitle approved: 8 words, ~3.2 seconds (limit: 5 seconds)
+⏳ ProductNo1Title pending: awaiting validation
+```
+
+#### **7. Configuration & Testing**
+
+##### **Configuration Options:**
+- Adjustable speaking rate (default: 150 WPM)
+- Configurable buffer percentage (default: 20%)
+- Enable/disable strict mode (fail workflow vs warn only)
+
+##### **Testing Requirements:**
+- Test with various text lengths
+- Validate timing calculations accuracy
+- Ensure Airtable updates work correctly
+- Integration test with full workflow
 
 ---
 
-## 🎯 Priority Order
+## **Implementation Priority Order:**
 
-1. **JSON2Video structure improvements** (highest impact on video quality)
-2. **Text generation timing optimization** (critical for voice sync)
-3. **ElevenLabs reference link storage** (important for file management)
-4. **Affiliate link integration** (revenue critical)
-5. **Complete timeout removal** (workflow reliability)
-6. **Intro photo generation** (visual appeal enhancement)
+### **Phase 1: Core MCP Development**
+1. **[✅]** Create `mcp_servers/text_length_validation_server.py`
+2. **[✅]** Create `src/mcp/text_length_validation_agent_mcp.py`
+3. **[✅]** Implement TTS duration calculation logic
+4. **[✅]** Implement Airtable status column updates
+
+### **Phase 2: Test Environment Integration**
+1. **[✅]** Create Test versions with `Test_` prefix
+2. **[✅]** Integrate into `src/Test_workflow_runner.py`
+3. **[ ]** Test with default 2-word audio content
+4. **[ ]** Verify all status columns update correctly
+
+### **Phase 3: Production Integration**
+1. **[✅]** Integrate into `src/workflow_runner.py`
+2. **[✅]** Position after content generation, before audio generation
+3. **[ ]** Test with real content generation
+4. **[ ]** Verify timing compliance with actual TTS generation
+
+### **Phase 4: Error Handling & Optimization**
+1. **[✅]** Implement content regeneration triggers for failed validation
+2. **[✅]** Add configuration options for timing adjustments
+3. **[✅]** Create comprehensive logging and monitoring
+4. **[✅]** Documentation and integration guides
 
 ---
 
-## 📊 Success Criteria
+## **Future Enhancements (Lower Priority)**
 
-- [ ] 60-second videos with perfect audio-visual sync
-- [ ] All voice files properly stored and accessible in Airtable
-- [ ] Affiliate links working across all platforms
-- [ ] Complete workflow runs without any timeouts or interruptions
-- [ ] Professional-quality intro visuals featuring all products
-- [ ] Optimal text length for 5-second intro, 10-second products, 5-second outro
-- [ ] Product ratings and reviews properly stored in ProductNo1-5Rating and ProductNo1-5Reviews fields
+### **Advanced TTS Integration:**
+- **[ ]** Direct integration with ElevenLabs API for accurate timing
+- **[ ]** Voice-specific timing calibration
+- **[ ]** Real-time duration measurement vs estimation
+
+### **Content Optimization:**
+- **[ ]** Automatic text shortening for failed validations
+- **[ ]** Intelligent summarization for overly long descriptions
+- **[ ]** Template-based content regeneration with length constraints
+
+### **Monitoring & Analytics:**
+- **[ ]** Track validation success rates
+- **[ ]** Analyze common failure patterns
+- **[ ]** Generate timing optimization reports
 
 ---
 
-*Generated: 2025-07-16 - Ready for tomorrow's development session*
+## **Technical Notes:**
+
+### **Dependencies:**
+- Existing Airtable MCP integration
+- Text processing utilities
+- Workflow integration framework
+
+### **Performance Considerations:**
+- Validation should be fast (< 1 second per record)
+- Batch processing for multiple records
+- Minimal API calls required
+
+### **Integration Points:**
+- Must work with existing content generation
+- Compatible with Test workflow optimizations
+- Fits into video prerequisite validation system
+
+---
+
+*This TODO list should be implemented after the current break to ensure proper TTS timing compliance in video generation.*

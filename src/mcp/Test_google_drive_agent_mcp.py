@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 # Import the Google Drive server
 import sys
 sys.path.append('/home/claude-workflow')
-from mcp_servers.google_drive_server import GoogleDriveMCPServer
+from mcp_servers.Test_google_drive_server import GoogleDriveMCPServer
 
 class GoogleDriveAgentMCP:
     """Controls the Google Drive upload workflow"""

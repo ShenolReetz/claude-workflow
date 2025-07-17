@@ -18,11 +18,14 @@ from bs4 import BeautifulSoup
 
 # ScrapingDog integration
 try:
-    from mcp_servers.scrapingdog_amazon_server import ScrapingDogAmazonServer
+    from mcp_servers.Test_scrapingdog_amazon_server import ScrapingDogAmazonServer
     SCRAPINGDOG_AVAILABLE = True
 except ImportError:
     SCRAPINGDOG_AVAILABLE = False
     ScrapingDogAmazonServer = None
+
+# Test default affiliate manager
+from mcp_servers.Test_default_affiliate_manager import TestDefaultAffiliateManager
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -34,6 +37,9 @@ class AmazonAffiliateMCPServer:
     def __init__(self, associate_id: str, config: Dict[str, Any]):
         self.associate_id = associate_id
         self.config = config
+        
+        # Initialize default affiliate manager for TEST MODE
+        self.affiliate_manager = TestDefaultAffiliateManager()
         
         # Rate limiting for Amazon searches
         self.last_request_time = 0
@@ -317,35 +323,79 @@ class AmazonAffiliateMCPServer:
             }
 
     async def generate_affiliate_links_batch(self, record_id: str, product_titles: List[Dict]) -> Dict[str, Any]:
-        """Generate affiliate links for a batch of products"""
-        logger.info(f"🔗 Starting affiliate link generation for {len(product_titles)} products")
+        """Generate affiliate links for a batch of products (TEST MODE: Uses default links)"""
+        logger.info(f"🔗 TEST MODE: Using default affiliate links instead of scraping")
+        logger.info(f"📦 Processing {len(product_titles)} products with pre-generated data")
         
         affiliate_links = {}
         results = []
+        
+        # Extract category from first product title for category-specific links
+        category = self._detect_category(product_titles[0]['title'] if product_titles else '')
         
         for product_info in product_titles:
             product_number = product_info['number']
             product_title = product_info['title']
             
-            logger.info(f"🔍 Processing Product{product_number}: {product_title}")
+            logger.info(f"🔍 TEST MODE: Using default data for Product{product_number}: {product_title}")
             
-            # Search Amazon and generate link
-            result = await self.search_and_generate_link(product_title, product_number)
+            # Get default affiliate data instead of scraping
+            affiliate_data = self.affiliate_manager.get_affiliate_link(product_number, category)
             
-            if result['success']:
-                affiliate_link_key = f'ProductNo{product_number}AffiliateLink'
-                affiliate_links[affiliate_link_key] = result['affiliate_link']
-                logger.info(f"✅ Generated affiliate link for Product{product_number}")
-            else:
-                logger.warning(f"❌ Failed to generate link for Product{product_number}: {result.get('error', 'Unknown error')}")
+            # Format result to match expected structure
+            result = {
+                'success': True,
+                'affiliate_link': affiliate_data['affiliate_link'],
+                'price': affiliate_data['price'],
+                'rating': affiliate_data['rating'],
+                'reviews': affiliate_data['reviews'],
+                'title': affiliate_data['title'],
+                'description': affiliate_data['description'],
+                'product_number': product_number,
+                'source': 'TEST_MODE_DEFAULT'
+            }
+            
+            affiliate_link_key = f'ProductNo{product_number}AffiliateLink'
+            affiliate_links[affiliate_link_key] = result['affiliate_link']
+            
+            # Also add pricing data to affiliate_links for Airtable update
+            affiliate_links[f'ProductNo{product_number}Price'] = result['price']
+            affiliate_links[f'ProductNo{product_number}Rating'] = result['rating']
+            affiliate_links[f'ProductNo{product_number}Reviews'] = result['reviews']
+            
+            logger.info(f"✅ TEST MODE: Using default affiliate link for Product{product_number}")
+            logger.info(f"💰 Price: {result['price']} | Rating: {result['rating']}⭐ | Reviews: {result['reviews']}")
             
             results.append(result)
+        
+        logger.info(f"✅ TEST MODE: Generated {len(affiliate_links)} affiliate fields using defaults")
+        logger.info(f"💸 Cost savings: Avoided {len(product_titles)} Amazon API calls")
         
         return {
             'record_id': record_id,
             'affiliate_links': affiliate_links,
             'results': results
         }
+    
+    def _detect_category(self, title: str) -> Optional[str]:
+        """Detect product category from title for category-specific affiliate links"""
+        title_lower = title.lower()
+        
+        # Category mappings
+        if any(word in title_lower for word in ['gaming', 'computer', 'tech', 'electronics', 'rgb']):
+            return 'electronics'
+        elif any(word in title_lower for word in ['kitchen', 'home', 'house', 'counter']):
+            return 'home_kitchen'
+        elif any(word in title_lower for word in ['car', 'auto', 'vehicle', 'automotive']):
+            return 'automotive'
+        elif any(word in title_lower for word in ['sports', 'outdoor', 'fitness', 'exercise']):
+            return 'sports_outdoors'
+        elif any(word in title_lower for word in ['beauty', 'personal', 'care', 'cosmetic']):
+            return 'beauty_personal_care'
+        elif any(word in title_lower for word in ['fashion', 'clothing', 'style', 'apparel']):
+            return 'fashion'
+        
+        return None  # Use default category
 
     async def close(self):
         """Clean up resources"""

@@ -1,16 +1,16 @@
 import asyncio
 import json
 import sys
-sys.path.append('/app')
+sys.path.append('/home/claude-workflow')
 
 from mcp_servers.google_drive_server import GoogleDriveMCPServer
 
 async def test_drive_connection():
-    with open('/app/config/api_keys.json', 'r') as f:
+    with open('/home/claude-workflow/config/api_keys.json', 'r') as f:
         config = json.load(f)
     
     # Initialize Google Drive server
-    drive_server = GoogleDriveMCPServer(config['google_drive_credentials'])
+    drive_server = GoogleDriveMCPServer(config)
     
     # Test 1: Initialize service
     print("🔑 Testing Google Drive API connection...")

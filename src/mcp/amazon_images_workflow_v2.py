@@ -20,7 +20,12 @@ async def download_and_save_amazon_images_v2(config: Dict, record_id: str,
     
     # Initialize services
     drive_agent = GoogleDriveAgentMCP(config)
-    drive_service = await drive_agent.initialize()
+    initialization_success = await drive_agent.initialize()
+    
+    if not initialization_success:
+        raise Exception("Failed to initialize Google Drive service")
+    
+    drive_service = drive_agent.drive_server.service
     airtable_server = AirtableMCPServer(
         api_key=config['airtable_api_key'],
         base_id=config['airtable_base_id'],
@@ -36,13 +41,15 @@ async def download_and_save_amazon_images_v2(config: Dict, record_id: str,
     }
     
     try:
-        # Get folder structure
-        n8n_folder = await drive_agent._find_or_create_folder('N8N Projects', None)
-        project_folder = await drive_agent._find_or_create_folder(project_title[:50], n8n_folder)
-        photos_folder = await drive_agent._find_or_create_folder('Photos', project_folder)
+        # Get folder structure using the drive_server methods
+        folder_structure = await drive_agent.drive_server.create_project_structure(project_title[:50])
+        photos_folder = folder_structure.get('photos')
+        
+        if not photos_folder:
+            raise Exception("Failed to create Photos folder structure")
         
         # HTTP client for downloading images
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=86400) as client:
             airtable_updates = {}
             
             # Process each product
@@ -84,7 +91,8 @@ async def download_and_save_amazon_images_v2(config: Dict, record_id: str,
                     drive_url = uploaded_file.get('webViewLink', '')
                     
                     # Update Airtable with Drive image URL
-                    airtable_updates[f'ProductNo{i}DriveImageURL'] = drive_url
+                    airtable_updates[f'ProductNo{i}Photo'] = drive_url
+                    airtable_updates[f'ProductNo{i}PhotoStatus'] = 'Ready'
                     
                     results['images_saved'] += 1
                     results['products_with_images'] += 1
@@ -139,7 +147,7 @@ async def verify_image_downloads(config: Dict, record_id: str) -> Dict:
         # Check each product's image URLs
         for i in range(1, 6):
             amazon_url = fields.get(f'ProductNo{i}ImageURL', '')
-            drive_url = fields.get(f'ProductNo{i}DriveImageURL', '')
+            drive_url = fields.get(f'ProductNo{i}Photo', '')
             
             verification_results['image_status'][f'product_{i}'] = {
                 'has_amazon_url': bool(amazon_url),

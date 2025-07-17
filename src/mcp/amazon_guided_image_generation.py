@@ -21,7 +21,12 @@ async def generate_amazon_guided_openai_images(config: Dict, record_id: str,
     
     # Initialize services
     drive_agent = GoogleDriveAgentMCP(config)
-    drive_service = await drive_agent.initialize()
+    initialization_success = await drive_agent.initialize()
+    
+    if not initialization_success:
+        raise Exception("Failed to initialize Google Drive service")
+    
+    drive_service = drive_agent.drive_server.service
     
     airtable_server = AirtableMCPServer(
         api_key=config['airtable_api_key'],
@@ -52,7 +57,7 @@ async def generate_amazon_guided_openai_images(config: Dict, record_id: str,
         logger.info(f"📁 Using Photos folder: {photos_folder}")
         
         # HTTP client for downloading generated images
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=86400) as client:
             airtable_updates = {}
             
             # Process each product with Amazon reference
@@ -184,7 +189,7 @@ async def verify_openai_image_generation(config: Dict, record_id: str) -> Dict:
         # Check each product's image URLs (Amazon vs OpenAI)
         for i in range(1, 6):
             amazon_url = fields.get(f'ProductNo{i}ImageURL', '')
-            amazon_drive_url = fields.get(f'ProductNo{i}DriveImageURL', '')
+            amazon_drive_url = fields.get(f'ProductNo{i}Photo', '')
             openai_drive_url = fields.get(f'ProductNo{i}OpenAIImageURL', '')
             
             verification_results['image_comparison'][f'product_{i}'] = {

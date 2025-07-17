@@ -16,8 +16,8 @@ sys.path.append('/app')
 sys.path.append('/home/claude-workflow')
 
 # Import your existing servers (following your pattern)
-from mcp_servers.airtable_server import AirtableMCPServer
-from mcp_servers.json2video_enhanced_server_v2 import JSON2VideoEnhancedMCPServerV2
+from mcp_servers.Test_airtable_server import AirtableMCPServer
+from mcp_servers.Test_json2video_enhanced_server_v2 import JSON2VideoEnhancedMCPServerV2
 
 class JSON2VideoAgentMCP:
     """Controls the video creation workflow logic"""

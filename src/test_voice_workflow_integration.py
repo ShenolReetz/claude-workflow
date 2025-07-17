@@ -45,12 +45,15 @@ async def test_voice_generation_workflow():
     voice_text_data = await orchestrator.generate_voice_text(script_data, optimized_title)
     
     print(f"✅ Generated voice text for {len(voice_text_data)} segments")
-    print(f"   Intro: {voice_text_data.get('IntroVoiceText', 'N/A')[:50]}...")
-    print(f"   Outro: {voice_text_data.get('OutroVoiceText', 'N/A')[:50]}...")
+    print(f"   Intro: {voice_text_data.get('IntroHook', 'N/A')[:50]}...")
+    print(f"   Outro: {voice_text_data.get('OutroCallToAction', 'N/A')[:50]}...")
     
-    for i in range(1, 4):
-        product_text = voice_text_data.get(f'ProductNo{i}VoiceText', 'N/A')
-        print(f"   Product {i}: {product_text[:50]}...")
+    # Show VideoScript which contains all product voice text
+    video_script = voice_text_data.get('VideoScript', 'N/A')
+    if video_script != 'N/A':
+        print(f"   VideoScript: {video_script[:100]}...")
+    else:
+        print("   VideoScript: No combined script generated")
     
     # Test voice generation (this will use ElevenLabs API)
     print("\n🎤 Testing voice generation with ElevenLabs...")

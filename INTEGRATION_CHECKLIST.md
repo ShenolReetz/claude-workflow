@@ -210,12 +210,17 @@ If integration fails:
    - Purpose: Avoid 1000+ token costs for WordPress blog content generation
    - Integration Risk: Would use template content instead of custom generated blogs
 
-5. **Video Timing Optimization**
+5. **Default Text Validation System**
+   - Files: `mcp_servers/Test_default_text_validation_manager.py`
+   - Purpose: Pre-populate all 12 text validation status columns with "Approved"
+   - Integration Risk: Would bypass actual TTS timing validation
+
+6. **Video Timing Optimization**
    - Modified: `mcp_servers/Test_json2video_enhanced_server_v2.py`
    - Changes: 2-second scenes instead of 5-9 seconds (14-second total vs 45+ second videos)
    - Integration Risk: Would create too-short production videos
 
-6. **Video Prerequisite Control System**
+7. **Video Prerequisite Control System**
    - Files: `mcp_servers/Test_video_prerequisite_control_server.py`, `src/mcp/Test_video_prerequisite_control_agent_mcp.py`
    - Purpose: Validate all prerequisites before video generation (test-specific workflow optimization)
    - Integration Consideration: May be useful for production if adapted for full-length videos
@@ -226,10 +231,12 @@ If integration fails:
 - [ ] **Verify no test_default_affiliate_links.json references**
 - [ ] **Verify no test_default_wordpress_content.json references**
 - [ ] **Verify no Test_default_*_manager.py imports**
+- [ ] **Verify no Test_default_text_validation_manager.py imports**
 - [ ] **Verify video scenes are 5-9 seconds, not 2 seconds**
 - [ ] **Verify no TEST_MODE constants or flags**
 - [ ] **Verify affiliate links use real Amazon scraping, not defaults**
 - [ ] **Verify WordPress content uses real generation, not templates**
+- [ ] **Verify text validation uses actual TTS timing checks, not auto-approval**
 
 ## Best Practices
 
