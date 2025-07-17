@@ -8,21 +8,55 @@ class AirtableMCPServer:
         self.airtable = Airtable(base_id, table_name, api_key)
         
     async def get_pending_titles(self, limit: int = 1) -> Optional[Dict]:
-        """Get titles with 'Pending' status from Airtable"""
+        """Get titles with 'Pending' status from Airtable by lowest ID"""
         try:
-            records = self.airtable.search('Status', 'Pending', max_records=limit)
-            if records:
-                record = records[0]
+            # Get all pending records and sort by ID (lowest first)
+            all_records = self.airtable.get_all(formula="Status = 'Pending'")
+            
+            if all_records:
+                # Sort by ID field (numerical order, lowest first)
+                def get_id(record):
+                    id_value = record['fields'].get('ID', float('inf'))
+                    return id_value if isinstance(id_value, (int, float)) else float('inf')
+                
+                sorted_records = sorted(all_records, key=get_id)
+                
+                # Take the record with the lowest ID
+                record = sorted_records[0]
+                id_value = get_id(record)
+                
+                # Get the record info for logging
+                title_preview = record['fields'].get('Title', '')[:50]
+                record_id = record['id']
+                
+                print(f"📋 Selected title with ID #{id_value}: {title_preview}...")
+                print(f"   Record ID: {record_id}")
+                
                 return {
                     'record_id': record['id'],
                     'title': record['fields'].get('Title', ''),
                     'video_title': record['fields'].get('VideoTitle', ''),
                     'video_title_status': record['fields'].get('VideoTitleStatus', ''),
-                    'status': record['fields'].get('Status', '')
+                    'status': record['fields'].get('Status', ''),
+                    'title_id': id_value
                 }
             return None
         except Exception as e:
-            print(f"Error fetching pending titles: {e}")
+            print(f"Error fetching pending titles by ID: {e}")
+            # Fallback to original method if sorting fails
+            try:
+                records = self.airtable.search('Status', 'Pending', max_records=limit)
+                if records:
+                    record = records[0]
+                    return {
+                        'record_id': record['id'],
+                        'title': record['fields'].get('Title', ''),
+                        'video_title': record['fields'].get('VideoTitle', ''),
+                        'video_title_status': record['fields'].get('VideoTitleStatus', ''),
+                        'status': record['fields'].get('Status', '')
+                    }
+            except Exception as fallback_error:
+                print(f"Fallback also failed: {fallback_error}")
             return None
     
     async def save_voice_data(self, record_id: str, voice_data: Dict) -> bool:
