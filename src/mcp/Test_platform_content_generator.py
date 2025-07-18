@@ -7,7 +7,7 @@ Generates optimized titles and descriptions for different platforms using existi
 import asyncio
 import json
 import logging
-import httpx
+import random
 from typing import Dict, List, Optional
 import re
 from pathlib import Path
@@ -17,26 +17,21 @@ import sys
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from mcp_servers.Test_airtable_server import AirtableMCPServer
-from mcp_servers.Test_default_wordpress_manager import TestDefaultWordPressManager
+from mcp_servers.Test_content_generation_server import ContentGenerationMCPServer
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class PlatformContentGenerator:
-    """Generate platform-specific content with SEO optimization"""
+    """TEST MODE: Generate hardcoded platform-specific content"""
     
     def __init__(self, config: Dict):
         self.config = config
-        self.anthropic_api_key = config['anthropic_api_key']
-        self.client = httpx.AsyncClient(timeout=86400)
         
-        # Initialize default WordPress manager for TEST MODE
-        self.wordpress_manager = TestDefaultWordPressManager()
-        self.headers = {
-            "x-api-key": self.anthropic_api_key,
-            "anthropic-version": "2023-06-01",
-            "content-type": "application/json"
-        }
+        # Initialize the hardcoded content generation server
+        self.content_server = ContentGenerationMCPServer(config.get('anthropic_api_key', ''))
+        
+        logger.info("✅ TEST MODE: Platform Content Generator initialized with hardcoded data")
         
         # Platform-specific constraints
         self.platform_specs = {
@@ -100,41 +95,64 @@ class PlatformContentGenerator:
         
         results = {}
         
-        # Generate YouTube content
-        logger.info("📹 Generating YouTube content...")
-        youtube_result = await self._generate_youtube_content(
-            base_title, youtube_keywords, products, category
+        # Generate platform keywords
+        platform_keywords = await self.content_server.generate_multi_platform_keywords(base_title, products)
+        
+        # Generate platform metadata using hardcoded content server
+        logger.info("📹 TEST MODE: Generating platform content...")
+        platform_metadata = await self.content_server.generate_platform_upload_metadata(
+            base_title, products, platform_keywords, products
         )
+        
+        # YouTube
+        youtube_data = platform_metadata.get('youtube', {})
+        youtube_result = {
+            'title': youtube_data.get('title', f'🔥 Top 5 {category} of 2025 - Best Reviews'),
+            'description': youtube_data.get('description', 'Check out our top 5 picks!'),
+            'title_length': len(youtube_data.get('title', '')),
+            'description_length': len(youtube_data.get('description', '')),
+            'keywords_used': len(youtube_data.get('tags', []))
+        }
         results['youtube'] = youtube_result
+        logger.info("✅ TEST MODE: YouTube content ready (no tokens used)")
         
-        # Generate TikTok content
-        logger.info("🎵 Generating TikTok content...")
-        tiktok_result = await self._generate_tiktok_content(
-            base_title, tiktok_keywords, products, category
-        )
+        # TikTok
+        tiktok_data = platform_metadata.get('tiktok', {})
+        tiktok_result = {
+            'title': tiktok_data.get('title', f'🔥 5 INSANE {category} #MustHave'),
+            'description': tiktok_data.get('caption', 'Check these out! #Trending'),
+            'title_length': len(tiktok_data.get('title', '')),
+            'description_length': len(tiktok_data.get('caption', '')),
+            'keywords_used': len(tiktok_data.get('hashtags', []))
+        }
         results['tiktok'] = tiktok_result
+        logger.info("✅ TEST MODE: TikTok content ready (no tokens used)")
         
-        # Generate Instagram content
-        logger.info("📸 Generating Instagram content...")
-        instagram_result = await self._generate_instagram_content(
-            base_title, instagram_hashtags, products, category
-        )
+        # Instagram
+        instagram_data = platform_metadata.get('instagram', {})
+        instagram_result = {
+            'title': instagram_data.get('title', f'✨ Must-Have {category} 2025'),
+            'caption': instagram_data.get('caption', 'Amazing finds! Link in bio!'),
+            'title_length': len(instagram_data.get('title', '')),
+            'caption_length': len(instagram_data.get('caption', '')),
+            'hashtags_used': len(instagram_data.get('hashtags', []))
+        }
         results['instagram'] = instagram_result
+        logger.info("✅ TEST MODE: Instagram content ready (no tokens used)")
         
-        # Generate WordPress content (TEST MODE: Use default content)
-        logger.info("📝 TEST MODE: Using default WordPress content...")
-        wordpress_data = self.wordpress_manager.get_wordpress_content(base_title, category)
+        # WordPress
+        wordpress_data = platform_metadata.get('wordpress', {})
         wordpress_result = {
-            'title': wordpress_data['title'],
-            'content': wordpress_data['content'],
-            'title_length': len(wordpress_data['title']),
-            'content_length': len(wordpress_data['content']),
-            'keywords_used': wordpress_seo[:5],  # Simulate some keywords used
-            'template_used': wordpress_data['template_used'],
-            'word_count': wordpress_data['word_count']
+            'title': wordpress_data.get('title', f'Best {category} 2025: Complete Guide'),
+            'content': wordpress_data.get('content', 'Comprehensive review and buying guide.'),
+            'title_length': len(wordpress_data.get('title', '')),
+            'content_length': len(wordpress_data.get('content', '')),
+            'keywords_used': wordpress_data.get('focus_keywords', [])[:5],
+            'template_used': 'hardcoded',
+            'word_count': len(wordpress_data.get('content', '').split())
         }
         results['wordpress'] = wordpress_result
-        logger.info(f"✅ TEST MODE: WordPress content ready ({wordpress_data['word_count']} words, ~1000+ tokens saved)")
+        logger.info(f"✅ TEST MODE: WordPress content ready ({results['wordpress']['word_count']} words, no tokens used)")
         
         # Calculate analytics
         logger.info("📊 Calculating SEO and engagement metrics...")
@@ -183,39 +201,36 @@ Format your response as:
 TITLE: [YouTube title here]
 DESCRIPTION: [YouTube description here]"""
 
+        # TEST MODE: Return hardcoded YouTube content
         try:
-            response = await self.client.post(
-                "https://api.anthropic.com/v1/messages",
-                headers=self.headers,
-                json={
-                    "model": "claude-3-opus-20240229",
-                    "messages": [{"role": "user", "content": prompt}],
-                    "max_tokens": 1000,
-                    "temperature": 0.7
-                }
-            )
+            title = f"🎯 {base_title} - Complete Review & Buying Guide!"
+            description = f"""🔥 Complete {category} buying guide! We've tested and reviewed the TOP 5 {category} so you don't have to!
+
+⭐ What's covered in this video:
+• Detailed product comparisons
+• Price analysis and best deals
+• Real user reviews and ratings
+• Pros and cons of each product
+• Our expert recommendations
+
+🎯 Keywords: {', '.join(keywords[:10])}
+
+🛒 Products featured:
+{chr(10).join([f'• {p.get("title", "Product")} - ${p.get("price", "0")}' for p in products[:5]])}
+
+📊 Don't forget to LIKE, SUBSCRIBE, and hit the BELL for more honest reviews!
+
+#ProductReview #{category.replace(' ', '')} #BuyingGuide #TechReview #BestProducts2025
+
+⚠️ Affiliate Disclaimer: This video contains affiliate links. We may earn a small commission at no extra cost to you."""
             
-            if response.status_code == 200:
-                result = response.json()
-                content = result['content'][0]['text']
-                
-                # Parse response
-                title_match = re.search(r'TITLE:\s*(.+)', content)
-                desc_match = re.search(r'DESCRIPTION:\s*(.+)', content, re.DOTALL)
-                
-                if title_match and desc_match:
-                    title = title_match.group(1).strip()
-                    description = desc_match.group(1).strip()
-                    
-                    return {
-                        'title': title,
-                        'description': description,
-                        'title_length': len(title),
-                        'description_length': len(description),
-                        'keywords_used': len([k for k in keywords if k.lower() in description.lower()])
-                    }
-            
-            return {'error': 'Failed to generate YouTube content'}
+            return {
+                'title': title,
+                'description': description,
+                'title_length': len(title),
+                'description_length': len(description),
+                'keywords_used': len([k for k in keywords if k.lower() in description.lower()])
+            }
             
         except Exception as e:
             logger.error(f"❌ Error generating YouTube content: {e}")
@@ -253,39 +268,24 @@ Format your response as:
 TITLE: [TikTok title here]
 DESCRIPTION: [TikTok description here]"""
 
+        # TEST MODE: Return hardcoded TikTok content
         try:
-            response = await self.client.post(
-                "https://api.anthropic.com/v1/messages",
-                headers=self.headers,
-                json={
-                    "model": "claude-3-opus-20240229",
-                    "messages": [{"role": "user", "content": prompt}],
-                    "max_tokens": 500,
-                    "temperature": 0.8
-                }
-            )
+            title = f"🔥 {base_title.replace('Top 5', 'TOP 5')} YOU NEED!"
+            description = f"""OMG these {category} are INSANE! 🤯 
+
+Which one would you pick? Drop a comment! 👇
+
+#{category.replace(' ', '')} #TechTok #ProductReview #MustHave #Viral #FYP #BestProducts #TechReview #Shopping #BuyingGuide #TechFinds
+
+🛒 Links in bio for best deals! 💰"""
             
-            if response.status_code == 200:
-                result = response.json()
-                content = result['content'][0]['text']
-                
-                # Parse response
-                title_match = re.search(r'TITLE:\s*(.+)', content)
-                desc_match = re.search(r'DESCRIPTION:\s*(.+)', content, re.DOTALL)
-                
-                if title_match and desc_match:
-                    title = title_match.group(1).strip()
-                    description = desc_match.group(1).strip()
-                    
-                    return {
-                        'title': title,
-                        'description': description,
-                        'title_length': len(title),
-                        'description_length': len(description),
-                        'keywords_used': len([k for k in keywords if k.lower() in description.lower()])
-                    }
-            
-            return {'error': 'Failed to generate TikTok content'}
+            return {
+                'title': title,
+                'description': description,
+                'title_length': len(title),
+                'description_length': len(description),
+                'keywords_used': len([k for k in keywords if k.lower() in description.lower()])
+            }
             
         except Exception as e:
             logger.error(f"❌ Error generating TikTok content: {e}")
@@ -323,39 +323,38 @@ Format your response as:
 TITLE: [Instagram title here]
 CAPTION: [Instagram caption here]"""
 
+        # TEST MODE: Return hardcoded Instagram content
         try:
-            response = await self.client.post(
-                "https://api.anthropic.com/v1/messages",
-                headers=self.headers,
-                json={
-                    "model": "claude-3-opus-20240229",
-                    "messages": [{"role": "user", "content": prompt}],
-                    "max_tokens": 800,
-                    "temperature": 0.7
-                }
-            )
+            title = f"✨ {base_title.replace('Top 5', 'TOP 5')} Review ✨"
             
-            if response.status_code == 200:
-                result = response.json()
-                content = result['content'][0]['text']
-                
-                # Parse response
-                title_match = re.search(r'TITLE:\s*(.+)', content)
-                caption_match = re.search(r'CAPTION:\s*(.+)', content, re.DOTALL)
-                
-                if title_match and caption_match:
-                    title = title_match.group(1).strip()
-                    caption = caption_match.group(1).strip()
-                    
-                    return {
-                        'title': title,
-                        'caption': caption,
-                        'title_length': len(title),
-                        'caption_length': len(caption),
-                        'hashtags_used': len([h for h in hashtags if h.lower() in caption.lower()])
-                    }
+            # Create hashtags from keywords
+            hashtag_list = [f"#{kw.replace(' ', '').lower()}" for kw in keywords[:10]]
+            hashtag_list.extend(["#ProductReview", "#TechFinds", "#ShoppingGuide", "#TechReview"])
+            hashtag_str = " ".join(hashtag_list[:15])
             
-            return {'error': 'Failed to generate Instagram content'}
+            caption = f"""🔥 Just finished testing these amazing {category}! Here's what I found:
+
+📦 Swipe to see all 5 products in detail
+⭐ Each one has been thoroughly tested
+💯 Honest reviews - no bias here!
+🔥 Which one caught your eye? Drop a comment!
+
+👆 Links in bio for best deals!
+
+{hashtag_str}
+
+---
+💬 Comment your thoughts!
+❤️ Save this post for later!
+📤 Share with friends who need this!"""
+            
+            return {
+                'title': title,
+                'caption': caption,
+                'title_length': len(title),
+                'caption_length': len(caption),
+                'hashtags_used': len(hashtag_list)
+            }
             
         except Exception as e:
             logger.error(f"❌ Error generating Instagram content: {e}")
@@ -446,44 +445,50 @@ Format your response as:
 TITLE: [WordPress title here]
 CONTENT: [WordPress content here with all placeholders and structure]"""
 
+        # TEST MODE: Return hardcoded WordPress content
         try:
-            response = await self.client.post(
-                "https://api.anthropic.com/v1/messages",
-                headers=self.headers,
-                json={
-                    "model": "claude-3-opus-20240229",
-                    "messages": [{"role": "user", "content": prompt}],
-                    "max_tokens": 2000,
-                    "temperature": 0.6
-                }
-            )
+            title = f"{base_title} - Complete Buying Guide & Reviews [2025]"
             
-            if response.status_code == 200:
-                result = response.json()
-                content = result['content'][0]['text']
-                
-                # Parse response
-                title_match = re.search(r'TITLE:\s*(.+)', content)
-                content_match = re.search(r'CONTENT:\s*(.+)', content, re.DOTALL)
-                
-                if title_match and content_match:
-                    title = title_match.group(1).strip()
-                    blog_content = content_match.group(1).strip()
-                    
-                    # Post-process content to replace placeholders with actual data
-                    blog_content = await self._process_wordpress_placeholders(
-                        blog_content, product_details, social_links
-                    )
-                    
-                    return {
-                        'title': title,
-                        'content': blog_content,
-                        'title_length': len(title),
-                        'content_length': len(blog_content),
-                        'keywords_used': len([k for k in seo_keywords if k.lower() in blog_content.lower()])
-                    }
+            # Create basic blog content
+            blog_content = f"""
+<h1>{title}</h1>
+
+<p>Looking for the best {category}? After extensive research and testing, we've compiled this comprehensive guide to help you make an informed decision. Our team has analyzed hundreds of products to bring you the top 5 {category} currently available.</p>
+
+<h2>Quick Summary - Top 5 {category}:</h2>
+<ol>
+{chr(10).join([f'<li><strong>{p["title"]}</strong> - ${p["price"]} - {p["rating"]}⭐ ({p["reviews"]} reviews)</li>' for p in product_details])}
+</ol>
+
+<h2>Detailed Product Reviews:</h2>
+{chr(10).join([f'''<h3>#{p["rank"]}. {p["title"]} - ${p["price"]}</h3>
+<p><strong>Rating:</strong> {p["rating"]}⭐ ({p["reviews"]} reviews)</p>
+<p>{p["description"]}</p>
+<p><strong>Pros:</strong> Great value, excellent features, highly rated</p>
+<p><strong>Cons:</strong> Limited availability, premium price point</p>
+<p><a href="{p["affiliate_link"]}" class="btn btn-primary">Check Latest Price</a></p>
+''' for p in product_details])}
+
+<h2>Frequently Asked Questions</h2>
+<p><strong>Q: Which {category} offers the best value?</strong><br>
+A: Based on our analysis, the #{product_details[0]['rank']} product offers excellent value for money.</p>
+
+<p><strong>Q: Are these products currently available?</strong><br>
+A: Yes, all products are currently in stock and available for purchase.</p>
+
+<h2>Conclusion</h2>
+<p>After thorough testing, we recommend the #{product_details[0]['rank']} product as our top choice. Each product on this list offers unique advantages, so choose based on your specific needs and budget.</p>
+
+<p><strong>Affiliate Disclosure:</strong> This post contains affiliate links. We may earn a small commission at no extra cost to you when you purchase through our links.</p>
+"""
             
-            return {'error': 'Failed to generate WordPress content'}
+            return {
+                'title': title,
+                'content': blog_content,
+                'title_length': len(title),
+                'content_length': len(blog_content),
+                'keywords_used': len([k for k in seo_keywords if k.lower() in blog_content.lower()])
+            }
             
         except Exception as e:
             logger.error(f"❌ Error generating WordPress content: {e}")
@@ -747,8 +752,8 @@ CONTENT: [WordPress content here with all placeholders and structure]"""
                 # Don't fail completely, just log the error
     
     async def close(self):
-        """Close the HTTP client"""
-        await self.client.aclose()
+        """Close the HTTP client - TEST MODE: No client to close"""
+        pass
 
 
 # Integration function for workflow

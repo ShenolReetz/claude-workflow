@@ -82,10 +82,10 @@ class TextGenerationControlAgentMCP:
                 all_valid = True
                 logger.info("✅ All products passed validation!")
                 
-                await self.airtable_server.update_record(record_id, {
-                    'TextControlStatus': 'Validated',
-                    'GenerationAttempts': attempt
-                })
+                # Note: Commented out due to non-existent Airtable fields\n        # await self.airtable_server.update_record(record_id, {
+                    # 'TextControlStatus': 'Validated',  # Field doesn't exist in Airtable
+                    # 'GenerationAttempts': attempt  # Field doesn't exist in Airtable
+                # })
                 
                 return {
                     'success': True,
@@ -111,11 +111,11 @@ class TextGenerationControlAgentMCP:
                 await asyncio.sleep(2)
         
         # Max attempts reached
-        await self.airtable_server.update_record(record_id, {
-            'TextControlStatus': 'Failed',
-            'GenerationAttempts': attempt,
-            'TextControlIssues': json.dumps(validation_result['products_needing_regeneration'])
-        })
+        # Note: Commented out due to non-existent Airtable fields\n        # await self.airtable_server.update_record(record_id, {
+            # 'TextControlStatus': 'Failed',  # Field doesn't exist in Airtable
+            # 'GenerationAttempts': attempt,  # Field doesn't exist in Airtable
+            # 'TextControlIssues': json.dumps(validation_result['products_needing_regeneration'])  # Field doesn't exist in Airtable
+        # })
         
         return {
             'success': False,

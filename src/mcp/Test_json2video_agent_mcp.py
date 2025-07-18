@@ -95,7 +95,10 @@ class JSON2VideoAgentMCP:
                 # Update Airtable with movie ID (for tracking)
                 await self.airtable_server.update_record(
                     record_id,
-                    {'Status': 'Processing'}
+                    {
+                        'Status': 'Processing',
+                        'JSON2VideoProjectID': video_result['movie_id']
+                    }
                 )
                 
                 return {

@@ -1,315 +1,390 @@
 import asyncio
 import json
-from anthropic import Anthropic
+import random
 from typing import Dict, List, Optional
 
 class ContentGenerationMCPServer:
     def __init__(self, anthropic_api_key: str):
-        self.client = Anthropic(api_key=anthropic_api_key)
+        # TEST MODE: No actual API calls
+        self.api_key = anthropic_api_key
+        
+        # Hardcoded templates for different categories
+        self.category_templates = {
+            'electronics': {
+                'keywords': ['best 2025', 'tech review', 'gadget', 'smart device', 'electronics', 
+                            'digital', 'wireless', 'bluetooth', 'USB-C', 'portable',
+                            'amazon finds', 'tech deals', 'budget tech', 'must have',
+                            'unboxing', 'comparison', 'top rated', 'viral tech', 'trending', 'TikTok'],
+                'title_templates': [
+                    "🔥 TOP 5 {category} That BROKE The Internet in 2025!",
+                    "⚡ These 5 {category} Are FLYING Off Amazon Shelves!", 
+                    "🎯 5 VIRAL {category} Everyone's Buying Right Now!",
+                    "💸 Best {category} Under $100 You NEED in 2025!"
+                ],
+                'intro_templates': [
+                    "These 5 products are selling out EVERYWHERE!",
+                    "I found the 5 most viral products on Amazon!",
+                    "You won't believe these insane deals I found!",
+                    "Everyone's buying these 5 products right now!"
+                ]
+            },
+            'home': {
+                'keywords': ['home gadgets', 'smart home', 'organization', 'cleaning', 'kitchen',
+                            'bedroom', 'bathroom', 'decor', 'space saving', 'minimalist',
+                            'home improvement', 'DIY', 'amazon home', 'home hacks', 'cozy',
+                            'aesthetic', 'room makeover', 'home essentials', 'viral home', 'TikTok home'],
+                'title_templates': [
+                    "🏠 5 Home Gadgets That Will CHANGE Your Life in 2025!",
+                    "✨ Top 5 Viral Home Products Everyone Needs!",
+                    "🎁 5 Amazon Home Finds Under $50 You'll LOVE!",
+                    "💡 These 5 Home Products Are GENIUS!"
+                ],
+                'intro_templates': [
+                    "Your home will never be the same after these!",
+                    "These 5 products transformed my entire home!",
+                    "I can't believe I lived without these!",
+                    "These home finds are going viral for a reason!"
+                ]
+            },
+            'fashion': {
+                'keywords': ['fashion tech', 'wearable', 'accessories', 'style', 'trendy',
+                            'fashionable', 'outfit', 'wardrobe', 'designer', 'luxury',
+                            'fashion finds', 'style tips', 'fashion haul', 'OOTD', 'lookbook',
+                            'fashion trends', 'style guide', 'fashion must haves', 'viral fashion', 'TikTok fashion'],
+                'title_templates': [
+                    "👗 5 Fashion Tech Items Taking Over 2025!",
+                    "💎 Top 5 Trending Accessories Everyone Wants!",
+                    "🛍️ 5 Viral Fashion Finds You Need NOW!",
+                    "✨ Best Fashion Tech Under $75 on Amazon!"
+                ],
+                'intro_templates': [
+                    "These fashion finds are breaking the internet!",
+                    "Everyone's adding these to their wardrobe!",
+                    "You need these trending pieces ASAP!",
+                    "These accessories are selling out fast!"
+                ]
+            },
+            'marine_speakers': {
+                'keywords': ['marine audio', 'boat speakers', 'waterproof', 'marine stereo', 'boat sound',
+                            'marine electronics', 'boat audio', 'nautical', 'marine grade', 'salt resistant',
+                            'boat accessories', 'marine tech', 'boat upgrade', 'marine sound system', 'boat life',
+                            'marine bluetooth', 'boat party', 'marine amplifier', 'boat entertainment', 'marine subwoofer'],
+                'title_templates': [
+                    "🚤 TOP 5 Marine Speakers That DOMINATE The Water!",
+                    "⚓ 5 Boat Speakers With INSANE Sound Quality!",
+                    "🌊 Best Marine Audio Systems Under $200!",
+                    "🎵 5 Waterproof Speakers Every Boat NEEDS!"
+                ],
+                'intro_templates': [
+                    "These marine speakers will transform your boat!",
+                    "Get ready for the best sound on the water!",
+                    "Your boat parties will never be the same!",
+                    "These speakers are built for the ocean!"
+                ]
+            },
+            'default': {
+                'keywords': ['best 2025', 'top rated', 'amazon finds', 'must have', 'viral',
+                            'trending', 'popular', 'review', 'comparison', 'budget',
+                            'deals', 'sale', 'discount', 'worth it', 'game changer',
+                            'life changing', 'essential', 'recommended', 'favorite', 'TikTok'],
+                'title_templates': [
+                    "🔥 TOP 5 {category} Everyone's Buying in 2025!",
+                    "⭐ 5 {category} With THOUSANDS of 5-Star Reviews!",
+                    "💯 Best {category} That Are Actually Worth It!",
+                    "🎯 5 Viral {category} You Need to See!"
+                ],
+                'intro_templates': [
+                    "These 5 products are taking over social media!",
+                    "I tested the most viral products online!",
+                    "You won't believe these incredible finds!",
+                    "Everyone's talking about these products!"
+                ]
+            }
+        }
+    
+    def _get_category_key(self, title: str) -> str:
+        """Determine category from title"""
+        title_lower = title.lower()
+        if any(word in title_lower for word in ['camera', 'photo', 'digital', 'tech', 'gadget', 'electronic']):
+            return 'electronics'
+        elif any(word in title_lower for word in ['home', 'kitchen', 'cleaning', 'power strip']):
+            return 'home'
+        elif any(word in title_lower for word in ['fashion', 'watch', 'band', 'accessory', 'wearable']):
+            return 'fashion'
+        elif any(word in title_lower for word in ['marine', 'boat', 'speaker', 'waterproof', 'nautical']):
+            return 'marine_speakers'
+        else:
+            return 'default'
+    
+    def _extract_category_name(self, title: str) -> str:
+        """Extract category name from title"""
+        # Common patterns: "Top 5 X", "Best X", etc.
+        patterns = [
+            r'top \d+ (.+?)(?:\s+releases|\s+of|\s+in|\s+for|$)',
+            r'best (.+?)(?:\s+releases|\s+of|\s+in|\s+for|$)',
+            r'new (.+?)(?:\s+releases|\s+of|\s+in|\s+for|$)',
+            r'\d+ (.+?)(?:\s+that|\s+you|\s+with|$)'
+        ]
+        
+        import re
+        for pattern in patterns:
+            match = re.search(pattern, title.lower())
+            if match:
+                return match.group(1).title()
+        
+        # Fallback - use middle words
+        words = title.split()
+        if len(words) > 3:
+            return ' '.join(words[2:5]).title()
+        return 'Amazing Products'
         
     async def generate_seo_keywords(self, title: str, product_category: str) -> List[str]:
-        """Generate SEO keywords for YouTube/TikTok optimization"""
+        """TEST MODE: Return hardcoded SEO keywords"""
         try:
-            prompt = f"""
-            Generate 20 high-impact SEO keywords for this video title: "{title}"
-            Product category: {product_category}
+            # Determine category
+            category_key = self._get_category_key(title)
+            template = self.category_templates.get(category_key, self.category_templates['default'])
             
-            Focus on:
-            - YouTube Shorts optimization
-            - TikTok trending keywords  
-            - Amazon product search terms
-            - 2025 trending tech keywords
+            # Base keywords from template
+            keywords = template['keywords'].copy()
             
-            Return as a simple comma-separated list.
-            """
+            # Add title-specific keywords
+            title_words = title.lower().split()
+            for word in title_words:
+                if len(word) > 4 and word not in ['these', 'those', 'there', 'where']:
+                    keywords.append(word)
             
-            # Remove await - Anthropic client is sync
-            response = self.client.messages.create(
-                model="claude-3-5-sonnet-20241022",
-                max_tokens=500,
-                messages=[{"role": "user", "content": prompt}]
-            )
+            # Add year and trending terms
+            keywords.extend(['2025', 'amazon prime', 'free shipping', 'best seller'])
             
-            keywords_text = response.content[0].text
-            keywords = [k.strip() for k in keywords_text.split(',')]
+            # Shuffle and take 20
+            random.shuffle(keywords)
+            keywords = keywords[:20]
             
-            print(f"✅ Generated {len(keywords)} SEO keywords")
+            print(f"✅ TEST MODE: Generated {len(keywords)} SEO keywords")
             return keywords
             
         except Exception as e:
             print(f"Error generating keywords: {e}")
-            return []
+            return ['amazon', 'best', '2025', 'top', 'review']
     
     async def optimize_title(self, original_title: str, keywords: List[str]) -> str:
-        """Optimize title for social media engagement"""
+        """TEST MODE: Return hardcoded optimized title"""
         try:
-            keywords_str = ', '.join(keywords[:10])  # Use top 10 keywords
+            # Get category and template
+            category_key = self._get_category_key(original_title)
+            template = self.category_templates.get(category_key, self.category_templates['default'])
             
-            prompt = f"""
-            Optimize this video title for maximum engagement on YouTube Shorts, TikTok, and Instagram:
+            # Pick a random title template
+            title_template = random.choice(template['title_templates'])
             
-            Original title: "{original_title}"
-            Key SEO terms: {keywords_str}
+            # Extract category from original title
+            category_name = self._extract_category_name(original_title)
             
-            Requirements:
-            - Under 60 characters for YouTube Shorts
-            - Attention-grabbing and clickable
-            - Include trending keywords naturally
-            - Add urgency/FOMO elements
-            - Perfect for 9:16 vertical video format
+            # Format the title
+            optimized_title = title_template.format(category=category_name)
             
-            Return only the optimized title, nothing else.
-            """
+            # Ensure it's under 60 characters
+            if len(optimized_title) > 60:
+                optimized_title = optimized_title[:57] + "..."
             
-            # Remove await - Anthropic client is sync
-            response = self.client.messages.create(
-                model="claude-3-5-sonnet-20241022",
-                max_tokens=200,
-                messages=[{"role": "user", "content": prompt}]
-            )
-            
-            optimized_title = response.content[0].text.strip().strip('"')
-            print(f"✅ Optimized title: {optimized_title}")
+            print(f"✅ TEST MODE: Optimized title: {optimized_title}")
             return optimized_title
             
         except Exception as e:
             print(f"Error optimizing title: {e}")
-            return original_title
+            return original_title[:60]
     
     async def generate_countdown_script(self, title: str, keywords: List[str]) -> Dict:
-        """Generate 5-product countdown script under 1 minute"""
+        """TEST MODE: Generate hardcoded countdown script"""
         try:
-            keywords_str = ', '.join(keywords[:15])
+            # Get category for appropriate intro
+            category_key = self._get_category_key(title)
+            template = self.category_templates.get(category_key, self.category_templates['default'])
             
-            prompt = f"""
-            Create a YouTube Shorts script for: "{title}"
-            Keywords to include: {keywords_str}
-            Category context: {title}
-            
-            PRODUCT EXAMPLES BY CATEGORY:
-            - Marine Stereos: Fusion MS-RA70, JBL PRV-175, Kenwood KMR-M328BT
-            - Satellite TV: DISH Wally HD, Winegard SK-SWM3, KING VQ4500
-            - Computer Vacuums: XPOWER A-2, Metro Vacuum DataVac, OPOLAR Cordless
-            - Security Cameras: Wyze Cam v3, Blink Mini, Ring Indoor Cam
-            - Keyboards: Logitech MX Keys, Corsair K95 RGB, Razer BlackWidow
-            
-            STRICT REQUIREMENTS:
-            - TOTAL VIDEO: Under 60 seconds
-            - INTRO: Maximum 5 seconds, extremely attention-grabbing
-            - PRODUCTS: Exactly 5 products, countdown from #5 to #1
-            - EACH PRODUCT: Maximum 9 seconds each
-            - IMPORTANT: Use ONLY REAL products that ACTUALLY exist on Amazon!
-              Examples: "Logitech MX Keys", "Sony WH-1000XM5", "Apple AirPods Pro"
-              NEVER invent fake products like "Neptune Command Center" or "TelepathX"!
-              Use actual brand names and model numbers!
-            - OUTRO: Maximum 5 seconds, call-to-action for links in comments
-            - FORMAT: 9:16 vertical video
-            - STYLE: Fast-paced, energetic, hook viewer immediately
-            
-            Return ONLY valid JSON with this exact structure:
-            {{
-                "intro": "5-second intro script",
-                "products": [
-                    {{
-                        "rank": 5,
-                        "name": "REAL product name (e.g. Sony WH-1000XM5)",
-                        "script": "9-second product description",
-                        "key_features": ["feature1", "feature2", "feature3"]
-                    }}
+            # Hardcoded product examples by category
+            category_products = {
+                'electronics': [
+                    {"name": "Anker PowerCore 10000", "features": ["10000mAh", "Ultra-compact", "Fast charging"], 
+                     "script": "At number 5, the Anker PowerCore 10000! This ultra-compact power bank fits in your pocket but packs enough juice to charge your phone three times!"},
+                    {"name": "JBL Flip 6 Portable Speaker", "features": ["Waterproof", "12-hour battery", "PartyBoost"],
+                     "script": "Number 4 is the JBL Flip 6! Waterproof, dustproof, and with 12 hours of playtime, this speaker brings the party anywhere you go!"},
+                    {"name": "Logitech MX Master 3S", "features": ["8K DPI", "Quiet clicks", "Multi-device"],
+                     "script": "Coming in at number 3, the Logitech MX Master 3S! With silent clicks and ultra-smooth scrolling, it's the ultimate productivity mouse!"},
+                    {"name": "Sony WH-1000XM5", "features": ["Industry-leading ANC", "30-hour battery", "Hi-Res audio"],
+                     "script": "Number 2 goes to Sony WH-1000XM5! These headphones have the best noise canceling on the market and crystal-clear call quality!"},
+                    {"name": "Apple AirPods Pro 2nd Gen", "features": ["Adaptive Transparency", "Personalized Spatial Audio", "MagSafe"],
+                     "script": "And the number 1 spot? Apple AirPods Pro 2nd Gen! With adaptive noise control and the new H2 chip, these are simply unbeatable!"}
                 ],
-                "outro": "5-second outro with CTA",
-                "total_duration": "estimated seconds",
-                "hook_phrases": ["attention-grabbing phrases used"]
-            }}
-            """
+                'home': [
+                    {"name": "Bissell Little Green Machine", "features": ["Portable", "Deep clean", "Pet-friendly"],
+                     "script": "Starting at 5, the Bissell Little Green! This portable cleaner tackles any spill or stain in seconds. Perfect for pets and kids!"},
+                    {"name": "Instant Vortex Plus Air Fryer", "features": ["6-quart", "6-in-1 functions", "EvenCrisp"],
+                     "script": "Number 4, the Instant Vortex Plus! Air fry, roast, broil, and more with 95% less oil. Your kitchen game-changer is here!"},
+                    {"name": "Shark IQ Robot Vacuum", "features": ["Self-emptying", "Home mapping", "Pet hair pickup"],
+                     "script": "At number 3, the Shark IQ Robot! It empties itself for up to 45 days and maps your home for perfect cleaning every time!"},
+                    {"name": "Ninja Foodi 11-in-1", "features": ["Pressure cook", "Air fry", "Slow cook"],
+                     "script": "Number 2 is the Ninja Foodi 11-in-1! Replace your entire kitchen with this one device that does literally everything!"},
+                    {"name": "Dyson V15 Detect", "features": ["Laser detection", "230AW suction", "LCD screen"],
+                     "script": "Taking the top spot, the Dyson V15 Detect! Its laser reveals invisible dust and the LCD shows exactly what you're cleaning!"}
+                ],
+                'marine_speakers': [
+                    {"name": "Polk Audio MM652", "features": ["UV resistant", "IP56 rated", "Full-range"],
+                     "script": "At number 5, the Polk Audio MM652! These speakers are built for salt, sun, and spray with incredible full-range sound!"},
+                    {"name": "BOSS Audio MCK632WB.64", "features": ["500W system", "Bluetooth", "All-weather"],
+                     "script": "Number 4 brings the BOSS Audio marine package! Complete 500-watt system with Bluetooth and weatherproof remotes included!"},
+                    {"name": "Kenwood KFC-1653MRW", "features": ["Peak power handling", "Water-resistant", "LED lighting"],
+                     "script": "Coming in third, Kenwood marine speakers with built-in LED lights! Your boat will sound amazing and look incredible at night!"},
+                    {"name": "JBL MS6520 180W", "features": ["Plus One woofers", "Balanced dome tweeters", "Marine-rated"],
+                     "script": "Number 2 goes to JBL MS6520! With Plus One cone technology, these deliver concert-quality sound even in rough seas!"},
+                    {"name": "Rockford Fosgate M2-65B", "features": ["Color Optix LED", "Element Ready", "Premium sound"],
+                     "script": "And number 1? Rockford Fosgate M2-65B! With customizable LED lighting and audiophile-grade sound, these are the ultimate marine speakers!"}
+                ],
+                'fashion': [
+                    {"name": "Fitbit Charge 5", "features": ["EDA sensor", "Built-in GPS", "7-day battery"],
+                     "script": "Starting at 5, the Fitbit Charge 5! Track stress, sleep, and workouts with the most advanced fitness tracker available!"},
+                    {"name": "Ray-Ban Smart Glasses", "features": ["Built-in camera", "Open-ear audio", "Voice control"],
+                     "script": "Number 4, Ray-Ban smart glasses! Take photos, make calls, and listen to music while looking absolutely stylish!"},
+                    {"name": "Oura Ring Gen3", "features": ["Sleep tracking", "Heart rate", "Temperature"],
+                     "script": "At number 3, the Oura Ring! This tiny ring tracks everything from sleep to readiness with incredible accuracy!"},
+                    {"name": "Apple Watch Series 9", "features": ["Double tap gesture", "Precision finding", "Carbon neutral"],
+                     "script": "Number 2 is the Apple Watch Series 9! With the new double-tap gesture and brighter display, it's smarter than ever!"},
+                    {"name": "Theragun Mini", "features": ["Ultra-portable", "150-min battery", "QuietForce"],
+                     "script": "Taking the top spot, Theragun Mini! This pocket-sized massager delivers professional-grade muscle treatment anywhere!"}
+                ]
+            }
             
-            # Remove await - Anthropic client is sync
-            response = self.client.messages.create(
-                model="claude-3-5-sonnet-20241022",
-                max_tokens=2000,
-                messages=[{"role": "user", "content": prompt}]
-            )
+            # Get products for this category
+            products = category_products.get(category_key, category_products['electronics'])
             
-            script_text = response.content[0].text
-            # Extract JSON from response
-            start_idx = script_text.find('{')
-            end_idx = script_text.rfind('}') + 1
-            if start_idx != -1 and end_idx > start_idx:
-                json_str = script_text[start_idx:end_idx]
-                script_data = json.loads(json_str)
-                print(f"✅ Generated countdown script with {len(script_data.get('products', []))} products")
-                return script_data
-            else:
-                print("❌ Could not extract JSON from response")
-                return {}
+            # Pick intro
+            intro = random.choice(template['intro_templates'])
+            
+            # Format products for script
+            script_products = []
+            for i, product in enumerate(products):
+                script_products.append({
+                    "rank": 5 - i,
+                    "name": product["name"],
+                    "script": product["script"],
+                    "key_features": product["features"]
+                })
+            
+            script_data = {
+                "intro": intro,
+                "products": script_products,
+                "outro": "Which one are you getting? All links in the description below!",
+                "total_duration": "58",
+                "hook_phrases": ["selling out", "viral", "game-changer", "must-have"]
+            }
+            
+            print(f"✅ TEST MODE: Generated countdown script with {len(script_data['products'])} products")
+            return script_data
             
         except Exception as e:
             print(f"Error generating script: {e}")
             return {}
     
     async def generate_blog_post(self, title: str, script_data: Dict, keywords: List[str]) -> str:
-        """Generate SEO blog post for website"""
+        """TEST MODE: Generate hardcoded blog post"""
         try:
+            # Extract products from script_data
             products_info = ""
             if 'products' in script_data:
                 for product in script_data['products']:
                     products_info += f"#{product.get('rank', 'N/A')}: {product.get('name', 'N/A')} - {product.get('script', 'N/A')}\n"
             
-            keywords_str = ', '.join(keywords)
+            # Generate hardcoded blog post
+            blog_post = f"""# {title}
+
+In this comprehensive review, I'll break down the top 5 products that are absolutely worth your money in 2025.
+
+## Product Reviews
+
+{products_info}
+
+## FAQ Section
+
+**Q: Are these products really worth buying?**
+A: Yes, all products featured have been carefully selected based on customer reviews and ratings.
+
+**Q: Where can I buy these products?**
+A: All products are available on Amazon with fast shipping.
+
+## Conclusion
+
+These products represent the best value and quality in their respective categories. Watch our full video review for detailed analysis!
+
+*This post contains affiliate links. As an Amazon Associate, I earn from qualifying purchases at no extra cost to you.*"""
             
-            prompt = f"""
-            Write a comprehensive blog post for this video content:
-            
-            Title: {title}
-            Products covered: {products_info}
-            SEO Keywords: {keywords_str}
-            
-            Requirements:
-            - 800-1200 words
-            - SEO optimized with keywords naturally integrated
-            - Include product affiliate sections
-            - Add FAQ section
-            - Mobile-friendly formatting
-            - Include call-to-action for video
-            - Professional but engaging tone
-            
-            Structure:
-            1. Engaging introduction with hook
-            2. Detailed product reviews (based on script)
-            3. Comparison table placeholder
-            4. FAQ section
-            5. Conclusion with video CTA
-            """
-            
-            # Remove await - Anthropic client is sync
-            response = self.client.messages.create(
-                model="claude-3-5-sonnet-20241022",
-                max_tokens=3000,
-                messages=[{"role": "user", "content": prompt}]
-            )
-            
-            blog_post = response.content[0].text
-            print(f"✅ Generated blog post ({len(blog_post)} characters)")
+            print(f"✅ TEST MODE: Generated blog post ({len(blog_post)} characters)")
             return blog_post
             
         except Exception as e:
             print(f"Error generating blog post: {e}")
-            return ""
+            return "Basic blog post content"
     
     async def generate_seo_keywords_with_products(self, title: str, product_names: List[str]) -> List[str]:
-        """Generate SEO keywords using actual product data"""
+        """TEST MODE: Generate hardcoded SEO keywords using product data"""
         try:
-            products_str = ', '.join(product_names[:5])
+            # Use the existing hardcoded keyword generation
+            keywords = await self.generate_seo_keywords(title, 'products')
             
-            prompt = f"""
-            Generate 20 high-impact SEO keywords for this video title: "{title}"
-            Actual products featured: {products_str}
+            # Add product-specific keywords
+            for product_name in product_names[:3]:
+                if product_name:
+                    # Extract brand name (usually first word)
+                    brand = product_name.split()[0]
+                    if len(brand) > 2:
+                        keywords.append(brand.lower())
             
-            Focus on:
-            - YouTube Shorts optimization
-            - TikTok trending keywords  
-            - Amazon product search terms
-            - Product-specific keywords
-            - 2025 trending tech keywords
-            
-            Return as a simple comma-separated list.
-            """
-            
-            response = self.client.messages.create(
-                model="claude-3-5-sonnet-20241022",
-                max_tokens=500,
-                messages=[{"role": "user", "content": prompt}]
-            )
-            
-            keywords_text = response.content[0].text
-            keywords = [k.strip() for k in keywords_text.split(',')]
-            
-            print(f"✅ Generated {len(keywords)} SEO keywords with product data")
-            return keywords
+            print(f"✅ TEST MODE: Generated {len(keywords)} SEO keywords with product data")
+            return keywords[:20]
             
         except Exception as e:
             print(f"Error generating keywords with products: {e}")
-            return []
+            return ['amazon', 'review', '2025', 'best', 'top']
     
     async def generate_countdown_script_with_products(self, title: str, keywords: List[str], products: List[Dict]) -> Dict:
-        """Generate countdown script using actual Amazon product data"""
+        """TEST MODE: Generate hardcoded countdown script using actual product data"""
         try:
-            keywords_str = ', '.join(keywords[:15])
+            # Get category for appropriate intro
+            category_key = self._get_category_key(title)
+            template = self.category_templates.get(category_key, self.category_templates['default'])
             
-            # Format products for the prompt
-            products_info = ""
-            for i, product in enumerate(products[:5], 1):
-                products_info += f"#{i}: {product['title']} - Rating: {product['rating']}, Reviews: {product['review_count']}, Price: ${product['price']}\n"
+            # Use actual product data but with hardcoded script structure
+            intro = random.choice(template['intro_templates'])
             
-            prompt = f"""
-            Create a YouTube Shorts script for: "{title}"
-            Keywords to include: {keywords_str}
+            script_data = {
+                "intro": intro,
+                "products": [],
+                "outro": "Which one are you getting? All links in the description below!"
+            }
             
-            ACTUAL PRODUCTS TO FEATURE:
-            {products_info}
-            
-            STRICT REQUIREMENTS:
-            - TOTAL VIDEO: Under 60 seconds
-            - INTRO: Maximum 5 seconds, extremely attention-grabbing
-            - PRODUCTS: Exactly 5 products, countdown from #5 to #1
-            - EACH PRODUCT: Maximum 9 seconds each
-            - OUTRO: Maximum 5 seconds with clear CTA
-            - USE ACTUAL PRODUCT NAMES AND DETAILS PROVIDED
-            
-            FORMAT - Return as JSON:
-            {{
-                "intro": "Text for intro (5 seconds max)",
-                "products": [
-                    {{
-                        "rank": 5,
-                        "name": "Actual product name",
-                        "script": "Product description script (9 seconds max)",
-                        "price": "Product price",
-                        "rating": "Product rating"
-                    }},
-                    // ... continue for products 4, 3, 2, 1
-                ],
-                "outro": "Text for outro (5 seconds max)"
-            }}
-            
-            SCRIPT WRITING STYLE:
-            - Energetic, fast-paced for Shorts
-            - Use numbers and rankings prominently
-            - Mention key product features quickly
-            - Build excitement toward #1 product
-            - Include price/rating mentions naturally
-            """
-            
-            response = self.client.messages.create(
-                model="claude-3-5-sonnet-20241022",
-                max_tokens=2000,
-                messages=[{"role": "user", "content": prompt}]
-            )
-            
-            script_text = response.content[0].text
-            
-            # Try to parse JSON response
-            try:
-                script_data = json.loads(script_text)
-            except json.JSONDecodeError:
-                # Fallback if JSON parsing fails
-                print("⚠️ Could not parse JSON, creating fallback structure")
-                script_data = {
-                    "intro": "Here are the top 5 products you need to see!",
-                    "products": [],
-                    "outro": "Which product will you choose? Check the links below!"
-                }
+            # Generate scripts for actual products
+            for i, product in enumerate(products[:5]):
+                rank = 5 - i
+                product_name = product.get('title', f'Product {rank}')[:50]
+                price = product.get('price', 'N/A')
+                rating = product.get('rating', '4.5')
                 
-                for i, product in enumerate(products[:5]):
-                    script_data["products"].append({
-                        "rank": 5-i,
-                        "name": product['title'][:50],
-                        "script": f"Coming in at #{5-i}, the {product['title'][:30]} with {product['rating']} stars!",
-                        "price": product['price'],
-                        "rating": product['rating']
-                    })
+                script_templates = [
+                    f"At number {rank}, the {product_name}! With {rating} stars and amazing features!",
+                    f"Coming in at #{rank}, {product_name}! Priced at just ${price} with incredible value!",
+                    f"Number {rank} goes to {product_name}! {rating} stars from thousands of happy customers!",
+                    f"At #{rank}, we have {product_name}! Outstanding quality at ${price}!",
+                    f"#{rank} on our list: {product_name}! {rating}-star rating speaks for itself!"
+                ]
+                
+                script_data["products"].append({
+                    "rank": rank,
+                    "name": product_name,
+                    "script": script_templates[i % len(script_templates)],
+                    "price": str(price),
+                    "rating": str(rating)
+                })
             
-            print(f"✅ Generated countdown script with {len(script_data.get('products', []))} products")
+            print(f"✅ TEST MODE: Generated countdown script with {len(script_data['products'])} products")
             return script_data
             
         except Exception as e:
@@ -317,110 +392,109 @@ class ContentGenerationMCPServer:
             return {}
     
     async def generate_multi_platform_keywords(self, title: str, products: List[Dict]) -> Dict[str, List[str]]:
-        """Generate platform-specific keywords for all social media platforms"""
+        """TEST MODE: Generate hardcoded platform-specific keywords"""
         try:
-            # Get product names for context
-            product_names = [p.get('title', '')[:30] for p in products[:5] if p.get('title')]
-            products_str = ', '.join(product_names)
+            # Get category
+            category_key = self._get_category_key(title)
+            base_keywords = self.category_templates[category_key]['keywords']
             
-            prompt = f"""
-            Generate comprehensive keywords for this video across multiple platforms:
-            Title: "{title}"
-            Featured Products: {products_str}
+            # Extract product brands if available
+            product_brands = []
+            for p in products[:5]:
+                if p.get('title'):
+                    # Extract brand name (usually first word)
+                    brand = p['title'].split()[0]
+                    if brand not in ['The', 'A', 'An'] and len(brand) > 2:
+                        product_brands.append(brand.lower())
             
-            Create platform-specific keywords following these EXACT requirements:
+            # YouTube Keywords (20)
+            youtube_keywords = [
+                "amazon finds 2025", "best tech 2025", "top 5 review", 
+                "viral products", "must have gadgets", "amazon haul",
+                "tech review 2025", "unboxing video", "product comparison",
+                "best sellers amazon", "budget tech finds", "worth buying"
+            ]
+            youtube_keywords.extend(base_keywords[:8])
+            youtube_keywords.extend(product_brands[:3])
+            youtube_keywords = list(set(youtube_keywords))[:20]
             
-            1. YOUTUBE KEYWORDS (20 keywords):
-            - YouTube search optimization
-            - Include "2025", "best", "top 5", "review"
-            - Product-specific terms
-            - Buyer intent keywords
-            - Format: comma-separated list
+            # Instagram Hashtags (30)
+            instagram_hashtags = [
+                "#amazonfinds", "#amazonfinds2025", "#techreview", "#gadgets",
+                "#techtok", "#amazonmusthaves", "#techfinds", "#amazonhaul",
+                "#viralproducts", "#amazonfavorites", "#techgadgets", "#smarttech",
+                "#amazonprime", "#techdeals", "#gadgetlover", "#techcommunity",
+                "#amazonbestsellers", "#techlifestyle", "#instatech", "#techgram"
+            ]
+            category_tags = {
+                'electronics': ["#electronics", "#techie", "#gadgetaddict", "#techlove"],
+                'home': ["#smarthome", "#hometech", "#homegadgets", "#homeimprovement"],
+                'fashion': ["#fashiontech", "#wearabletech", "#techfashion", "#smartwear"],
+                'marine_speakers': ["#marineaudio", "#boatlife", "#marinetech", "#boatspeakers"]
+            }
+            instagram_hashtags.extend(category_tags.get(category_key, []))
+            instagram_hashtags = instagram_hashtags[:30]
             
-            2. INSTAGRAM HASHTAGS (30 hashtags):
-            - Mix of popular and niche hashtags
-            - Include trending tech hashtags
-            - Product category hashtags
-            - Engagement hashtags (#techfinds #gadgetlover)
-            - Format: space-separated with # symbol
-            - Mix high-volume (1M+) and medium-volume (10K-1M) hashtags
+            # TikTok Keywords (15)
+            tiktok_keywords = [
+                "amazon finds", "tiktokmademebuyit", "viral products",
+                "POV shopping", "tech haul", "must have finds",
+                "worth the hype", "amazon favorites", "budget finds",
+                "life changing products", "game changer", "holy grail products"
+            ]
+            tiktok_keywords.extend(base_keywords[:3])
+            tiktok_keywords = list(set(tiktok_keywords))[:15]
             
-            3. TIKTOK KEYWORDS (15 keywords):
-            - TikTok discovery algorithm keywords
-            - Trending sounds/challenges related to tech
-            - Gen Z search terms
-            - Short, punchy keywords
-            - Include "POV", "finds", "haul", "musthave"
-            - Format: comma-separated list
+            # WordPress SEO (15 long-tail)
+            wordpress_seo = [
+                f"best {category_key} products on amazon 2025",
+                f"top rated {category_key} amazon review",
+                f"{category_key} buying guide 2025",
+                f"amazon {category_key} comparison chart",
+                f"affordable {category_key} under $100",
+                f"{category_key} for beginners guide",
+                f"how to choose best {category_key}",
+                f"{category_key} vs alternatives comparison",
+                f"is {category_key} worth buying in 2025",
+                f"{category_key} pros and cons review",
+                f"where to buy {category_key} online",
+                f"{category_key} frequently asked questions",
+                f"{category_key} unboxing and setup guide",
+                f"{category_key} maintenance tips and tricks",
+                f"best {category_key} brands comparison"
+            ][:15]
             
-            4. WORDPRESS SEO (15 long-tail keywords):
-            - Long-tail keywords for blog SEO
-            - Question-based keywords
-            - Comparison keywords
-            - Buyer intent phrases
-            - Location-neutral terms
-            - Format: comma-separated list
+            # Universal Keywords (10)
+            universal_keywords = [
+                "amazon", "review", "2025", "best", "top 5",
+                "comparison", "buying guide", "worth it", "tested", "recommended"
+            ]
             
-            5. UNIVERSAL KEYWORDS (10 core keywords):
-            - Keywords that work on ALL platforms
-            - Brand-neutral terms
-            - Core product categories
-            - Essential search terms
-            - Format: comma-separated list
+            result = {
+                'youtube': youtube_keywords,
+                'instagram': instagram_hashtags,
+                'tiktok': tiktok_keywords,
+                'wordpress': wordpress_seo,
+                'universal': universal_keywords
+            }
             
-            Return as JSON with this EXACT structure:
-            {{
-                "youtube": ["keyword1", "keyword2", ...],
-                "instagram": ["#hashtag1", "#hashtag2", ...],
-                "tiktok": ["keyword1", "keyword2", ...],
-                "wordpress": ["long tail keyword 1", "long tail keyword 2", ...],
-                "universal": ["keyword1", "keyword2", ...]
-            }}
-            """
+            print(f"✅ TEST MODE: Generated multi-platform keywords:")
+            print(f"   YouTube: {len(result['youtube'])} keywords")
+            print(f"   Instagram: {len(result['instagram'])} hashtags")
+            print(f"   TikTok: {len(result['tiktok'])} keywords")
+            print(f"   WordPress: {len(result['wordpress'])} keywords")
+            print(f"   Universal: {len(result['universal'])} keywords")
             
-            response = self.client.messages.create(
-                model="claude-3-5-sonnet-20241022",
-                max_tokens=2000,
-                messages=[{"role": "user", "content": prompt}]
-            )
+            return result
             
-            response_text = response.content[0].text
-            
-            # Parse JSON response
-            try:
-                keywords_data = json.loads(response_text)
-                
-                # Validate and format the response
-                result = {
-                    'youtube': keywords_data.get('youtube', [])[:20],
-                    'instagram': keywords_data.get('instagram', [])[:30],
-                    'tiktok': keywords_data.get('tiktok', [])[:15],
-                    'wordpress': keywords_data.get('wordpress', [])[:15],
-                    'universal': keywords_data.get('universal', [])[:10]
-                }
-                
-                print(f"✅ Generated multi-platform keywords:")
-                print(f"   YouTube: {len(result['youtube'])} keywords")
-                print(f"   Instagram: {len(result['instagram'])} hashtags")
-                print(f"   TikTok: {len(result['tiktok'])} keywords")
-                print(f"   WordPress: {len(result['wordpress'])} keywords")
-                print(f"   Universal: {len(result['universal'])} keywords")
-                
-                return result
-                
-            except json.JSONDecodeError:
-                print("⚠️ Could not parse JSON response, extracting keywords manually")
-                # Fallback parsing logic
-                return self._parse_keywords_fallback(response_text)
-                
         except Exception as e:
             print(f"❌ Error generating multi-platform keywords: {e}")
             return {
-                'youtube': [],
-                'instagram': [],
-                'tiktok': [],
-                'wordpress': [],
-                'universal': []
+                'youtube': ["amazon", "review", "2025"],
+                'instagram': ["#amazonfinds", "#techreview"],
+                'tiktok': ["tiktokmademebuyit"],
+                'wordpress': ["best products 2025"],
+                'universal': ["amazon", "best"]
             }
     
     def _parse_keywords_fallback(self, text: str) -> Dict[str, List[str]]:
@@ -457,364 +531,307 @@ class ContentGenerationMCPServer:
         return result
     
     async def generate_single_product(self, prompt: str) -> str:
-        """Generate a single product based on specific requirements"""
+        """TEST MODE: Generate hardcoded single product"""
         try:
-            response = self.client.messages.create(
-                model="claude-3-haiku-20240307",
-                max_tokens=200,
-                messages=[
-                    {"role": "user", "content": prompt}
-                ]
-            )
-            return response.content[0].text
+            # Return hardcoded product based on prompt content
+            if 'title' in prompt.lower():
+                return "Amazing Product Title with Great Features"
+            elif 'description' in prompt.lower():
+                return "This incredible product delivers outstanding performance with premium quality and unbeatable value for money."
+            else:
+                return "High-quality product that customers love with excellent reviews and ratings."
         except Exception as e:
             print(f"Error generating single product: {e}")
-            return None
+            return "Default product text"
     
     async def generate_optimized_product_descriptions(self, products: List[Dict], universal_keywords: List[str], title: str) -> List[Dict]:
-        """Generate SEO-optimized product descriptions for ProductNo1-5 fields using universal keywords"""
+        """TEST MODE: Generate hardcoded optimized product descriptions"""
         try:
-            keywords_str = ', '.join(universal_keywords[:10])
-            
-            # Format products for the prompt
-            products_info = ""
-            for i, product in enumerate(products[:5], 1):
-                products_info += f"Product #{i}: {product.get('title', 'Unknown')} - Price: ${product.get('price', 'N/A')}, Rating: {product.get('rating', 'N/A')}/5\n"
-            
-            prompt = f"""
-            Optimize product titles and descriptions for video content: "{title}"
-            Universal Keywords to integrate: {keywords_str}
-            
-            PRODUCTS TO OPTIMIZE:
-            {products_info}
-            
-            REQUIREMENTS FOR EACH PRODUCT:
-            - TITLE: Keep original product name but add 1-2 power words if needed
-            - DESCRIPTION: Exactly 18-22 words for perfect TTS timing (8-9 seconds)
-            - Include 2-3 universal keywords naturally
-            - Highlight unique selling points and key features
-            - Mention price/rating if compelling
-            - Use action words and benefits-focused language
-            - Avoid generic phrases, be specific
-            
-            OPTIMIZATION GOALS:
-            - Video engagement and retention
-            - Cross-platform discoverability
-            - Clear value proposition
-            - Natural keyword integration
-            
-            Return as JSON array with this structure:
-            [
-                {{
-                    "rank": 5,
-                    "optimized_title": "Enhanced product title",
-                    "optimized_description": "18-22 word description with keywords",
-                    "keywords_used": ["keyword1", "keyword2"],
-                    "word_count": 20,
-                    "estimated_seconds": 8.5,
-                    "selling_points": ["point1", "point2", "point3"]
-                }}
+            # Hardcoded description templates
+            description_templates = [
+                "This {adjective} {product_type} delivers {benefit} with premium quality and unbeatable value for budget-conscious buyers.",
+                "Experience {benefit} with this top-rated {product_type} featuring {feature} and earning thousands of five-star reviews.",
+                "The perfect {product_type} combining {feature} with {benefit} making it essential for anyone seeking quality.",
+                "Revolutionary {product_type} offering {feature} and {benefit} at an incredible price point you won't believe.",
+                "This bestselling {product_type} provides {benefit} through innovative {feature} that customers absolutely love today."
             ]
             
-            Order products by rank 5 (least exciting) to 1 (most exciting/best value).
-            """
+            adjectives = ["amazing", "innovative", "premium", "advanced", "professional"]
+            benefits = ["exceptional performance", "outstanding results", "incredible value", "superior quality", "maximum efficiency"]
+            features = ["cutting-edge technology", "durable construction", "user-friendly design", "versatile functionality", "smart features"]
             
-            response = self.client.messages.create(
-                model="claude-3-5-sonnet-20241022",
-                max_tokens=2000,
-                messages=[{"role": "user", "content": prompt}]
-            )
+            optimized_products = []
             
-            response_text = response.content[0].text
+            for i, product in enumerate(products[:5]):
+                rank = 5 - i
+                
+                # Extract product type from title
+                product_type = product.get('title', 'product').split()[0:2]
+                product_type = ' '.join(product_type).lower()
+                
+                # Generate description
+                template = description_templates[i % len(description_templates)]
+                description = template.format(
+                    adjective=adjectives[i % len(adjectives)],
+                    product_type=product_type,
+                    benefit=benefits[i % len(benefits)],
+                    feature=features[i % len(features)]
+                )
+                
+                # Count words
+                word_count = len(description.split())
+                
+                optimized_product = {
+                    "rank": rank,
+                    "optimized_title": product.get('title', f'Product {rank}'),
+                    "optimized_description": description,
+                    "keywords_used": universal_keywords[:3] if universal_keywords else ["best", "2025", "amazon"],
+                    "word_count": word_count,
+                    "estimated_seconds": word_count / 2.5,  # 2.5 words per second
+                    "selling_points": [
+                        f"Rated {product.get('rating', '4.5')}/5 stars",
+                        f"Over {product.get('review_count', '1000')} reviews",
+                        f"Price: {product.get('price', '$29.99')}"
+                    ]
+                }
+                
+                optimized_products.append(optimized_product)
             
-            # Parse JSON response
-            try:
-                # Extract JSON from response
-                start_idx = response_text.find('[')
-                end_idx = response_text.rfind(']') + 1
-                if start_idx != -1 and end_idx > start_idx:
-                    json_str = response_text[start_idx:end_idx]
-                    optimized_products = json.loads(json_str)
-                    print(f"✅ Generated {len(optimized_products)} optimized product descriptions")
-                    return optimized_products
-                else:
-                    print("❌ Could not extract JSON from response")
-                    return []
-                    
-            except json.JSONDecodeError as e:
-                print(f"❌ JSON parsing error: {e}")
-                return []
+            # Reverse to get correct ranking order (5 to 1)
+            optimized_products.reverse()
+            
+            print(f"✅ TEST MODE: Generated {len(optimized_products)} optimized product descriptions")
+            return optimized_products
                 
         except Exception as e:
             print(f"❌ Error generating optimized product descriptions: {e}")
             return []
     
     async def generate_attention_grabbing_intro(self, title: str, keywords: List[str], hook_style: str = "shocking") -> Dict:
-        """Generate extremely catchy intro hooks for maximum viewer retention"""
+        """TEST MODE: Generate hardcoded catchy intro hooks"""
         try:
-            keywords_str = ', '.join(keywords[:8])
-            
-            # Define different hook styles
-            hook_styles = {
-                "shocking": "Start with shocking statistics, surprising facts, or bold claims",
-                "question": "Start with intriguing questions that create curiosity gaps", 
-                "countdown": "Start with urgency and countdown energy",
-                "story": "Start with a relatable problem or story hook",
-                "controversy": "Start with controversial or contrarian takes"
+            # Hardcoded hooks by style
+            hook_templates = {
+                "shocking": [
+                    "These 5 products are breaking the internet right now!",
+                    "I can't believe Amazon still sells these this cheap!",
+                    "Number 1 will blow your mind completely!",
+                    "Everyone's buying these 5 products like crazy!"
+                ],
+                "question": [
+                    "Want to know what's going viral on Amazon?",
+                    "Why is everyone obsessed with these products?",
+                    "Can these 5 finds really change your life?",
+                    "What makes these products sell out daily?"
+                ],
+                "countdown": [
+                    "5 products you need before they're gone!",
+                    "Counting down the hottest Amazon finds today!",
+                    "From 5 to 1, these are must-haves!",
+                    "Get ready for the ultimate product countdown!"
+                ],
+                "story": [
+                    "I bought these 5 products and wow!",
+                    "Last week changed when I found these!",
+                    "My friends begged me to share these!",
+                    "These 5 finds solved all my problems!"
+                ],
+                "controversy": [
+                    "Experts don't want you knowing about these!",
+                    "These products shouldn't work but they do!",
+                    "I was wrong about these 5 products!",
+                    "People said I'm crazy for buying these!"
+                ]
             }
             
-            style_instruction = hook_styles.get(hook_style, hook_styles["shocking"])
+            # Get appropriate hooks
+            hooks = hook_templates.get(hook_style, hook_templates["shocking"])
+            intro_text = random.choice(hooks)
             
-            prompt = f"""
-            Create the most attention-grabbing 5-second intro for: "{title}"
-            Keywords to naturally include: {keywords_str}
-            Hook style: {style_instruction}
+            # Alternative hooks
+            alternative_hooks = random.sample([h for style_hooks in hook_templates.values() for h in style_hooks if h != intro_text], 3)
             
-            PSYCHOLOGICAL TRIGGERS TO USE:
-            - Curiosity gap (make them wonder what's coming)
-            - Social proof (everyone's talking about this)
-            - Urgency/FOMO (limited time, trending now)
-            - Benefit preview (what they'll gain)
-            - Pattern interrupt (unexpected opening)
+            intro_data = {
+                "intro_text": intro_text,
+                "hook_type": hook_style,
+                "psychological_triggers": ["curiosity gap", "social proof", "urgency"],
+                "word_count": len(intro_text.split()),
+                "estimated_seconds": len(intro_text.split()) / 2.5,
+                "retention_score": random.randint(85, 95),
+                "alternative_hooks": alternative_hooks
+            }
             
-            INTRO REQUIREMENTS:
-            - Exactly 10-15 words (5 seconds max when spoken)
-            - Hook viewers in first 3 seconds
-            - Create strong reason to watch until end
-            - Use power words and emotional triggers
-            - Include numbers/rankings if relevant
-            - End with momentum toward countdown
-            
-            EXAMPLES OF GREAT HOOKS:
-            - "These 5 products are breaking the internet right now!"
-            - "Number 1 will literally save you thousands of dollars!"
-            - "I can't believe Amazon is still selling these for this price!"
-            - "99% of people don't know about these hidden gems!"
-            
-            Return as JSON:
-            {{
-                "intro_text": "The hook text (10-15 words)",
-                "hook_type": "shocking/question/countdown/story/controversy",
-                "psychological_triggers": ["trigger1", "trigger2"],
-                "word_count": 12,
-                "estimated_seconds": 4.8,
-                "retention_score": 85,
-                "alternative_hooks": ["hook2", "hook3"]
-            }}
-            """
-            
-            response = self.client.messages.create(
-                model="claude-3-5-sonnet-20241022",
-                max_tokens=1000,
-                messages=[{"role": "user", "content": prompt}]
-            )
-            
-            response_text = response.content[0].text
-            
-            # Parse JSON response
-            try:
-                start_idx = response_text.find('{')
-                end_idx = response_text.rfind('}') + 1
-                if start_idx != -1 and end_idx > start_idx:
-                    json_str = response_text[start_idx:end_idx]
-                    intro_data = json.loads(json_str)
-                    print(f"✅ Generated attention-grabbing intro: {intro_data.get('intro_text', '')}")
-                    return intro_data
-                else:
-                    print("❌ Could not extract JSON from intro response")
-                    return {}
-                    
-            except json.JSONDecodeError as e:
-                print(f"❌ JSON parsing error for intro: {e}")
-                return {}
+            print(f"✅ TEST MODE: Generated intro hook: {intro_text}")
+            return intro_data
                 
         except Exception as e:
             print(f"❌ Error generating intro hook: {e}")
             return {}
     
     async def generate_platform_upload_metadata(self, title: str, products: List[Dict], platform_keywords: Dict, affiliate_data: List[Dict] = None) -> Dict:
-        """Generate platform-specific titles and descriptions for upload metadata only"""
+        """TEST MODE: Generate hardcoded platform-specific metadata"""
         try:
-            # Get top products for context
-            top_products = [p.get('optimized_title', p.get('title', '')) for p in products[:3]]
-            products_str = ', '.join(top_products)
+            # Get category for templates
+            category_key = self._get_category_key(title)
+            template = self.category_templates.get(category_key, self.category_templates['default'])
             
-            # Format affiliate links for inclusion
+            # Format affiliate links
             affiliate_links_text = ""
             if affiliate_data:
-                affiliate_links_text = "🛒 AFFILIATE LINKS:\n"
+                affiliate_links_text = "🛍️ AMAZON DEALS - CHECK DESCRIPTION:\n\n"
                 for i, affiliate in enumerate(affiliate_data[:5], 1):
-                    product_name = affiliate.get('title', f'Product #{i}')
+                    product_name = affiliate.get('title', f'Product #{i}')[:50]
                     affiliate_url = affiliate.get('affiliate_link', '')
                     if affiliate_url:
-                        affiliate_links_text += f"#{i}: {product_name}\n{affiliate_url}\n\n"
-                
-                affiliate_links_text += "💡 As an Amazon Associate, I earn from qualifying purchases at no extra cost to you.\n"
+                        affiliate_links_text += f"➡️ #{i}: {product_name}\n{affiliate_url}\n\n"
+                affiliate_links_text += "💡 As an Amazon Associate, I earn from qualifying purchases."
+            
+            # Get optimized title
+            optimized_title = await self.optimize_title(title, [])
             
             results = {}
             
             # YouTube Metadata
-            youtube_keywords = ', '.join(platform_keywords.get('youtube', [])[:10])
-            youtube_prompt = f"""
-            Create YouTube-optimized metadata for: "{title}"
-            Featured products: {products_str}
-            YouTube keywords: {youtube_keywords}
+            youtube_desc = f"""{optimized_title}
+
+⏰ TIMESTAMPS:
+0:00 Intro
+0:05 #5 Product
+0:15 #4 Product  
+0:25 #3 Product
+0:35 #2 Product
+0:45 #1 Product
+0:55 Outro
+
+{affiliate_links_text}
+
+🔔 SUBSCRIBE for more amazing product reviews!
+👍 LIKE if this helped you!
+💬 COMMENT your favorite product!
+
+#amazonfinds #amazonmusthaves #techreview #viralproducts #amazonhaul #bestof2025"""
             
-            YOUTUBE REQUIREMENTS:
-            - Title: Under 60 characters, clickable, retention-focused
-            - Description: 200-300 words with keywords, hashtags, CTA, and affiliate links
-            - Include product mentions and affiliate disclosure
-            - Use YouTube-specific language and trending terms
-            - Add timestamps for each product (0:05 #5, 0:15 #4, etc.)
-            - Include affiliate links section
+            results['youtube'] = {
+                "title": optimized_title[:60],
+                "description": youtube_desc,
+                "tags": platform_keywords.get('youtube', [])[:10],
+                "character_count": len(optimized_title)
+            }
             
-            AFFILIATE LINKS TO INCLUDE:
-            {affiliate_links_text}
+            # TikTok Metadata
+            tiktok_title = random.choice([
+                "Wait for #1 🤯",
+                "POV: You need all of these 😭",
+                "RUN don't walk to Amazon!",
+                "The last one though 👀"
+            ])
             
-            Return as JSON:
-            {{
-                "title": "YouTube optimized title",
-                "description": "Complete YouTube description with hashtags and affiliate links",
-                "tags": ["tag1", "tag2", "tag3"],
-                "character_count": 58
-            }}
-            """
+            tiktok_caption = f"{tiktok_title} These {category_key} finds are INSANE! Link in bio for all the Amazon deals 🛍️🔥 #amazonfinds #tiktokmademebuyit #amazonmusthaves #viralproducts #amazonhaul"
             
-            # TikTok Metadata  
-            tiktok_keywords = ', '.join(platform_keywords.get('tiktok', [])[:8])
-            tiktok_prompt = f"""
-            Create TikTok-optimized metadata for: "{title}"
-            Featured products: {products_str}
-            TikTok keywords: {tiktok_keywords}
+            results['tiktok'] = {
+                "title": tiktok_title,
+                "caption": tiktok_caption,
+                "hashtags": platform_keywords.get('tiktok', [])[:8],
+                "character_count": len(tiktok_title)
+            }
             
-            TIKTOK REQUIREMENTS:
-            - Title: Gen Z language, trending slang, under 50 characters
-            - Caption: 2-3 sentences with trending hashtags and "Link in bio for Amazon deals!"
-            - Use TikTok-specific hashtags and discovery terms
-            - Include product mentions and affiliate disclosure
-            - Add call-to-action for bio link
+            # Instagram Metadata  
+            instagram_title = random.choice([
+                "✨ Amazon Finds That Changed My Life",
+                "📱 Tech Gadgets You NEED in 2025",
+                "🎁 Gift Ideas Everyone Will Love",
+                "🔥 Viral Products Worth The Hype"
+            ])
             
-            AFFILIATE DISCLOSURE:
-            Include: "Amazon affiliate links in bio! 🛒 #amazonfinds #tiktokmademebuyit"
+            instagram_caption = f"""{instagram_title}
+
+Okay but why is nobody talking about these?! 😱
+
+I tested the most viral {category_key} on Amazon and these 5 are ACTUALLY worth your money!
+
+Save this for later & check my bio for all the links! 🔗
+
+{' '.join(platform_keywords.get('instagram', [])[:20])}
+
+📌 Tag someone who needs to see this!"""
             
-            Return as JSON:
-            {{
-                "title": "TikTok optimized title",
-                "caption": "TikTok caption with hashtags and bio CTA",
-                "hashtags": ["#hashtag1", "#hashtag2"],
-                "character_count": 45
-            }}
-            """
-            
-            # Instagram Metadata
-            instagram_hashtags = ' '.join(platform_keywords.get('instagram', [])[:15])
-            instagram_prompt = f"""
-            Create Instagram-optimized metadata for: "{title}"
-            Featured products: {products_str}
-            Instagram hashtags: {instagram_hashtags}
-            
-            INSTAGRAM REQUIREMENTS:
-            - Title: Visual storytelling focus, under 55 characters
-            - Caption: Engaging story with call-to-action, hashtags, and "Link in bio!"
-            - Mix popular and niche hashtags for reach
-            - Include product mentions and affiliate disclosure
-            - Add strong call-to-action for bio link
-            
-            AFFILIATE DISCLOSURE:
-            Include: "🛒 Amazon affiliate links in bio! Tap the link for the best deals!"
-            
-            Return as JSON:
-            {{
-                "title": "Instagram optimized title",
-                "caption": "Instagram caption with storytelling and bio CTA",
-                "hashtags": ["#hashtag1", "#hashtag2"],
-                "character_count": 52
-            }}
-            """
+            results['instagram'] = {
+                "title": instagram_title[:55],
+                "caption": instagram_caption,
+                "hashtags": platform_keywords.get('instagram', [])[:30],
+                "character_count": len(instagram_title)
+            }
             
             # WordPress Metadata
-            wordpress_keywords = ', '.join(platform_keywords.get('wordpress', [])[:8])
+            wp_title = f"Best {self._extract_category_name(title)} on Amazon (2025 Review)"
+            meta_desc = f"In-depth review of the top 5 {category_key} on Amazon. Honest comparisons, pros/cons, and buyer's guide included."
             
-            # Format product images for WordPress
-            wordpress_images_html = ""
+            # Generate blog content
+            blog_content = f"""<h1>{wp_title}</h1>
+
+<p>After testing dozens of {category_key} products, I've found the absolute best options available on Amazon in 2025. This comprehensive guide breaks down everything you need to know before making a purchase.</p>
+
+<h2>Quick Summary - Top 5 {self._extract_category_name(title)}</h2>
+<ol>
+<li><strong>Best Overall:</strong> Product #1 - Perfect balance of features and value</li>
+<li><strong>Best Budget:</strong> Product #5 - Incredible performance under $50</li>
+<li><strong>Most Features:</strong> Product #2 - Packed with cutting-edge technology</li>
+<li><strong>Best Design:</strong> Product #3 - Sleek and modern aesthetics</li>
+<li><strong>Best Value:</strong> Product #4 - Premium quality at mid-range price</li>
+</ol>
+
+<h2>Detailed Product Reviews</h2>
+"""
+            
+            # Add product reviews if affiliate data available
             if affiliate_data:
-                for i, affiliate in enumerate(affiliate_data[:5], 1):
-                    product_name = affiliate.get('title', f'Product #{i}')
-                    image_url = affiliate.get('image_url', '')
-                    affiliate_url = affiliate.get('affiliate_link', '')
-                    price = affiliate.get('price', 'N/A')
-                    rating = affiliate.get('rating', 'N/A')
-                    
-                    if image_url and affiliate_url:
-                        wordpress_images_html += f'''
-                        <div class="product-review">
-                            <h3>#{i}: {product_name}</h3>
-                            <img src="{image_url}" alt="{product_name}" style="max-width: 300px; height: auto;" />
-                            <p><strong>Price:</strong> ${price} | <strong>Rating:</strong> {rating}/5</p>
-                            <a href="{affiliate_url}" target="_blank" rel="nofollow" class="affiliate-button">Check Price on Amazon</a>
-                        </div>
-                        '''
+                for i, product in enumerate(affiliate_data[:5], 1):
+                    blog_content += f"""
+<h3>#{i}. {product.get('title', f'Product {i}')}</h3>
+<div class="product-box">
+<p><strong>Price:</strong> {product.get('price', 'Check Amazon')}<br>
+<strong>Rating:</strong> {product.get('rating', '4.5')}/5 stars ({product.get('review_count', '1000+')} reviews)</p>
+<p>Key Features:</p>
+<ul>
+<li>High-quality construction</li>
+<li>Excellent performance</li>
+<li>Great value for money</li>
+</ul>
+<p><a href="{product.get('affiliate_link', '#')}" class="button" target="_blank" rel="nofollow">Check Price on Amazon</a></p>
+</div>
+"""
             
-            wordpress_prompt = f"""
-            Create WordPress SEO-optimized content for: "{title}"
-            Featured products: {products_str}
-            WordPress keywords: {wordpress_keywords}
+            blog_content += f"""
+<h2>Buying Guide - How to Choose the Best {self._extract_category_name(title)}</h2>
+<p>When shopping for {category_key}, consider these key factors:</p>
+<ul>
+<li><strong>Budget:</strong> Determine your price range before shopping</li>
+<li><strong>Features:</strong> List must-have vs nice-to-have features</li>
+<li><strong>Reviews:</strong> Always check verified purchase reviews</li>
+<li><strong>Warranty:</strong> Look for products with solid warranties</li>
+</ul>
+
+<h2>Frequently Asked Questions</h2>
+<h3>Q: Are these products worth the price?</h3>
+<p>A: Yes, all products in this list offer excellent value for their respective price points.</p>
+
+<h3>Q: Do these products come with warranties?</h3>
+<p>A: Most come with manufacturer warranties. Check individual product pages for details.</p>
+
+<h3>Q: How often is this list updated?</h3>
+<p>A: We update our recommendations monthly based on new releases and user feedback.</p>
+
+<p><em>Disclosure: This post contains affiliate links. As an Amazon Associate, I earn from qualifying purchases at no extra cost to you.</em></p>"""
             
-            WORDPRESS REQUIREMENTS:
-            - Title: Long-tail SEO optimized, under 60 characters
-            - Meta description: 150-160 characters with keywords
-            - Content: 800-1200 word blog post with product reviews
-            - Include product images with affiliate links
-            - Focus on search intent and organic discovery
-            - Include product comparison table
-            - Add FAQ section
+            results['wordpress'] = {
+                "title": wp_title[:60],
+                "meta_description": meta_desc[:160],
+                "content": blog_content,
+                "focus_keywords": platform_keywords.get('wordpress', [])[:5],
+                "character_count": len(wp_title)
+            }
             
-            PRODUCT IMAGES HTML TO INCLUDE:
-            {wordpress_images_html}
-            
-            AFFILIATE DISCLOSURE:
-            Include: "This post contains affiliate links. As an Amazon Associate, I earn from qualifying purchases at no extra cost to you."
-            
-            Return as JSON:
-            {{
-                "title": "WordPress SEO title",
-                "meta_description": "SEO meta description",
-                "content": "Full blog post with HTML, images, and affiliate links",
-                "focus_keywords": ["keyword1", "keyword2"],
-                "character_count": 58
-            }}
-            """
-            
-            # Generate all platform metadata in parallel
-            platforms = [
-                ("youtube", youtube_prompt),
-                ("tiktok", tiktok_prompt), 
-                ("instagram", instagram_prompt),
-                ("wordpress", wordpress_prompt)
-            ]
-            
-            for platform, prompt in platforms:
-                try:
-                    response = self.client.messages.create(
-                        model="claude-3-5-sonnet-20241022",
-                        max_tokens=800,
-                        messages=[{"role": "user", "content": prompt}]
-                    )
-                    
-                    response_text = response.content[0].text
-                    start_idx = response_text.find('{')
-                    end_idx = response_text.rfind('}') + 1
-                    
-                    if start_idx != -1 and end_idx > start_idx:
-                        json_str = response_text[start_idx:end_idx]
-                        platform_data = json.loads(json_str)
-                        results[platform] = platform_data
-                        print(f"✅ Generated {platform} metadata: {platform_data.get('title', '')[:40]}...")
-                    
-                except Exception as e:
-                    print(f"❌ Error generating {platform} metadata: {e}")
-                    results[platform] = {}
-            
+            print(f"✅ TEST MODE: Generated platform metadata for all platforms")
             return results
                 
         except Exception as e:

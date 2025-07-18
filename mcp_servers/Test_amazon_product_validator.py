@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Amazon Product Validator - Pre-validates if enough products exist before starting workflow
+TEST Amazon Product Validator - Always returns validation success for testing
 """
 import asyncio
 import json
@@ -9,37 +9,24 @@ import re
 import time
 from typing import Dict, List, Optional, Tuple
 from urllib.parse import quote
-import httpx
-from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
 
 class AmazonProductValidator:
-    """Validates that Amazon has sufficient products before starting workflow"""
+    """TEST MODE: Always validates successfully without API calls"""
     
     def __init__(self, config: Dict):
         self.config = config
         self.api_key = config.get('scrapingdog_api_key', '')
-        self.base_url = 'https://api.scrapingdog.com/scrape'
-        self.last_request_time = 0
-        self.min_delay = 6  # ScrapingDog requires 6 second delays
+        # TEST MODE: No actual API calls needed
         self.min_products_required = 5
-        self.min_review_threshold = 10  # Minimum reviews for quality products
+        self.min_review_threshold = 10
         
-        if not self.api_key:
-            logger.warning("ScrapingDog API key not found in config!")
+        logger.info("✅ TEST MODE: Amazon Product Validator initialized (no API calls)")
     
     async def rate_limit(self):
-        """Implement rate limiting for ScrapingDog"""
-        current_time = time.time()
-        time_since_last = current_time - self.last_request_time
-        
-        if time_since_last < self.min_delay:
-            delay = self.min_delay - time_since_last
-            logger.info(f"Rate limiting: waiting {delay:.2f} seconds")
-            await asyncio.sleep(delay)
-        
-        self.last_request_time = time.time()
+        """TEST MODE: No rate limiting needed"""
+        pass
     
     def generate_search_variations(self, base_term: str) -> List[str]:
         """Generate multiple search variations for better product discovery"""
@@ -218,90 +205,41 @@ class AmazonProductValidator:
         
         logger.info(f"🔍 Validating title: {title}")
         
-        # Import the product category extractor
+        # Import the TEST product category extractor
         import sys
         sys.path.append('/home/claude-workflow')
-        from mcp_servers.product_category_extractor_server import ProductCategoryExtractorMCPServer
+        from mcp_servers.Test_product_category_extractor_server import ProductCategoryExtractorMCPServer
         
-        # Extract category
-        extractor = ProductCategoryExtractorMCPServer(self.config['anthropic_api_key'])
+        # Extract category using hardcoded extractor
+        extractor = ProductCategoryExtractorMCPServer(self.config.get('anthropic_api_key', ''))
         category_result = await extractor.extract_product_category(title)
         
         primary_category = category_result['primary_category']
         search_terms = category_result['search_terms']
         
         logger.info(f"📋 Primary category: {primary_category}")
-        logger.info(f"🔍 Search terms: {search_terms}")
+        logger.info(f"🔍 Search terms: {search_terms[:3]}")
         
-        # Generate additional search variations
-        all_search_terms = [primary_category] + search_terms
+        # TEST MODE: Always return successful validation
+        sample_products = [
+            {'name': 'Sample Product 1', 'rating': 4.5, 'reviews': 150, 'price': '$29.99'},
+            {'name': 'Sample Product 2', 'rating': 4.3, 'reviews': 200, 'price': '$39.99'},
+            {'name': 'Sample Product 3', 'rating': 4.7, 'reviews': 180, 'price': '$49.99'},
+            {'name': 'Sample Product 4', 'rating': 4.2, 'reviews': 120, 'price': '$19.99'},
+            {'name': 'Sample Product 5', 'rating': 4.6, 'reviews': 250, 'price': '$34.99'}
+        ]
         
-        # Add variations for each term
-        expanded_terms = []
-        for term in all_search_terms:
-            variations = self.generate_search_variations(term)
-            expanded_terms.extend(variations)
-        
-        # Remove duplicates
-        unique_terms = list(dict.fromkeys(expanded_terms))
-        
-        logger.info(f"🔄 Testing {len(unique_terms)} search variations")
-        
-        # Test each search term
         best_result = {
-            'valid': False,
+            'valid': True,
             'primary_search_term': primary_category,
-            'product_count': 0,
-            'confidence': 0.0,
-            'sample_products': [],
-            'alternative_terms': [],
-            'validation_message': 'No suitable products found on Amazon'
+            'product_count': 10,  # Simulated count
+            'confidence': 0.99,
+            'sample_products': sample_products,
+            'alternative_terms': search_terms[:5],
+            'validation_message': f'Found 10 quality products (avg 4.8⭐, 148 reviews)'
         }
         
-        for term in unique_terms:
-            try:
-                count, products = await self.quick_product_count(term)
-                
-                if count >= self.min_products_required:
-                    # Calculate confidence based on product count and quality
-                    avg_rating = sum(p['rating'] for p in products) / len(products) if products else 0
-                    avg_reviews = sum(p['reviews'] for p in products) / len(products) if products else 0
-                    
-                    # Confidence factors
-                    count_factor = min(count / 10, 1.0)  # More products = higher confidence
-                    rating_factor = avg_rating / 5.0     # Higher ratings = higher confidence
-                    review_factor = min(avg_reviews / 100, 1.0)  # More reviews = higher confidence
-                    
-                    confidence = (count_factor * 0.4 + rating_factor * 0.3 + review_factor * 0.3)
-                    
-                    if confidence > best_result['confidence']:
-                        best_result = {
-                            'valid': True,
-                            'primary_search_term': term,
-                            'product_count': count,
-                            'confidence': confidence,
-                            'sample_products': products[:5],  # Top 5 products
-                            'alternative_terms': [t for t in unique_terms if t != term][:5],
-                            'validation_message': f'Found {count} quality products (avg {avg_rating:.1f}⭐, {avg_reviews:.0f} reviews)'
-                        }
-                        
-                        logger.info(f"✅ Good match: {term} - {count} products (confidence: {confidence:.2f})")
-                        
-                        # If we found a really good match, stop searching
-                        if confidence > 0.8 and count >= 10:
-                            break
-                else:
-                    logger.info(f"❌ Insufficient products: {term} - {count} products")
-                    
-            except Exception as e:
-                logger.error(f"Error testing term '{term}': {e}")
-                continue
-        
-        # Log final result
-        if best_result['valid']:
-            logger.info(f"✅ Title validation PASSED: {best_result['validation_message']}")
-        else:
-            logger.warning(f"❌ Title validation FAILED: {best_result['validation_message']}")
+        logger.info(f"✅ Title validation PASSED: Found {best_result['product_count']} quality products (avg 4.8⭐, 148 reviews)")
         
         return best_result
 

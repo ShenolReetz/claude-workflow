@@ -1,23 +1,58 @@
-# mcp_servers/product_category_extractor_server.py
+# mcp_servers/Test_product_category_extractor_server.py
 import json
 import logging
 import asyncio
+import re
 from typing import Dict, List, Optional, Any
-from anthropic import AsyncAnthropic
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class ProductCategoryExtractorMCPServer:
-    """MCP Server that converts marketing titles to clean product search terms"""
+    """TEST MODE: MCP Server with hardcoded product category extraction"""
     
     def __init__(self, anthropic_api_key: str):
         self.anthropic_api_key = anthropic_api_key
-        self.client = AsyncAnthropic(api_key=anthropic_api_key)
+        # TEST MODE: No actual API client needed
+        
+        # Hardcoded category mappings
+        self.category_patterns = {
+            # Audio/Electronics
+            'speaker': {'category': 'speakers', 'type': 'electronics', 'terms': ['speakers', 'bluetooth speakers', 'wireless speakers']},
+            'cable': {'category': 'audio cables', 'type': 'electronics', 'terms': ['audio cables', 'speaker cables', 'rca cables']},
+            'headphone': {'category': 'headphones', 'type': 'electronics', 'terms': ['headphones', 'wireless headphones', 'bluetooth headphones']},
+            'headset': {'category': 'gaming headsets', 'type': 'electronics', 'terms': ['gaming headsets', 'headsets', 'gaming headphones']},
+            'amplifier': {'category': 'car amplifiers', 'type': 'automotive', 'terms': ['car amplifiers', 'automotive amplifiers', 'car audio amps']},
+            'amp': {'category': 'car amplifiers', 'type': 'automotive', 'terms': ['car amplifiers', 'automotive amplifiers', 'car audio amps']},
+            'subwoofer': {'category': 'car subwoofers', 'type': 'automotive', 'terms': ['car subwoofers', 'automotive subwoofers', 'car audio subs']},
+            'marine': {'category': 'marine speakers', 'type': 'automotive', 'terms': ['marine speakers', 'boat speakers', 'waterproof speakers']},
+            
+            # Cameras/Security
+            'camera': {'category': 'security cameras', 'type': 'electronics', 'terms': ['security cameras', 'surveillance cameras', 'home security cameras']},
+            'security': {'category': 'security cameras', 'type': 'electronics', 'terms': ['security cameras', 'surveillance cameras', 'home security cameras']},
+            'surveillance': {'category': 'security cameras', 'type': 'electronics', 'terms': ['surveillance cameras', 'security cameras', 'home cameras']},
+            
+            # Tech/Computing
+            'monitor': {'category': 'computer monitors', 'type': 'electronics', 'terms': ['computer monitors', 'gaming monitors', 'desktop monitors']},
+            'keyboard': {'category': 'gaming keyboards', 'type': 'electronics', 'terms': ['gaming keyboards', 'mechanical keyboards', 'computer keyboards']},
+            'mouse': {'category': 'gaming mice', 'type': 'electronics', 'terms': ['gaming mice', 'computer mice', 'wireless mice']},
+            
+            # Home/Kitchen
+            'knife': {'category': 'kitchen knives', 'type': 'home', 'terms': ['kitchen knives', 'chef knives', 'cooking knives']},
+            'cookware': {'category': 'cookware sets', 'type': 'home', 'terms': ['cookware sets', 'pots and pans', 'kitchen cookware']},
+            'power strip': {'category': 'power strips', 'type': 'electronics', 'terms': ['power strips', 'surge protectors', 'outlet strips']},
+            
+            # Fashion/Accessories
+            'watch': {'category': 'smartwatches', 'type': 'electronics', 'terms': ['smartwatches', 'fitness trackers', 'wearable devices']},
+            'band': {'category': 'watch bands', 'type': 'fashion', 'terms': ['watch bands', 'smartwatch bands', 'watch straps']},
+            
+            # Default fallback
+            'default': {'category': 'electronics', 'type': 'electronics', 'terms': ['electronics', 'gadgets', 'tech accessories']}
+        }
     
     async def extract_product_category(self, marketing_title: str) -> Dict[str, Any]:
         """
-        Extract clean product category from marketing title
+        TEST MODE: Extract product category using hardcoded patterns
         
         Args:
             marketing_title: Title like "🔥 5 INSANE Car Amps You Need in 2025! *Loudest Ever* 🚗"
@@ -34,221 +69,113 @@ class ProductCategoryExtractorMCPServer:
         logger.info(f"🔍 Extracting product category from: {marketing_title[:50]}...")
         
         try:
-            prompt = f"""
-You are a product category extraction specialist. Your job is to convert marketing titles into clean, searchable product categories that Amazon can understand.
-
-Input title: "{marketing_title}"
-
-Please extract:
-1. PRIMARY_CATEGORY: The main product category (2-3 words max, simple and clear)
-2. SEARCH_TERMS: 3-5 alternative search terms that would work on Amazon
-3. PRODUCT_TYPE: General category (electronics, automotive, home, sports, etc.)
-4. CONFIDENCE: How confident you are (0.0-1.0)
-
-Rules:
-- Remove ALL emojis, exclamation marks, and hype language
-- Remove words like "INSANE", "BEST", "TOP", "2025", "NEW", "SHOCKING"
-- Focus on the actual product being discussed
-- Use terms that real shoppers would search for
-- Keep it simple and clear
-
-Format your response as JSON:
-{{
-    "primary_category": "clean product name",
-    "search_terms": ["term1", "term2", "term3", "term4", "term5"],
-    "product_type": "category",
-    "category_confidence": 0.95,
-    "reasoning": "why you chose this category"
-}}
-
-Examples:
-- "🔥 5 INSANE Car Amps You Need in 2025!" → "car amplifiers"
-- "BEST Gaming Headsets That Will Blow Your Mind!" → "gaming headsets"
-- "TOP 5 Kitchen Knives Every Chef Needs 🔪" → "kitchen knives"
-- "Marine Subs That Will Shock You" → "marine subwoofers" (NOT submarines)
-- "Bluetooth Speakers You Need" → "bluetooth speakers"
-
-Important context:
-- "Marine Subs" refers to marine subwoofers (audio equipment for boats), NOT submarines
-- "Amps" refers to amplifiers (audio equipment), NOT electrical amperage
-- "Monitors" refers to computer monitors, NOT surveillance monitors
-"""
-
-            response = await self.client.messages.create(
-                model="claude-3-haiku-20240307",
-                max_tokens=500,
-                temperature=0.1,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ]
-            )
+            # Clean title for pattern matching
+            clean_title = self._clean_title(marketing_title)
             
-            response_text = response.content[0].text.strip()
+            # Find matching pattern
+            matched_pattern = None
+            for pattern, category_info in self.category_patterns.items():
+                if pattern == 'default':
+                    continue
+                if pattern.lower() in clean_title.lower():
+                    matched_pattern = category_info
+                    break
             
-            # Parse JSON response
-            try:
-                result = json.loads(response_text)
-                
-                # Validate required fields
-                required_fields = ['primary_category', 'search_terms', 'product_type', 'category_confidence']
-                if not all(field in result for field in required_fields):
-                    raise ValueError(f"Missing required fields in response: {result}")
-                
-                logger.info(f"✅ Extracted category: {result['primary_category']}")
-                logger.info(f"🎯 Search terms: {', '.join(result['search_terms'][:3])}")
-                logger.info(f"📊 Confidence: {result['category_confidence']}")
-                
-                return {
-                    'success': True,
-                    'original_title': marketing_title,
-                    'primary_category': result['primary_category'],
-                    'search_terms': result['search_terms'],
-                    'product_type': result['product_type'],
-                    'category_confidence': result['category_confidence'],
-                    'reasoning': result.get('reasoning', '')
-                }
-                
-            except json.JSONDecodeError as e:
-                logger.error(f"❌ JSON parsing error: {e}")
-                logger.error(f"Response: {response_text}")
-                
-                # Fallback: try to extract category manually
-                fallback_result = self._fallback_extraction(marketing_title)
-                return fallback_result
+            # Use default if no match found
+            if not matched_pattern:
+                matched_pattern = self.category_patterns['default']
+            
+            result = {
+                'success': True,
+                'primary_category': matched_pattern['category'],
+                'search_terms': matched_pattern['terms'][:5],
+                'product_type': matched_pattern['type'],
+                'category_confidence': 0.95,
+                'reasoning': f"Matched pattern based on keywords in title"
+            }
+            
+            logger.info(f"✅ Extracted category: {result['primary_category']}")
+            logger.info(f"🎯 Search terms: {', '.join(result['search_terms'][:3])}")
+            logger.info(f"📊 Confidence: {result['category_confidence']}")
+            
+            return result
                 
         except Exception as e:
-            logger.error(f"❌ Category extraction failed: {str(e)}")
+            logger.error(f"❌ Error extracting category: {e}")
             return {
                 'success': False,
                 'error': str(e),
-                'original_title': marketing_title
+                'primary_category': 'electronics',
+                'search_terms': ['electronics', 'gadgets'],
+                'product_type': 'electronics',
+                'category_confidence': 0.5
             }
     
-    def _fallback_extraction(self, title: str) -> Dict[str, Any]:
-        """Fallback extraction using simple keyword matching"""
+    def _clean_title(self, title: str) -> str:
+        """Clean marketing title for pattern matching"""
+        # Remove emojis and special characters
+        clean = re.sub(r'[🔥⚡💸🚗🔪📱💻🎵🎮🏠⭐👍💯✨]', '', title)
+        # Remove hype words
+        hype_words = ['INSANE', 'BEST', 'TOP', '2025', 'NEW', 'SHOCKING', 'AMAZING', 'INCREDIBLE']
+        for word in hype_words:
+            clean = clean.replace(word, '')
+        # Remove extra whitespace
+        clean = ' '.join(clean.split())
+        return clean
+    
+    def _fallback_extraction(self, marketing_title: str) -> Dict[str, Any]:
+        """
+        TEST MODE: Enhanced fallback using pattern matching
+        """
+        logger.warning("🔄 Using fallback extraction method")
         
-        logger.info("🔄 Using fallback extraction method")
+        # Use the same logic as main extraction but with lower confidence
+        clean_title = self._clean_title(marketing_title)
         
-        # Clean the title
-        import re
-        clean_title = re.sub(r'[🔥🚗🎮🔌⚡️📱🏆💯✨🎯💎🔊🎧🎪🎨🔥]', '', title)
-        clean_title = re.sub(r'[!*]', '', clean_title)
-        clean_title = re.sub(r'\b(TOP|BEST|INSANE|NEW|2025|SHOCKING|GONE|FAR|EVER|NEED|YOU|WILL|THAT|THE|OF|IN|FOR|WITH|AND|OR)\b', '', clean_title, flags=re.IGNORECASE)
-        clean_title = re.sub(r'\s+', ' ', clean_title).strip()
+        # Find matching pattern
+        for pattern, category_info in self.category_patterns.items():
+            if pattern == 'default':
+                continue
+            if pattern.lower() in clean_title.lower():
+                return {
+                    'success': True,
+                    'primary_category': category_info['category'],
+                    'search_terms': category_info['terms'][:5],
+                    'product_type': category_info['type'],
+                    'category_confidence': 0.75,  # Lower confidence for fallback
+                    'reasoning': f'Fallback: detected {pattern} keywords'
+                }
         
-        # Common product mappings
-        product_mappings = {
-            'car amp': 'car amplifiers',
-            'car amplifier': 'car amplifiers', 
-            'marine sub': 'marine subwoofers',
-            'gaming headset': 'gaming headsets',
-            'monitor': 'computer monitors',
-            'power strip': 'power strips',
-            'camera stabilizer': 'camera stabilizers',
-            'kitchen knife': 'kitchen knives',
-            'bluetooth speaker': 'bluetooth speakers',
-            'phone case': 'phone cases',
-            'laptop stand': 'laptop stands',
-            'wireless charger': 'wireless chargers'
-        }
-        
-        # Find best match
-        clean_lower = clean_title.lower()
-        primary_category = None
-        
-        for keyword, category in product_mappings.items():
-            if keyword in clean_lower:
-                primary_category = category
-                break
-        
-        if not primary_category:
-            # Extract first few meaningful words
-            words = clean_title.split()[:3]
-            primary_category = ' '.join(words).lower()
-        
+        # Ultimate fallback
         return {
             'success': True,
-            'original_title': title,
-            'primary_category': primary_category,
-            'search_terms': [primary_category, clean_title.lower()],
+            'primary_category': 'electronics',
+            'search_terms': ['electronics', 'gadgets', 'tech accessories'],
             'product_type': 'electronics',
-            'category_confidence': 0.6,
-            'reasoning': 'Fallback extraction used'
+            'category_confidence': 0.5,
+            'reasoning': 'Fallback: generic electronics category'
         }
-    
-    async def batch_extract_categories(self, titles: List[str]) -> List[Dict[str, Any]]:
-        """Extract categories from multiple titles in batch"""
-        
-        logger.info(f"🔄 Batch extracting categories from {len(titles)} titles")
-        
-        tasks = [self.extract_product_category(title) for title in titles]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        
-        # Handle any exceptions
-        processed_results = []
-        for i, result in enumerate(results):
-            if isinstance(result, Exception):
-                logger.error(f"❌ Error processing title {i+1}: {result}")
-                processed_results.append({
-                    'success': False,
-                    'error': str(result),
-                    'original_title': titles[i]
-                })
-            else:
-                processed_results.append(result)
-        
-        return processed_results
-    
-    async def test_extraction(self, test_titles: List[str]) -> None:
-        """Test the extraction with sample titles"""
-        
-        print("🧪 Testing Product Category Extraction")
-        print("=" * 60)
-        
-        for title in test_titles:
-            print(f"\n📝 Original: {title}")
-            result = await self.extract_product_category(title)
-            
-            if result['success']:
-                print(f"✅ Category: {result['primary_category']}")
-                print(f"🎯 Search Terms: {', '.join(result['search_terms'][:3])}")
-                print(f"📊 Confidence: {result['category_confidence']}")
-            else:
-                print(f"❌ Error: {result['error']}")
 
-# Test function
-if __name__ == "__main__":
-    import os
+# Test the server
+async def test_category_extractor():
+    server = ProductCategoryExtractorMCPServer('test_key')
     
-    # Test titles from the Airtable
     test_titles = [
-        "🔥 5 INSANE Car Amps You Need in 2025! *Loudest Ever* 🚗",
-        "🔥 5 INSANE Marine Subs That Will Shock You (2025 DEALS)",
-        "INSANE Monitors You NEED in 2025! 🔥 (Gone Too Far?)",
-        "BEST Power Strips in 2025! 🔌 (Shocking Test Results) ⚡️",
-        "🔥 5 INSANE Camera Stabilizers You Need in 2025! 📱",
-        "Top 5 New Car Mono Amplifiers Releases 2025",
-        "🔥 TOP 5 Gaming Headsets That Will Blow Your Mind! 🎮",
-        "BEST Kitchen Knives Every Chef Needs 🔪 (Professional Grade)",
-        "🔥 5 INSANE Bluetooth Speakers You Need! 🔊 (Bass Test)",
-        "TOP 5 Phone Cases That Actually Work! 📱 (Drop Test)"
+        "🔥 5 INSANE Car Amps You Need in 2025!",
+        "BEST Gaming Headsets That Will Blow Your Mind!",
+        "TOP 5 Kitchen Knives Every Chef Needs 🔪",
+        "Marine Subs That Will Shock You",
+        "Bluetooth Speakers You Need",
+        "Top 5 Surveillance & Security Cameras Editor's Picks 2025"
     ]
     
-    async def run_test():
-        # Load config
-        with open('/home/claude-workflow/config/api_keys.json', 'r') as f:
-            config = json.load(f)
-        
-        # Initialize server
-        server = ProductCategoryExtractorMCPServer(config['anthropic_api_key'])
-        
-        # Test extraction
-        await server.test_extraction(test_titles)
-        
-        print("\n" + "=" * 60)
-        print("✅ Product Category Extraction test complete!")
-    
-    asyncio.run(run_test())
+    for title in test_titles:
+        result = await server.extract_product_category(title)
+        print(f"Title: {title}")
+        print(f"Category: {result['primary_category']}")
+        print(f"Terms: {result['search_terms'][:3]}")
+        print(f"Confidence: {result['category_confidence']}")
+        print("-" * 50)
+
+if __name__ == "__main__":
+    asyncio.run(test_category_extractor())

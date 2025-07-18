@@ -180,19 +180,28 @@ class ContentPipelineOrchestrator:
                 amazon_result['airtable_data']
             )
             
-            # Step 2.75: Populate Airtable with default photos (TEST MODE)
-            print("🖼️ TEST MODE: Populating Airtable with default photos...")
-            default_photo_updates = self.default_photo_manager.populate_airtable_with_default_photos(
-                amazon_result, 
-                clean_category
-            )
-            
-            if default_photo_updates:
-                await self.airtable_server.update_record(
-                    pending_title['record_id'],
-                    default_photo_updates
-                )
-                print(f"✅ TEST MODE: Updated {len(default_photo_updates)} photo fields with default URLs")
+            # Step 2.75: Use hardcoded real photos from Power Strips project
+            print("🖼️ TEST MODE: Using hardcoded real photos from Power Strips project...")
+            try:
+                from mcp_servers.Test_hardcoded_photo_manager import TestHardcodedPhotoManager
+                photo_manager = TestHardcodedPhotoManager()
+                
+                # Get hardcoded real Google Drive photo URLs
+                real_photo_urls = photo_manager.get_airtable_photo_updates()
+                
+                if real_photo_urls:
+                    await self.airtable_server.update_record(
+                        pending_title['record_id'],
+                        real_photo_urls
+                    )
+                    print(f"✅ TEST MODE: Updated {len(real_photo_urls)} photo fields with REAL hardcoded URLs")
+                    for field, url in real_photo_urls.items():
+                        print(f"  {field}: {url[:60]}...")
+                else:
+                    print("⚠️ No hardcoded photos available, JSON2Video may fail")
+            except Exception as e:
+                print(f"❌ Error using hardcoded photos: {e}")
+                print("⚠️ JSON2Video may fail without valid photo URLs")
             
             # Step 2.8: Populate Airtable with default audio (TEST MODE)
             print("🎵 TEST MODE: Populating Airtable with default audio files...")
@@ -505,22 +514,38 @@ class ContentPipelineOrchestrator:
             
             if video_result['success']:
                 print(f"✅ Video created successfully!")
+                print(f"📋 JSON2Video Project ID: {video_result['movie_id']}")
                 
-                # Step 11: Upload to Google Drive
-                print("☁️ Uploading video to Google Drive...")
-                upload_result = await upload_video_to_google_drive(
-                    self.config,
-                    video_result['video_url'],
-                    video_result.get('project_name', f'Video_{pending_title["record_id"]}'),
-                    pending_title['record_id']
-                )
-                
-                if upload_result['success']:
-                    print(f"✅ Video uploaded to Google Drive: {upload_result['drive_url']}")
+                # Wait for video to complete processing and get URL
+                if video_result.get('video_url'):
+                    print(f"✅ Video URL available: {video_result['video_url']}")
                     
-                    # Update Airtable with final video URL (Google Drive)
+                    # Step 11: Upload to Google Drive
+                    print("☁️ Uploading video to Google Drive...")
+                    upload_result = await upload_video_to_google_drive(
+                        self.config,
+                        video_result['video_url'],
+                        video_result.get('project_name', f'Video_{pending_title["record_id"]}'),
+                        pending_title['record_id']
+                    )
+                    
+                    if upload_result['success']:
+                        print(f"✅ Video uploaded to Google Drive: {upload_result['drive_url']}")
+                        
+                        # Update Airtable with final video URL (Google Drive)
+                        await self.airtable_server.update_record(pending_title['record_id'], {
+                            'FinalVideo': upload_result['drive_url']
+                        })
+                    else:
+                        print(f"❌ Google Drive upload failed: {upload_result.get('error', 'Unknown error')}")
+                else:
+                    print("⏳ Video is still processing - Google Drive upload skipped")
+                    print(f"🔗 Check status at: https://json2video.com/app/projects/{video_result['movie_id']}")
+                    
+                    # Update Airtable with processing status
                     await self.airtable_server.update_record(pending_title['record_id'], {
-                        'FinalVideo': upload_result['drive_url']
+                        'Status': 'Video Processing',
+                        'FinalVideo': f"Processing - Check: https://json2video.com/app/projects/{video_result['movie_id']}"
                     })
                     
                     # Create WordPress blog post
