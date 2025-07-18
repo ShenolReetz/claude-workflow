@@ -29,17 +29,36 @@ class JSON2VideoEnhancedMCPServerV2:
         self.client = httpx.AsyncClient(timeout=86400, headers=self.headers)
     
     def build_perfect_timing_video(self, record_data: Dict) -> tuple:
-        """Build PERFECT timing video: Intro 5s, Products 9s each, Outro 5s (total <60s) - USING WORKING SCHEMA"""
+        """Build PERFECT timing video: Intro 5s, Products 9s each, Outro 5s (total <60s) - USING WORKING SCHEMA WITH SUBTITLES"""
         
         # Extract data from record
         title = record_data.get('VideoTitle', 'Top 5 Products')
         
-        # Build JSON2Video movie structure with PERFECT timing - EXACT COPY FROM WORKING PRODUCTION
+        # Build JSON2Video movie structure with PERFECT timing - ENHANCED WITH SUBTITLE SUPPORT
         movie_json = {
             "comment": f"PERFECT TIMING: {title[:30]}",
             "resolution": "instagram-story",  # 9:16 vertical format (1080x1920)
             "quality": "high",
-            "scenes": []
+            "scenes": [],
+            # Movie-level subtitle element for automatic subtitle generation
+            "elements": [
+                {
+                    "type": "subtitles",
+                    "model": "default",
+                    "language": "en",
+                    "settings": {
+                        "style": "classic-progressive",
+                        "font-family": "Roboto",
+                        "font-size": 32,
+                        "position": "bottom-center",
+                        "word-color": "#FFFF00",
+                        "line-color": "#FFFFFF",
+                        "outline-width": 2,
+                        "outline-color": "#000000",
+                        "max-words-per-line": 5
+                    }
+                }
+            ]
         }
         
         # 1. INTRO SCENE - EXACTLY 5 seconds
@@ -105,52 +124,35 @@ class JSON2VideoEnhancedMCPServerV2:
         scene["elements"].append({
             "type": "image",
             "src": working_intro_url,
-            "x": 0,
-            "y": 0,
-            "width": 1080,
-            "height": 1920,
-            "object-fit": "cover",
-            "opacity": 0.7
+            "resize": "cover",
+            "position": "center-center"
         })
         
         # Dark overlay handled by background-color - EXACT COPY FROM WORKING PRODUCTION
         scene["background-color"] = "rgba(0, 0, 0, 0.5)"
         
-        # Title at top - EXACT COPY FROM WORKING PRODUCTION
+        # Title at top - UPDATED FOR V2 SCHEMA
         scene["elements"].append({
             "type": "text",
             "text": title,
-            "font-family": "Montserrat",
-            "font-weight": "bold",
-            "font-size": 56,
-            "font-color": "#FFFFFF",
-            "text-align": "center",
-            "x": "center",
-            "y": 200,
-            "width": 950,
-            "duration": 5,
-            "animations": [
-                {
-                    "type": "scale",
-                    "from": 0.8,
-                    "to": 1,
-                    "start": 0,
-                    "duration": 0.8,
-                    "easing": "easeOutBack"
-                }
-            ]
+            "settings": {
+                "font-family": "Montserrat",
+                "font-size": "56px",
+                "font-color": "#FFFFFF",
+                "text-align": "center",
+                "vertical-position": "top",
+                "horizontal-position": "center"
+            }
         })
         
-        # Synchronized voice text with word highlighting - EXACT COPY FROM WORKING PRODUCTION
+        # Voice narration (subtitles will be generated automatically at movie level)
         if intro_voice_text:
-            word_highlight_elements = self._create_word_highlight_elements(
-                intro_voice_text, 
-                start_time=0.5, 
-                total_duration=4.5, 
-                y_position=1400,
-                font_size=40
-            )
-            scene["elements"].extend(word_highlight_elements)
+            scene["elements"].append({
+                "type": "voice",
+                "text": intro_voice_text,
+                "voice": "en-US-EmmaMultilingualNeural",
+                "model": "azure"
+            })
         
         return scene
     
@@ -190,12 +192,8 @@ class JSON2VideoEnhancedMCPServerV2:
         scene["elements"].append({
             "type": "image",
             "src": working_bg_url,
-            "x": 0,
-            "y": 0,
-            "width": 1080,
-            "height": 1920,
-            "object-fit": "cover",
-            "opacity": 0.3
+            "resize": "cover",
+            "position": "center-center"
         })
         
         # Background gradient overlay - using solid color for now due to API issues - EXACT COPY FROM WORKING PRODUCTION
@@ -301,16 +299,14 @@ class JSON2VideoEnhancedMCPServerV2:
                 "duration": 8.3
             })
         
-        # Description at BOTTOM with synchronized word highlighting - EXACT COPY FROM WORKING PRODUCTION
+        # Voice narration (subtitles will be generated automatically at movie level)
         if voice_text:
-            word_highlight_elements = self._create_word_highlight_elements(
-                voice_text, 
-                start_time=1.0, 
-                total_duration=8.0, 
-                y_position=1200,
-                font_size=32
-            )
-            scene["elements"].extend(word_highlight_elements)
+            scene["elements"].append({
+                "type": "voice",
+                "text": voice_text,
+                "voice": "en-US-EmmaMultilingualNeural",
+                "model": "azure"
+            })
         elif description:
             # Fallback to static description if no voice text
             scene["elements"].append({
@@ -423,54 +419,18 @@ class JSON2VideoEnhancedMCPServerV2:
             "duration": 4
         })
         
-        # Synchronized voice text with word highlighting - EXACT COPY FROM WORKING PRODUCTION
+        # Voice narration (subtitles will be generated automatically at movie level)
         if outro_voice_text:
-            word_highlight_elements = self._create_word_highlight_elements(
-                outro_voice_text, 
-                start_time=0.5, 
-                total_duration=4.5, 
-                y_position=1400,
-                font_size=32
-            )
-            scene["elements"].extend(word_highlight_elements)
+            scene["elements"].append({
+                "type": "voice",
+                "text": outro_voice_text,
+                "voice": "en-US-EmmaMultilingualNeural",
+                "model": "azure"
+            })
         
         return scene
     
-    def _create_word_highlight_elements(self, text: str, start_time: float, total_duration: float, 
-                                      y_position: int, font_size: int = 32) -> List[Dict]:
-        """Create synchronized word highlighting elements with yellow background"""
-        
-        elements = []
-        words = text.split()
-        
-        if not words:
-            return elements
-        
-        # Calculate timing per word (160 WPM = 2.67 words per second)
-        time_per_word = total_duration / len(words)
-        
-        # Create base text element (all words in white)
-        base_text = {
-            "type": "text",
-            "text": text,
-            "font-family": "Open Sans",
-            "font-size": font_size,
-            "font-color": "#FFFFFF",
-            "text-align": "center",
-            "line-height": 1.4,
-            "x": "center",
-            "y": y_position,
-            "width": 900,
-            "start": start_time,
-            "duration": total_duration
-        }
-        elements.append(base_text)
-        
-        # Simplified word display without shapes (to avoid API issues)
-        # Just show the full text with simple animations
-        pass
-        
-        return elements
+    # Removed _create_word_highlight_elements method - now using native subtitle support
     
     async def create_perfect_timing_video(self, record_data: Dict) -> Dict[str, Any]:
         """Create a video with PERFECT timing and word synchronization"""
@@ -540,7 +500,7 @@ class JSON2VideoEnhancedMCPServerV2:
                 'error': str(e)
             }
     
-    async def wait_for_video(self, project_id: str, max_attempts: int = 10) -> Optional[str]:
+    async def wait_for_video(self, project_id: str, max_attempts: int = 60) -> Optional[str]:
         """Poll for video completion with proper timing to avoid server overload"""
         
         # Initial 1-minute wait before first status check (TEST MODE)
@@ -596,7 +556,7 @@ class JSON2VideoEnhancedMCPServerV2:
                 logger.info(f"⏰ Waiting 1 minute before next status check...")
                 await asyncio.sleep(60)  # 1 minute = 60 seconds
                 
-        logger.error(f"❌ Video creation timed out after {max_attempts} attempts (10 minutes in TEST MODE)")
+        logger.error(f"❌ Video creation timed out after {max_attempts} attempts ({max_attempts} minutes in TEST MODE)")
         return None
     
     async def close(self):

@@ -2,15 +2,79 @@
 
 ## Pre-Integration Analysis
 
-### Current Status Summary (Updated July 17, 2025)
-- **✅ CRITICAL FIX COMPLETED:** Production Airtable server ID field integration
-- **✅ FLOWS SYNCHRONIZED:** Both Test and Production use `ID` field for sequential selection
-- **✅ DATA READY:** ID column populated with 4,188 sequential numbers (1-4188)
-- **✅ VERIFIED:** Test workflow completed successfully with ID-based selection
+### Current Status Summary (Updated July 18, 2025)
+- **✅ VIDEO GENERATION ENHANCED:** JSON2Video Test server updated with native subtitle support
+- **✅ SUBTITLE INTEGRATION:** Progressive word highlighting working with real Airtable photos  
+- **✅ GOOGLE DRIVE ACCESS:** External API permissions resolved for photo URL access
+- **✅ SCHEMA UPGRADED:** JSON2Video v2 compliance with proper image/text formats
+- **📋 READY FOR INTEGRATION:** JSON2Video subtitle enhancement ready for Production deployment
+- **Previous Fixes:** Critical ID field integration, flows synchronized, 4,188 sequential IDs populated
 - **Main Differences:** Test flow has test-specific optimizations (NOT for Production integration)
 - **Test-Only Features:** Default photo/audio systems, 2-second video timing, prerequisite control system
 
 ## Integration Process
+
+### READY FOR INTEGRATION (July 18, 2025)
+
+#### 📋 JSON2Video Subtitle Enhancement - Ready for Production
+- **Enhanced Test File:** `mcp_servers/Test_json2video_enhanced_server_v2.py`
+- **Production Target:** `mcp_servers/json2video_enhanced_server_v2.py`
+- **Integration Complexity:** **Medium** - Schema changes and method removal required
+- **Key Functional Changes:**
+  - **Added movie-level subtitle element** with progressive highlighting
+  - **Removed `_create_word_highlight_elements()` method** - no longer needed
+  - **Updated image schema** to v2 format (`resize`, `position` properties)
+  - **Updated text schema** to use `settings` object with proper positioning
+  - **Integrated Azure TTS** using `en-US-EmmaMultilingualNeural` voice
+- **Testing Status:** ✅ Complete - 48-second video generated successfully
+- **Google Drive Integration:** ✅ Verified - External API access working
+- **Schema Compliance:** ✅ JSON2Video v2 format validated
+
+#### Integration Steps for JSON2Video Enhancement:
+1. **Backup Production File**
+   ```bash
+   cp mcp_servers/json2video_enhanced_server_v2.py mcp_servers/json2video_enhanced_server_v2.py.backup_$(date +%Y%m%d_%H%M%S)
+   ```
+
+2. **Apply Key Changes:**
+   - Add movie-level `elements` array with subtitle configuration
+   - Remove `_create_word_highlight_elements` method entirely
+   - Update `_create_intro_scene`, `_create_perfect_product_scene`, `_create_outro_scene` methods
+   - Replace word highlighting calls with `voice` elements
+   - Update image elements to use `resize`/`position` (not `x`/`y`/`width`/`height`)
+   - Update text elements to use `settings` object
+
+3. **Critical Changes to Apply:**
+   ```python
+   # Add to movie_json in build_perfect_timing_video():
+   "elements": [
+       {
+           "type": "subtitles",
+           "model": "default", 
+           "language": "en",
+           "settings": {
+               "style": "classic-progressive",
+               "font-family": "Roboto",
+               "font-size": 32,
+               "position": "bottom-center",
+               "word-color": "#FFFF00",
+               "line-color": "#FFFFFF",
+               "outline-width": 2,
+               "outline-color": "#000000",
+               "max-words-per-line": 5
+           }
+       }
+   ]
+   ```
+
+4. **Remove/Replace Method Calls:**
+   - Remove all `word_highlight_elements = self._create_word_highlight_elements(...)` calls
+   - Replace with `{"type": "voice", "text": text, "voice": "en-US-EmmaMultilingualNeural", "model": "azure"}`
+
+5. **Verification Required:**
+   - Test compilation: `python3 -m py_compile mcp_servers/json2video_enhanced_server_v2.py`
+   - Test import: `python3 -c "from mcp_servers.json2video_enhanced_server_v2 import JSON2VideoEnhancedMCPServerV2; print('✅ OK')"`
+   - **DO NOT** change video timing from production lengths (keep 5s intro, 9s products, 5s outro)
 
 ### COMPLETED INTEGRATIONS (July 17, 2025)
 

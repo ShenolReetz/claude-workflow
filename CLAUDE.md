@@ -1,9 +1,9 @@
 # Claude Workflow Project Documentation
 
-## Project Status: Production Ready v3.1
+## Project Status: Production Ready v3.2
 
-**Last Updated:** July 17, 2025  
-**Current Version:** v3.1 Sequential ID Selection Integration - Complete Workflow Synchronization  
+**Last Updated:** July 18, 2025  
+**Current Version:** v3.2 Video Generation Enhancement with Native Subtitle Support  
 **Architecture:** Dual-Flow System (Production + Testing)
 
 ## Overview
@@ -270,7 +270,25 @@ python3 -m py_compile [production_file].py  # Verify rollback
 - Optimized file handling and storage
 - Streamlined workflow processes
 
-## Recent Updates (v3.1)
+## Recent Updates (v3.2)
+
+### Video Generation Enhancement with Native Subtitle Support
+- **✅ SUBTITLE INTEGRATION:** Native JSON2Video subtitle support with progressive word highlighting
+- **✅ GOOGLE DRIVE PERMISSIONS:** Resolved external API access for Airtable photo URLs  
+- **✅ TEST WORKFLOW VIDEO:** Successfully generated 48-second video with real photos and subtitles
+- **✅ VIDEO PROOF:** https://assets.json2video.com/clients/Apiha4SJJk/renders/2025-07-18-46883.mp4
+- **✅ SCHEMA OPTIMIZATION:** Replaced complex word highlighting with native subtitle elements
+- **✅ TEST SERVER UPDATE:** `Test_json2video_enhanced_server_v2.py` enhanced with subtitle support
+- **✅ DOCUMENTATION:** Complete JSON2Video schema documentation with subtitle examples
+
+### Video Generation Technical Improvements
+- **Movie-level subtitle element** with `classic-progressive` style for automatic word highlighting
+- **Azure TTS integration** using `en-US-EmmaMultilingualNeural` voice model
+- **Google Drive photo compatibility** with proper `uc?id=XXX&export=download` URL format
+- **V2 schema compliance** with `resize` and `position` properties for images
+- **Text element settings object** with proper `font-size` units and positioning
+
+## Previous Updates (v3.1)
 
 ### Repository Cleanup & Current Status
 - **✅ REPOSITORY CLEANED:** 30+ old/unused files removed, 50+ current files added
