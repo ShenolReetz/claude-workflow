@@ -1,9 +1,9 @@
-# Claude Workflow Project Documentation
+# Claude Workflow Project - Complete Documentation Update
 
-## Project Status: Production Ready v3.3
+## Project Status: Production Ready v3.1
 
-**Last Updated:** July 22, 2025  
-**Current Version:** v3.3 JSON2Video Enhanced with Y Coordinates & Montserrat Bold Typography  
+**Last Updated:** July 17, 2025  
+**Current Version:** v3.1 Sequential ID Selection Integration - Complete Workflow Synchronization  
 **Architecture:** Dual-Flow System (Production + Testing)
 
 ## Overview
@@ -99,6 +99,147 @@ Complete mirror of production agents with `Test_` prefix:
 - `Test_wordpress_mcp.py`
 - `Test_youtube_mcp.py`
 
+## Flow Synchronization System
+
+### Overview
+The project uses a **Test-First Development** approach where:
+- All changes are developed and tested in Test flow first
+- Successful changes are systematically integrated into Production flow
+- Integration is tracked and documented for safety
+
+### Synchronization Documents
+- **`FLOW_SYNC_TRACKER.md`** - Tracks differences between Test and Production flows
+- **`INTEGRATION_CHECKLIST.md`** - Step-by-step integration procedures
+- **`CLAUDE.md`** - This documentation (updated with each integration)
+
+### Flow Sync Tracker
+
+#### Current Synchronization Status
+- **Last Sync:** July 16, 2025
+- **Status:** Test flow is clone of Production flow
+- **Pending Integrations:** None (flows are synchronized)
+- **Known Fixes in Test:** Import issue in `Test_amazon_drive_integration.py` (Production already correct)
+
+#### Component Synchronization Matrix
+
+| Component Type | Production File | Test File | Status | Last Updated | Notes |
+|---|---|---|---|---|---|
+| Workflow Runner | `src/workflow_runner.py` | `src/Test_workflow_runner.py` | ✅ Synced | 2025-07-16 | Both use correct ID field |
+| Airtable Server | `mcp_servers/airtable_server.py` | `mcp_servers/Test_airtable_server.py` | ✅ Synced | 2025-07-16 | ID field fix integrated |
+| Amazon Affiliate Agent | `src/mcp/amazon_affiliate_agent_mcp.py` | `src/mcp/Test_amazon_affiliate_agent_mcp.py` | ✅ Synced | 2025-07-16 | Import paths corrected |
+| Amazon Drive Integration | `src/mcp/amazon_drive_integration.py` | `src/mcp/Test_amazon_drive_integration.py` | ⚠️ Minor | 2025-07-16 | Test has fixed import issue |
+
+#### Pending Synchronizations
+- None currently pending
+
+#### Integration Safety Measures
+1. **Always backup before integration**
+2. **Test compilation after each change**
+3. **Verify full workflow functionality**
+4. **Document all changes**
+5. **Keep rollback procedure ready**
+
+### Integration Checklist
+
+#### Pre-Integration Verification
+- [ ] Test workflow runs successfully without errors
+- [ ] All Test components compile correctly
+- [ ] New features tested thoroughly in Test environment
+- [ ] Documentation updated for any architectural changes
+
+#### Integration Process
+
+##### 1. Development Phase (Test Environment)
+```bash
+# Work in Test files
+vim mcp_servers/Test_[component].py
+vim src/mcp/Test_[component].py
+
+# Test changes
+python3 src/Test_workflow_runner.py
+```
+
+##### 2. Verification Phase
+```bash
+# Verify Test workflow works
+python3 -c "import src.Test_workflow_runner; print('✅ Test workflow OK')"
+
+# Document changes in FLOW_SYNC_TRACKER.md
+```
+
+##### 3. Integration Phase
+```bash
+# Create backup
+cp [production_file].py [production_file].py.backup_$(date +%Y%m%d_%H%M%S)
+
+# Apply changes (remove Test_ prefixes, update imports)
+# Follow INTEGRATION_CHECKLIST.md
+
+# Verify integration
+python3 -m py_compile [production_file].py
+python3 -c "import src.workflow_runner; print('✅ Production workflow OK')"
+```
+
+##### 4. Documentation Phase
+```bash
+# Update FLOW_SYNC_TRACKER.md with integration status
+# Update CLAUDE.md if architectural changes
+# Clean up old backups (keep recent ones)
+```
+
+#### Step-by-Step Integration Procedures
+
+##### Integrating MCP Server Changes
+1. **Backup Production File**
+   ```bash
+   cp mcp_servers/[server].py mcp_servers/[server].py.backup_$(date +%Y%m%d_%H%M%S)
+   ```
+
+2. **Compare Test and Production Files**
+   ```bash
+   diff mcp_servers/[server].py mcp_servers/Test_[server].py
+   ```
+
+3. **Apply Changes**
+   - Remove `Test_` prefixes from imports
+   - Update any hardcoded references
+   - Maintain production-specific configurations
+
+4. **Verify Integration**
+   ```bash
+   python3 -m py_compile mcp_servers/[server].py
+   python3 -c "from mcp_servers.[server] import *; print('✅ Server imports OK')"
+   ```
+
+##### Integrating MCP Agent Changes
+1. **Backup Production File**
+   ```bash
+   cp src/mcp/[agent].py src/mcp/[agent].py.backup_$(date +%Y%m%d_%H%M%S)
+   ```
+
+2. **Update Import Statements**
+   - Change `Test_` server imports to production servers
+   - Update any `Test_` agent references
+
+3. **Verify Compilation**
+   ```bash
+   python3 -m py_compile src/mcp/[agent].py
+   ```
+
+##### Emergency Rollback Procedure
+```bash
+# If integration fails, restore from backup
+cp [production_file].py.backup_[timestamp] [production_file].py
+python3 -m py_compile [production_file].py  # Verify rollback
+```
+
+#### Post-Integration Tasks
+- [ ] Update FLOW_SYNC_TRACKER.md with integration status
+- [ ] Test production workflow functionality
+- [ ] Update CLAUDE.md if architectural changes made
+- [ ] Archive old backups (keep 3 most recent)
+- [ ] Document any new features or changes
+
 ## Workflow Features
 
 ### Production Workflow Capabilities
@@ -180,237 +321,24 @@ python3 src/Test_workflow_runner.py
 3. Production workflow should only be used for live content generation
 4. All new features must pass Test workflow before production deployment
 
-## Flow Synchronization System
-
-### Overview
-The project uses a **Test-First Development** approach where:
-- All changes are developed and tested in Test flow first
-- Successful changes are systematically integrated into Production flow
-- Integration is tracked and documented for safety
-
-### Synchronization Documents
-- **`FLOW_SYNC_TRACKER.md`** - Tracks differences between Test and Production flows
-- **`INTEGRATION_CHECKLIST.md`** - Step-by-step integration procedures
-- **`CLAUDE.md`** - This documentation (updated with each integration)
-- **`Update.md`** - Detailed project update history and status
-
-### Integration Workflow
-
-#### 1. Development Phase (Test Environment)
-```bash
-# Work in Test files
-vim mcp_servers/Test_[component].py
-vim src/mcp/Test_[component].py
-
-# Test changes
-python3 src/Test_workflow_runner.py
-```
-
-#### 2. Verification Phase
-```bash
-# Verify Test workflow works
-python3 -c "import src.Test_workflow_runner; print('✅ Test workflow OK')"
-
-# Document changes in FLOW_SYNC_TRACKER.md
-```
-
-#### 3. Integration Phase
-```bash
-# Create backup
-cp [production_file].py [production_file].py.backup_$(date +%Y%m%d_%H%M%S)
-
-# Apply changes (remove Test_ prefixes, update imports)
-# Follow INTEGRATION_CHECKLIST.md
-
-# Verify integration
-python3 -m py_compile [production_file].py
-python3 -c "import src.workflow_runner; print('✅ Production workflow OK')"
-```
-
-#### 4. Documentation Phase
-```bash
-# Update FLOW_SYNC_TRACKER.md with integration status
-# Update CLAUDE.md if architectural changes
-# Clean up old backups (keep recent ones)
-```
-
-### Current Synchronization Status
-- **Last Sync:** July 18, 2025
-- **Status:** Test flow enhanced with subtitle support, ready for integration
-- **Pending Integrations:** JSON2Video Y coordinate positioning & Montserrat Bold typography (Test → Production)
-- **Recent Enhancements:** Y coordinate positioning system, Montserrat Bold typography, API compatibility fixes
-
-### Integration Safety Measures
-1. **Always backup before integration**
-2. **Test compilation after each change**
-3. **Verify full workflow functionality**
-4. **Document all changes**
-5. **Keep rollback procedure ready**
-
-### Emergency Rollback
-```bash
-# If integration fails, restore from backup
-cp [production_file].py.backup_[timestamp] [production_file].py
-python3 -m py_compile [production_file].py  # Verify rollback
-```
-
-## Common Development Tasks
-
-### Building and Running the Project
-```bash
-# Run Production Workflow
-cd /home/claude-workflow
-python3 src/workflow_runner.py
-
-# Run Test Workflow (for development/testing)
-python3 src/Test_workflow_runner.py
-
-# Test specific components
-python3 test_text_length_validation.py
-python3 test_status_update.py
-python3 check_airtable_fields.py
-```
-
-### Linting and Testing
-```bash
-# Check Python syntax for all production files
-for file in mcp_servers/*.py src/mcp/*.py; do
-  [[ "$file" != *"Test_"* ]] && python3 -m py_compile "$file" && echo "✅ $file"
-done
-
-# Check Test environment compilation
-for file in mcp_servers/Test_*.py src/mcp/Test_*.py; do
-  python3 -m py_compile "$file" && echo "✅ $file"
-done
-
-# Verify imports
-python3 -c "import src.workflow_runner; print('✅ Production OK')"
-python3 -c "import src.Test_workflow_runner; print('✅ Test OK')"
-```
-
-### Running a Single Test
-```bash
-# Test Airtable connection
-python3 -c "from mcp_servers.airtable_server import AirtableMCPServer; print('✅ Airtable OK')"
-
-# Test JSON2Video server
-python3 -c "from mcp_servers.json2video_enhanced_server_v2 import JSON2VideoEnhancedMCPServerV2; print('✅ JSON2Video OK')"
-
-# Test specific workflow step
-python3 test_specific_step.py --step="text_validation"
-```
-
-## High-Level Architecture
-
-### Core Architecture Patterns
-
-#### 1. Dual-Flow Architecture
-The project implements a **Test-First Development** approach with complete isolation:
-- **Production Flow:** Lives in standard files for live content generation
-- **Test Flow:** Mirror environment with `Test_` prefix for safe development
-- **Integration Process:** Systematic promotion from Test to Production
-
-#### 2. MCP (Modular Component Pattern) Architecture
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│ Workflow Runner │────▶│   MCP Agents    │────▶│  MCP Servers    │
-│  (Orchestrator) │     │  (Coordinators) │     │  (Executors)    │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-        │                       │                        │
-        ▼                       ▼                        ▼
-   Entry Point           Workflow Logic           Core Functions
-```
-
-- **Workflow Runners:** High-level orchestration (src/workflow_runner.py)
-- **MCP Agents:** Mid-level coordination combining multiple servers (src/mcp/*.py)
-- **MCP Servers:** Low-level atomic operations (mcp_servers/*.py)
-
-#### 3. Workflow Pipeline Architecture
-```
-[Airtable Title] → [Validation] → [Content Generation] → [Media Creation] → [Publishing]
-       │                │                   │                    │               │
-       ▼                ▼                   ▼                    ▼               ▼
-   ID Selection    Min 5 Products    Multi-Platform      Images/Voice    YouTube/TikTok
-                                        Content           /Video         Instagram/WP
-```
-
-### Key Architectural Decisions
-
-1. **Stateless Operations:** Each MCP component is stateless for reliability
-2. **Error Recovery:** Failed operations don't block the pipeline
-3. **API Rate Limiting:** Built-in throttling for external service calls
-4. **Validation Gates:** Prerequisites checked before expensive operations
-5. **Parallel Processing:** Independent operations run concurrently when possible
-
 ## Technical Notes
 
-### MCP Architecture Details
-- **MCP Servers:** Core functionality providers (atomic operations)
-- **MCP Agents:** Workflow orchestrators that combine multiple servers
+### MCP Architecture
+- **MCP Servers:** Core functionality providers
+- **MCP Agents:** Workflow orchestrators that use multiple servers
 - **Workflow Runners:** Entry points that coordinate the entire process
 
-### Error Handling Strategy
+### Error Handling
 - Comprehensive error handling with fallback mechanisms
 - Failed titles are marked and skipped to prevent infinite loops
 - Detailed logging for debugging and monitoring
-- Automatic retry logic for transient failures
 
 ### Performance Optimizations
 - Efficient API usage with proper rate limiting
 - Optimized file handling and storage
 - Streamlined workflow processes
-- Parallel operation execution where possible
 
-## Recent Updates (v3.3)
-
-### JSON2Video Y Coordinates & Montserrat Bold Typography Enhancement
-- **✅ Y COORDINATE POSITIONING:** Implemented precise custom positioning using X/Y coordinates
-- **✅ MONTSERRAT BOLD TYPOGRAPHY:** Applied Montserrat Bold (font-weight: 700) throughout all text elements
-- **✅ API COMPATIBILITY FIX:** Resolved JSON2Video API error for font-weight in subtitle elements
-- **✅ TEST WORKFLOW VIDEO:** Successfully generated 55-second video with enhanced positioning and typography
-- **✅ VIDEO PROOF:** https://json2video.com/app/projects/GHngctG7UTIrZtPo
-- **✅ STAR RATING SYSTEM:** Replaced complex components with Unicode star text elements (★★★★☆)
-- **✅ AIRTABLE INTEGRATION:** Direct integration with review count, rating status, and price columns
-
-### Video Generation Technical Improvements
-- **Custom positioning system** with position: "custom" and precise Y coordinates (Y=80 for titles, Y=1000 for stars)
-- **Montserrat Bold font family** for improved readability and professional appearance
-- **Unicode star ratings** using ★★★★☆ characters for better API compatibility
-- **Gold color scheme** (#FFD700) for titles and ratings with white text for reviews and prices
-- **55-second video duration** (5s intro + 45s products + 5s outro) under 60-second requirement
-
-### JSON2Video Unified Schema Template (v3.3)
-- **✅ UNIFIED TEMPLATE:** Created comprehensive `json2video_unified_schema_template.json` file
-- **✅ DYNAMIC PLACEHOLDERS:** Template uses {{placeholders}} for all Airtable data fields
-- **✅ TEMPLATE PROCESSOR:** Python script `json2video_template_processor.py` for data processing
-- **✅ STAR CONVERSION:** Automatic conversion of numeric ratings to star displays (★★★★☆)
-- **✅ SCENE STRUCTURE:** Complete 7-scene video structure (intro + 5 products + outro)
-- **✅ VISUAL ELEMENTS:** All elements properly positioned with custom X/Y coordinates
-- **✅ TRANSITIONS:** Smooth transitions between scenes (smoothright, slideright)
-- **✅ COMPATIBILITY:** Follows proven JSON2Video API structure from test workflow
-
-### Template Features
-- **1080x1920 resolution** (9:16 aspect ratio for Instagram Stories/YouTube Shorts)
-- **Montserrat Bold typography** with font-weight: 700 throughout
-- **Gold color scheme** (#FFD700) for primary text, white (#FFFFFF) for secondary
-- **Native subtitle support** with progressive word highlighting
-- **Background zoom effects** on all scene images
-- **Audio integration** for voice narration on each scene
-- **Subscribe button** component in outro scene
-- **Fade in/out timing** for product scene elements
-
-## Previous Updates (v3.2)
-
-### Video Generation Enhancement with Native Subtitle Support
-- **✅ SUBTITLE INTEGRATION:** Native JSON2Video subtitle support with progressive word highlighting
-- **✅ GOOGLE DRIVE PERMISSIONS:** Resolved external API access for Airtable photo URLs  
-- **✅ TEST WORKFLOW VIDEO:** Successfully generated 48-second video with real photos and subtitles
-- **✅ VIDEO PROOF:** https://assets.json2video.com/clients/Apiha4SJJk/renders/2025-07-18-46883.mp4
-- **✅ SCHEMA OPTIMIZATION:** Replaced complex word highlighting with native subtitle elements
-- **✅ TEST SERVER UPDATE:** `Test_json2video_enhanced_server_v2.py` enhanced with subtitle support
-- **✅ DOCUMENTATION:** Complete JSON2Video schema documentation with subtitle examples
-
-## Previous Updates (v3.1)
+## Recent Updates (v3.1)
 
 ### Repository Cleanup & Current Status
 - **✅ REPOSITORY CLEANED:** 30+ old/unused files removed, 50+ current files added
@@ -500,10 +428,6 @@ The project implements a **Test-First Development** approach with complete isola
 - Performance monitoring and optimization
 - Feature updates and improvements
 - Security audits and updates
-
-## Current Workflow Configuration Note
-
-- **IMPORTANT:** Please always at the start update yourself with the following files: Flow_Sync_Tracker.md, Integration_Checklist.md, Claude.md and Update.md
 
 ---
 

@@ -1,5 +1,63 @@
 # Project TODO List
 
+## URGENT: Video Generation & Star Rating Fix
+
+### 🔥 **HIGH PRIORITY: Fix Video Generation & Review Components**
+
+#### **Current Issues:**
+1. **Video Generation Error** - Videos are failing to render (Error: Error rendering video)
+2. **Star Rating Implementation** - Need proper v2 review component from documentation
+3. **Unicode Stars Don't Work** - Remove all Unicode star approaches completely
+4. **Component Implementation** - Use advanced/070 component correctly
+
+#### **Required Tasks:**
+
+##### **1. Fix Video Generation Error** 
+- **Status:** ❌ FAILING - All videos showing "Error: Error rendering video"
+- **Action:** Debug and fix whatever is causing JSON2Video render failures
+- **Test:** Ensure videos complete successfully with "success": true
+
+##### **2. Implement Proper v2 Review Component**
+- **Status:** 🔄 NEEDS IMPLEMENTATION
+- **Source:** Use advanced/070 component from JSON2Video_Elements.md documentation
+- **Format:** Keep ⭐⭐⭐⭐⭐ 4.X/5 (X,XXX reviews) visual format but with proper component
+- **Action:** Replace current star rendering with correct advanced/070 implementation
+
+##### **3. Remove Unicode Stars Completely**
+- **Status:** ❌ CURRENTLY BROKEN
+- **Issue:** Unicode stars (⭐) don't render correctly in videos
+- **Action:** Remove all text-based star approaches, use only components
+
+##### **4. Use Advanced/070 Component Correctly**
+- **Status:** 🔄 NEEDS PROPER IMPLEMENTATION
+- **Reference:** Follow exact format from documentation
+- **Components:**
+  ```json
+  {
+    "type": "component",
+    "component": "advanced/070",
+    "settings": {
+      "rating": {
+        "value": 4.2,
+        "symbol": "star", 
+        "size": "8vw",
+        "color": "#FFD700",
+        "off-color": "rgba(255,255,255,0.2)"
+      }
+    }
+  }
+  ```
+- **Plus separate text element:** `"4.2/5 (1,234 reviews)"`
+
+##### **5. Preserve Format Requirements**
+- **Visual Result:** Stars + "4.X/5 (X,XXX reviews)"
+- **Implementation:** Component for stars + text element for rating/reviews
+- **Files to Update:** 
+  - `mcp_servers/json2video_enhanced_server_v2.py`
+  - `mcp_servers/Test_json2video_enhanced_server_v2.py`
+
+---
+
 ## Current Session Break - Resume Tasks
 
 ### 🎯 **PRIORITY: Text-to-Speech Timing Validation MCP**

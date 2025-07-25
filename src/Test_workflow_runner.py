@@ -796,6 +796,8 @@ class ContentPipelineOrchestrator:
                 print(f"🎵 TEST MODE: Product {rank_number} text limited to 2 words: '{product_text}'")
                 
                 product_voice_texts.append(product_text)
+                # Save individual product voice text for JSON2Video
+                voice_text_data[f'Product{i}VoiceText'] = product_text
             
             # Store all product voice texts in VideoScript field
             if product_voice_texts:

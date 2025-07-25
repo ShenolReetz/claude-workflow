@@ -1,0 +1,29 @@
+{
+  "movie": {
+    "version": "2.0",
+    "scenes": [
+      {
+        "id": "test-scene",
+        "type": "Scene",
+        "duration": 5,
+        "backgroundColor": "#000000",
+        "elements": [
+          {
+            "id": "title",
+            "type": "Text",
+            "text": "Hello, JSON2Video!",
+            "style": "Style_BoldWhite",
+            "position": { "x": "50%", "y": "50%" }
+          },
+          {
+            "id": "tts",
+            "type": "Audio",
+            "provider": "tts",
+            "voice": "en-US-Standard-B",
+            "text": "Hello, JSON2Video!"
+          }
+        ]
+      }
+    ]
+  }
+}

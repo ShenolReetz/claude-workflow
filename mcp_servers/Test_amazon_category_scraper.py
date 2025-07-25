@@ -28,41 +28,41 @@ class AmazonCategoryScraper:
                     'title': 'Digital Camera for Kids, WITYEAH 48MP FHD 1080P',
                     'url': 'https://amazon.com/dp/B01234567',
                     'price': '$29.00',
-                    'rating': 4.5,
+                    'rating': 3.8,
                     'review_count': 1436,
-                    'score': 6462  # rating * review_count
+                    'score': 5457  # rating * review_count
                 },
                 {
                     'title': 'Digital Camera, 4K 64MP, 18X Zoom',
                     'url': 'https://amazon.com/dp/B01234568',
                     'price': '$44.00',
-                    'rating': 4.2,
+                    'rating': 4.3,
                     'review_count': 262,
-                    'score': 1100
+                    'score': 1127
                 },
                 {
                     'title': '4K Digital Camera, 64MP Dual-Lens Vlogging Camera',
                     'url': 'https://amazon.com/dp/B01234569',
                     'price': '$69.00',
-                    'rating': 4.1,
+                    'rating': 4.6,
                     'review_count': 219,
-                    'score': 898
+                    'score': 1007
                 },
                 {
                     'title': 'Security Cameras Wireless Outdoor - HD 2K Battery',
                     'url': 'https://amazon.com/dp/B01234570',
                     'price': '$28.00',
-                    'rating': 4.0,
+                    'rating': 3.5,
                     'review_count': 208,
-                    'score': 832
+                    'score': 728
                 },
                 {
                     'title': 'True 5K Digital Camera for Photography, Autofocus',
                     'url': 'https://amazon.com/dp/B01234571',
                     'price': '$99.00',
-                    'rating': 4.2,
+                    'rating': 4.7,
                     'review_count': 190,
-                    'score': 798
+                    'score': 893
                 }
             ],
             'fashion': [

@@ -1,707 +1,322 @@
 {
-  "_documentation": {
-    "description": "JSON2Video Schema Template for ReviewCh3kr Workflow",
+  "movie": {
     "version": "2.0",
-    "created": "2025-01-18",
-    "purpose": "Creates 55-second product review videos with perfect timing",
-    "structure": "5s intro + 5×9s products + 5s outro = 55 seconds total",
-    "format": "Instagram Story (9:16 vertical, 1080x1920)",
-    "features": [
-      "Countdown format (#5 to #1)",
-      "Product images, titles, descriptions",
-      "Star ratings and review counts",
-      "Price display",
-      "Winner badge for #1 product",
-      "Professional transitions",
-      "Synchronized audio support"
-    ],
-    "placeholders": {
-      "VideoTitle": "Main video title",
-      "IntroHook": "Introduction text",
-      "ProductNoXTitle": "Product title (X = 1-5)",
-      "ProductNoXDescription": "Product description (X = 1-5)",
-      "ProductNoXPhoto": "Product image URL (X = 1-5)",
-      "ProductNoXPrice": "Product price (X = 1-5)",
-      "ProductNoXRating": "Product rating (X = 1-5)",
-      "ProductNoXReviews": "Review count (X = 1-5)",
-      "IntroPhoto": "Introduction background image",
-      "OutroPhoto": "Outro background image",
-      "OutroCallToAction": "Outro call-to-action text"
-    }
-  },
-  "comment": "PERFECT TIMING: {{VideoTitle}}",
-  "resolution": "instagram-story",
-  "quality": "high",
-  "scenes": [
-    {
-      "comment": "INTRO - EXACTLY 5 seconds",
-      "duration": 5,
-      "background-color": "rgba(0, 0, 0, 0.5)",
-      "transition": {
-        "type": "fade",
-        "duration": 0.5
+    "scenes": [
+      {
+        "id": "intro",
+        "type": "Scene",
+        "duration": 5,
+        "transition": {
+          "type": "fade",
+          "duration": 0.5
+        },
+        "elements": [
+          {
+            "id": "bg-intro",
+            "type": "Image",
+            "source": {
+              "type": "airtable",
+              "table": "Products",
+              "field": "IntroPhoto"
+            }
+          },
+          {
+            "id": "title-intro",
+            "type": "Text",
+            "text": "{{VideoTitle}}",
+            "style": "Style_BoldWhite",
+            "position": { "x": "50%", "y": "10%" }
+          },
+          {
+            "id": "desc-intro",
+            "type": "Text",
+            "text": "{{IntroHook}}",
+            "style": "Style_NormalWhite",
+            "position": { "x": "50%", "y": "85%" },
+            "animation": {
+              "type": "word-by-word",
+              "highlightColor": "#FFD700"
+            }
+          },
+          {
+            "id": "audio-intro",
+            "type": "Audio",
+            "provider": "tts",
+            "voice": "en-US-Standard-B",
+            "text": "{{IntroHook}}"
+          }
+        ]
       },
-      "elements": [
-        {
-          "type": "image",
-          "src": "{{IntroPhoto}}",
-          "x": 0,
-          "y": 0,
-          "width": 1080,
-          "height": 1920,
-          "object-fit": "cover",
-          "opacity": 0.7
+      {
+        "id": "product5",
+        "type": "Scene",
+        "duration": 9,
+        "transition": {
+          "type": "slide_left",
+          "duration": 0.5
         },
-        {
-          "type": "text",
-          "text": "{{VideoTitle}}",
-          "font-family": "Montserrat",
-          "font-weight": "bold",
-          "font-size": 56,
-          "font-color": "#FFFFFF",
-          "text-align": "center",
-          "x": "center",
-          "y": 200,
-          "width": 950,
-          "duration": 5,
-          "animations": [
-            {
-              "type": "scale",
-              "from": 0.8,
-              "to": 1,
-              "start": 0,
-              "duration": 0.8,
-              "easing": "easeOutBack"
+        "elements": [
+          {
+            "id": "bg-5",
+            "type": "Image",
+            "source": {
+              "type": "airtable",
+              "table": "Products",
+              "field": "ProductNo5Photo"
             }
-          ]
-        },
-        {
-          "type": "text",
-          "text": "{{IntroHook}}",
-          "font-family": "Open Sans",
-          "font-size": 40,
-          "font-color": "#FFFFFF",
-          "text-align": "center",
-          "line-height": 1.4,
-          "x": "center",
-          "y": 1400,
-          "width": 900,
-          "start": 0.5,
-          "duration": 4.5
-        }
-      ]
-    },
-    {
-      "comment": "PRODUCT #5 - EXACTLY 9 seconds",
-      "duration": 9,
-      "background-color": "rgba(22, 33, 62, 0.9)",
-      "transition": {
-        "type": "fade",
-        "duration": 0.5
+          },
+          {
+            "id": "title-5",
+            "type": "Text",
+            "text": "#5: {{ProductNo5Title}} – ${{ProductNo5Price}}",
+            "style": "Style_BoldWhite",
+            "position": { "x": "50%", "y": "10%" }
+          },
+          {
+            "id": "desc-5",
+            "type": "Text",
+            "text": "{{ProductNo5Description}}",
+            "style": "Style_NormalWhite",
+            "position": { "x": "50%", "y": "85%" },
+            "animation": {
+              "type": "word-by-word",
+              "highlightColor": "#FFD700"
+            }
+          },
+          {
+            "id": "audio-5",
+            "type": "Audio",
+            "provider": "tts",
+            "voice": "en-US-Standard-B",
+            "text": "{{ProductNo5Description}}"
+          }
+        ]
       },
-      "elements": [
-        {
-          "type": "image",
-          "src": "{{ProductNo5Photo}}",
-          "x": 0,
-          "y": 0,
-          "width": 1080,
-          "height": 1920,
-          "object-fit": "cover",
-          "opacity": 0.3
+      {
+        "id": "product4",
+        "type": "Scene",
+        "duration": 9,
+        "transition": {
+          "type": "slide_left",
+          "duration": 0.5
         },
-        {
-          "type": "text",
-          "text": "#5: {{ProductNo5Title}} - ${{ProductNo5Price}}",
-          "font-family": "Montserrat",
-          "font-weight": "bold",
-          "font-size": 44,
-          "font-color": "#FFFFFF",
-          "text-align": "center",
-          "x": "center",
-          "y": 150,
-          "width": 950,
-          "duration": 9,
-          "animations": [
-            {
-              "type": "slide",
-              "from": {"x": -1080, "y": 150},
-              "to": {"x": "center", "y": 150},
-              "start": 0,
-              "duration": 0.6,
-              "easing": "easeOutCubic"
+        "elements": [
+          {
+            "id": "bg-4",
+            "type": "Image",
+            "source": {
+              "type": "airtable",
+              "table": "Products",
+              "field": "ProductNo4Photo"
             }
-          ]
-        },
-        {
-          "type": "image",
-          "src": "{{ProductNo5Photo}}",
-          "x": "center",
-          "y": 400,
-          "width": 500,
-          "height": 500,
-          "object-fit": "contain",
-          "duration": 9,
-          "animations": [
-            {
-              "type": "scale",
-              "from": 0.7,
-              "to": 1,
-              "start": 0.3,
-              "duration": 0.8,
-              "easing": "easeOutBack"
+          },
+          {
+            "id": "title-4",
+            "type": "Text",
+            "text": "#4: {{ProductNo4Title}} – ${{ProductNo4Price}}",
+            "style": "Style_BoldWhite",
+            "position": { "x": "50%", "y": "10%" }
+          },
+          {
+            "id": "desc-4",
+            "type": "Text",
+            "text": "{{ProductNo4Description}}",
+            "style": "Style_NormalWhite",
+            "position": { "x": "50%", "y": "85%" },
+            "animation": {
+              "type": "word-by-word",
+              "highlightColor": "#FFD700"
             }
-          ]
-        },
-        {
-          "type": "text",
-          "text": "⭐⭐⭐⭐⭐ {{ProductNo5Rating}}/5",
-          "font-family": "Open Sans",
-          "font-size": 36,
-          "font-color": "#FFD700",
-          "text-align": "center",
-          "x": "center",
-          "y": 950,
-          "width": 600,
-          "start": 0.5,
-          "duration": 8.5
-        },
-        {
-          "type": "text",
-          "text": "({{ProductNo5Reviews}} reviews)",
-          "font-family": "Open Sans",
-          "font-size": 28,
-          "font-color": "#CCCCCC",
-          "text-align": "center",
-          "x": "center",
-          "y": 1000,
-          "width": 600,
-          "start": 0.7,
-          "duration": 8.3
-        },
-        {
-          "type": "text",
-          "text": "{{ProductNo5Description}}",
-          "font-family": "Open Sans",
-          "font-size": 32,
-          "font-color": "#E0E0E0",
-          "text-align": "center",
-          "line-height": 1.4,
-          "x": "center",
-          "y": 1200,
-          "width": 900,
-          "start": 1,
-          "duration": 8
-        }
-      ]
-    },
-    {
-      "comment": "PRODUCT #4 - EXACTLY 9 seconds",
-      "duration": 9,
-      "background-color": "rgba(22, 33, 62, 0.9)",
-      "transition": {
-        "type": "fade",
-        "duration": 0.5
+          },
+          {
+            "id": "audio-4",
+            "type": "Audio",
+            "provider": "tts",
+            "voice": "en-US-Standard-B",
+            "text": "{{ProductNo4Description}}"
+          }
+        ]
       },
-      "elements": [
-        {
-          "type": "image",
-          "src": "{{ProductNo4Photo}}",
-          "x": 0,
-          "y": 0,
-          "width": 1080,
-          "height": 1920,
-          "object-fit": "cover",
-          "opacity": 0.3
+      {
+        "id": "product3",
+        "type": "Scene",
+        "duration": 9,
+        "transition": {
+          "type": "slide_left",
+          "duration": 0.5
         },
-        {
-          "type": "text",
-          "text": "#4: {{ProductNo4Title}} - ${{ProductNo4Price}}",
-          "font-family": "Montserrat",
-          "font-weight": "bold",
-          "font-size": 44,
-          "font-color": "#FFFFFF",
-          "text-align": "center",
-          "x": "center",
-          "y": 150,
-          "width": 950,
-          "duration": 9,
-          "animations": [
-            {
-              "type": "slide",
-              "from": {"x": -1080, "y": 150},
-              "to": {"x": "center", "y": 150},
-              "start": 0,
-              "duration": 0.6,
-              "easing": "easeOutCubic"
+        "elements": [
+          {
+            "id": "bg-3",
+            "type": "Image",
+            "source": {
+              "type": "airtable",
+              "table": "Products",
+              "field": "ProductNo3Photo"
             }
-          ]
-        },
-        {
-          "type": "image",
-          "src": "{{ProductNo4Photo}}",
-          "x": "center",
-          "y": 400,
-          "width": 500,
-          "height": 500,
-          "object-fit": "contain",
-          "duration": 9,
-          "animations": [
-            {
-              "type": "scale",
-              "from": 0.7,
-              "to": 1,
-              "start": 0.3,
-              "duration": 0.8,
-              "easing": "easeOutBack"
+          },
+          {
+            "id": "title-3",
+            "type": "Text",
+            "text": "#3: {{ProductNo3Title}} – ${{ProductNo3Price}}",
+            "style": "Style_BoldWhite",
+            "position": { "x": "50%", "y": "10%" }
+          },
+          {
+            "id": "desc-3",
+            "type": "Text",
+            "text": "{{ProductNo3Description}}",
+            "style": "Style_NormalWhite",
+            "position": { "x": "50%", "y": "85%" },
+            "animation": {
+              "type": "word-by-word",
+              "highlightColor": "#FFD700"
             }
-          ]
-        },
-        {
-          "type": "text",
-          "text": "⭐⭐⭐⭐⭐ {{ProductNo4Rating}}/5",
-          "font-family": "Open Sans",
-          "font-size": 36,
-          "font-color": "#FFD700",
-          "text-align": "center",
-          "x": "center",
-          "y": 950,
-          "width": 600,
-          "start": 0.5,
-          "duration": 8.5
-        },
-        {
-          "type": "text",
-          "text": "({{ProductNo4Reviews}} reviews)",
-          "font-family": "Open Sans",
-          "font-size": 28,
-          "font-color": "#CCCCCC",
-          "text-align": "center",
-          "x": "center",
-          "y": 1000,
-          "width": 600,
-          "start": 0.7,
-          "duration": 8.3
-        },
-        {
-          "type": "text",
-          "text": "{{ProductNo4Description}}",
-          "font-family": "Open Sans",
-          "font-size": 32,
-          "font-color": "#E0E0E0",
-          "text-align": "center",
-          "line-height": 1.4,
-          "x": "center",
-          "y": 1200,
-          "width": 900,
-          "start": 1,
-          "duration": 8
-        }
-      ]
-    },
-    {
-      "comment": "PRODUCT #3 - EXACTLY 9 seconds",
-      "duration": 9,
-      "background-color": "rgba(22, 33, 62, 0.9)",
-      "transition": {
-        "type": "fade",
-        "duration": 0.5
+          },
+          {
+            "id": "audio-3",
+            "type": "Audio",
+            "provider": "tts",
+            "voice": "en-US-Standard-B",
+            "text": "{{ProductNo3Description}}"
+          }
+        ]
       },
-      "elements": [
-        {
-          "type": "image",
-          "src": "{{ProductNo3Photo}}",
-          "x": 0,
-          "y": 0,
-          "width": 1080,
-          "height": 1920,
-          "object-fit": "cover",
-          "opacity": 0.3
+      {
+        "id": "product2",
+        "type": "Scene",
+        "duration": 9,
+        "transition": {
+          "type": "slide_left",
+          "duration": 0.5
         },
-        {
-          "type": "text",
-          "text": "#3: {{ProductNo3Title}} - ${{ProductNo3Price}}",
-          "font-family": "Montserrat",
-          "font-weight": "bold",
-          "font-size": 44,
-          "font-color": "#FFFFFF",
-          "text-align": "center",
-          "x": "center",
-          "y": 150,
-          "width": 950,
-          "duration": 9,
-          "animations": [
-            {
-              "type": "slide",
-              "from": {"x": -1080, "y": 150},
-              "to": {"x": "center", "y": 150},
-              "start": 0,
-              "duration": 0.6,
-              "easing": "easeOutCubic"
+        "elements": [
+          {
+            "id": "bg-2",
+            "type": "Image",
+            "source": {
+              "type": "airtable",
+              "table": "Products",
+              "field": "ProductNo2Photo"
             }
-          ]
-        },
-        {
-          "type": "image",
-          "src": "{{ProductNo3Photo}}",
-          "x": "center",
-          "y": 400,
-          "width": 500,
-          "height": 500,
-          "object-fit": "contain",
-          "duration": 9,
-          "animations": [
-            {
-              "type": "scale",
-              "from": 0.7,
-              "to": 1,
-              "start": 0.3,
-              "duration": 0.8,
-              "easing": "easeOutBack"
+          },
+          {
+            "id": "title-2",
+            "type": "Text",
+            "text": "#2: {{ProductNo2Title}} – ${{ProductNo2Price}}",
+            "style": "Style_BoldWhite",
+            "position": { "x": "50%", "y": "10%" }
+          },
+          {
+            "id": "desc-2",
+            "type": "Text",
+            "text": "{{ProductNo2Description}}",
+            "style": "Style_NormalWhite",
+            "position": { "x": "50%", "y": "85%" },
+            "animation": {
+              "type": "word-by-word",
+              "highlightColor": "#FFD700"
             }
-          ]
-        },
-        {
-          "type": "text",
-          "text": "⭐⭐⭐⭐⭐ {{ProductNo3Rating}}/5",
-          "font-family": "Open Sans",
-          "font-size": 36,
-          "font-color": "#FFD700",
-          "text-align": "center",
-          "x": "center",
-          "y": 950,
-          "width": 600,
-          "start": 0.5,
-          "duration": 8.5
-        },
-        {
-          "type": "text",
-          "text": "({{ProductNo3Reviews}} reviews)",
-          "font-family": "Open Sans",
-          "font-size": 28,
-          "font-color": "#CCCCCC",
-          "text-align": "center",
-          "x": "center",
-          "y": 1000,
-          "width": 600,
-          "start": 0.7,
-          "duration": 8.3
-        },
-        {
-          "type": "text",
-          "text": "{{ProductNo3Description}}",
-          "font-family": "Open Sans",
-          "font-size": 32,
-          "font-color": "#E0E0E0",
-          "text-align": "center",
-          "line-height": 1.4,
-          "x": "center",
-          "y": 1200,
-          "width": 900,
-          "start": 1,
-          "duration": 8
-        }
-      ]
-    },
-    {
-      "comment": "PRODUCT #2 - EXACTLY 9 seconds",
-      "duration": 9,
-      "background-color": "rgba(22, 33, 62, 0.9)",
-      "transition": {
-        "type": "fade",
-        "duration": 0.5
+          },
+          {
+            "id": "audio-2",
+            "type": "Audio",
+            "provider": "tts",
+            "voice": "en-US-Standard-B",
+            "text": "{{ProductNo2Description}}"
+          }
+        ]
       },
-      "elements": [
-        {
-          "type": "image",
-          "src": "{{ProductNo2Photo}}",
-          "x": 0,
-          "y": 0,
-          "width": 1080,
-          "height": 1920,
-          "object-fit": "cover",
-          "opacity": 0.3
+      {
+        "id": "product1",
+        "type": "Scene",
+        "duration": 9,
+        "transition": {
+          "type": "slide_left",
+          "duration": 0.5
         },
-        {
-          "type": "text",
-          "text": "#2: {{ProductNo2Title}} - ${{ProductNo2Price}}",
-          "font-family": "Montserrat",
-          "font-weight": "bold",
-          "font-size": 44,
-          "font-color": "#FFFFFF",
-          "text-align": "center",
-          "x": "center",
-          "y": 150,
-          "width": 950,
-          "duration": 9,
-          "animations": [
-            {
-              "type": "slide",
-              "from": {"x": -1080, "y": 150},
-              "to": {"x": "center", "y": 150},
-              "start": 0,
-              "duration": 0.6,
-              "easing": "easeOutCubic"
+        "elements": [
+          {
+            "id": "bg-1",
+            "type": "Image",
+            "source": {
+              "type": "airtable",
+              "table": "Products",
+              "field": "ProductNo1Photo"
             }
-          ]
-        },
-        {
-          "type": "image",
-          "src": "{{ProductNo2Photo}}",
-          "x": "center",
-          "y": 400,
-          "width": 500,
-          "height": 500,
-          "object-fit": "contain",
-          "duration": 9,
-          "animations": [
-            {
-              "type": "scale",
-              "from": 0.7,
-              "to": 1,
-              "start": 0.3,
-              "duration": 0.8,
-              "easing": "easeOutBack"
+          },
+          {
+            "id": "title-1",
+            "type": "Text",
+            "text": "#1: {{ProductNo1Title}} – ${{ProductNo1Price}}",
+            "style": "Style_BoldWhite",
+            "position": { "x": "50%", "y": "10%" }
+          },
+          {
+            "id": "desc-1",
+            "type": "Text",
+            "text": "{{ProductNo1Description}}",
+            "style": "Style_NormalWhite",
+            "position": { "x": "50%", "y": "85%" },
+            "animation": {
+              "type": "word-by-word",
+              "highlightColor": "#FFD700"
             }
-          ]
-        },
-        {
-          "type": "text",
-          "text": "⭐⭐⭐⭐⭐ {{ProductNo2Rating}}/5",
-          "font-family": "Open Sans",
-          "font-size": 36,
-          "font-color": "#FFD700",
-          "text-align": "center",
-          "x": "center",
-          "y": 950,
-          "width": 600,
-          "start": 0.5,
-          "duration": 8.5
-        },
-        {
-          "type": "text",
-          "text": "({{ProductNo2Reviews}} reviews)",
-          "font-family": "Open Sans",
-          "font-size": 28,
-          "font-color": "#CCCCCC",
-          "text-align": "center",
-          "x": "center",
-          "y": 1000,
-          "width": 600,
-          "start": 0.7,
-          "duration": 8.3
-        },
-        {
-          "type": "text",
-          "text": "{{ProductNo2Description}}",
-          "font-family": "Open Sans",
-          "font-size": 32,
-          "font-color": "#E0E0E0",
-          "text-align": "center",
-          "line-height": 1.4,
-          "x": "center",
-          "y": 1200,
-          "width": 900,
-          "start": 1,
-          "duration": 8
-        }
-      ]
-    },
-    {
-      "comment": "PRODUCT #1 - EXACTLY 9 seconds - WINNER",
-      "duration": 9,
-      "background-color": "rgba(255, 215, 0, 0.9)",
-      "transition": {
-        "type": "fade",
-        "duration": 0.5
+          },
+          {
+            "id": "audio-1",
+            "type": "Audio",
+            "provider": "tts",
+            "voice": "en-US-Standard-B",
+            "text": "{{ProductNo1Description}}"
+          }
+        ]
       },
-      "elements": [
-        {
-          "type": "image",
-          "src": "{{ProductNo1Photo}}",
-          "x": 0,
-          "y": 0,
-          "width": 1080,
-          "height": 1920,
-          "object-fit": "cover",
-          "opacity": 0.3
+      {
+        "id": "outro",
+        "type": "Scene",
+        "duration": 7,
+        "transition": {
+          "type": "fade",
+          "duration": 0.5
         },
-        {
-          "type": "text",
-          "text": "#1: {{ProductNo1Title}} - ${{ProductNo1Price}}",
-          "font-family": "Montserrat",
-          "font-weight": "bold",
-          "font-size": 44,
-          "font-color": "#000000",
-          "text-align": "center",
-          "x": "center",
-          "y": 150,
-          "width": 950,
-          "duration": 9,
-          "animations": [
-            {
-              "type": "slide",
-              "from": {"x": -1080, "y": 150},
-              "to": {"x": "center", "y": 150},
-              "start": 0,
-              "duration": 0.6,
-              "easing": "easeOutCubic"
+        "elements": [
+          {
+            "id": "bg-outro",
+            "type": "Image",
+            "source": {
+              "type": "airtable",
+              "table": "Products",
+              "field": "OutroPhoto"
             }
-          ]
-        },
-        {
-          "type": "image",
-          "src": "{{ProductNo1Photo}}",
-          "x": "center",
-          "y": 400,
-          "width": 500,
-          "height": 500,
-          "object-fit": "contain",
-          "duration": 9,
-          "animations": [
-            {
-              "type": "scale",
-              "from": 0.7,
-              "to": 1,
-              "start": 0.3,
-              "duration": 0.8,
-              "easing": "easeOutBack"
+          },
+          {
+            "id": "title-outro",
+            "type": "Text",
+            "text": "{{OutroCallToAction}}",
+            "style": "Style_BoldWhite",
+            "position": { "x": "50%", "y": "10%" }
+          },
+          {
+            "id": "desc-outro",
+            "type": "Text",
+            "text": "Don't forget to like, comment & subscribe!",
+            "style": "Style_NormalWhite",
+            "position": { "x": "50%", "y": "85%" },
+            "animation": {
+              "type": "word-by-word",
+              "highlightColor": "#FFD700"
             }
-          ]
-        },
-        {
-          "type": "text",
-          "text": "⭐⭐⭐⭐⭐ {{ProductNo1Rating}}/5",
-          "font-family": "Open Sans",
-          "font-size": 36,
-          "font-color": "#FFD700",
-          "text-align": "center",
-          "x": "center",
-          "y": 950,
-          "width": 600,
-          "start": 0.5,
-          "duration": 8.5
-        },
-        {
-          "type": "text",
-          "text": "({{ProductNo1Reviews}} reviews)",
-          "font-family": "Open Sans",
-          "font-size": 28,
-          "font-color": "#CCCCCC",
-          "text-align": "center",
-          "x": "center",
-          "y": 1000,
-          "width": 600,
-          "start": 0.7,
-          "duration": 8.3
-        },
-        {
-          "type": "text",
-          "text": "{{ProductNo1Description}}",
-          "font-family": "Open Sans",
-          "font-size": 32,
-          "font-color": "#333333",
-          "text-align": "center",
-          "line-height": 1.4,
-          "x": "center",
-          "y": 1200,
-          "width": 900,
-          "start": 1,
-          "duration": 8
-        },
-        {
-          "type": "text",
-          "text": "🏆 WINNER",
-          "font-family": "Montserrat",
-          "font-weight": "bold",
-          "font-size": 48,
-          "font-color": "#FFD700",
-          "text-align": "center",
-          "x": "center",
-          "y": 300,
-          "width": 300,
-          "animations": [
-            {
-              "type": "pulse",
-              "scale": 1.2,
-              "duration": 1,
-              "loop": true
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "comment": "OUTRO - EXACTLY 5 seconds",
-      "duration": 5,
-      "background-color": "#1a1a2e",
-      "transition": {
-        "type": "cross-dissolve",
-        "duration": 0.5
-      },
-      "elements": [
-        {
-          "type": "image",
-          "src": "{{OutroPhoto}}",
-          "x": 0,
-          "y": 0,
-          "width": 1080,
-          "height": 1920,
-          "object-fit": "cover",
-          "opacity": 0.7
-        },
-        {
-          "type": "text",
-          "text": "Thanks for Watching!",
-          "font-family": "Montserrat",
-          "font-weight": "bold",
-          "font-size": 64,
-          "font-color": "#FFFFFF",
-          "text-align": "center",
-          "x": "center",
-          "y": 300,
-          "width": 900,
-          "duration": 5,
-          "animations": [
-            {
-              "type": "scale",
-              "from": 0.8,
-              "to": 1,
-              "start": 0,
-              "duration": 0.8,
-              "easing": "easeOutBack"
-            }
-          ]
-        },
-        {
-          "type": "text",
-          "text": "👍 LIKE | 🔔 SUBSCRIBE | 💬 COMMENT",
-          "font-family": "Open Sans",
-          "font-size": 36,
-          "font-color": "#FFD700",
-          "text-align": "center",
-          "x": "center",
-          "y": 800,
-          "width": 800,
-          "start": 1,
-          "duration": 4
-        },
-        {
-          "type": "text",
-          "text": "{{OutroCallToAction}}",
-          "font-family": "Open Sans",
-          "font-size": 32,
-          "font-color": "#FFFFFF",
-          "text-align": "center",
-          "line-height": 1.4,
-          "x": "center",
-          "y": 1400,
-          "width": 900,
-          "start": 0.5,
-          "duration": 4.5
-        }
-      ]
-    }
+          },
+          {
+            "id": "audio-outro",
+            "type": "Audio",
+            "provider": "tts",
+            "voice": "en-US-Standard-B",
+            "text": "Thanks for watching ReviewCh3kr! Don't forget to like, comment and subscribe."
+          }
+        ]
+      }
     ]
   }
 }
