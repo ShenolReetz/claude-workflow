@@ -13,6 +13,12 @@ import asyncio
 from datetime import datetime
 import re
 
+# Import Video Status Specialist
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from Test_video_status_monitor_server import TestVideoStatusMonitorMCPServer
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -27,6 +33,9 @@ class JSON2VideoEnhancedMCPServerV2:
             "Content-Type": "application/json"
         }
         self.client = httpx.AsyncClient(timeout=86400, headers=self.headers)
+        
+        # Initialize Video Status Specialist
+        self.video_monitor = TestVideoStatusMonitorMCPServer({'json2video_api_key': api_key})
     
     def build_perfect_timing_video(self, record_data: Dict) -> tuple:
         """Build PERFECT timing video: Intro 5s, Products 9s each, Outro 5s (total <60s) - USING WORKING SCHEMA WITH SUBTITLES"""
@@ -485,7 +494,7 @@ class JSON2VideoEnhancedMCPServerV2:
             logger.info(f"🎨 Scenes: {len(movie_json.get('scenes', []))}")
             logger.info(f"📐 Resolution: {movie_json.get('resolution')}")
             
-            result = await self.create_video(movie_json, project_name)
+            result = await self.create_video(movie_json, project_name, test_record_data)
             return result
             
         except Exception as e:
@@ -495,7 +504,7 @@ class JSON2VideoEnhancedMCPServerV2:
                 'error': str(e)
             }
     
-    async def create_video(self, movie_json: Dict, project_name: str) -> Dict[str, Any]:
+    async def create_video(self, movie_json: Dict, project_name: str, record_data: Dict[str, Any]) -> Dict[str, Any]:
         """Submit video creation request to JSON2Video API"""
         try:
             logger.info(f"🎬 Submitting PERFECT TIMING video to JSON2Video API: {project_name}")
@@ -516,6 +525,9 @@ class JSON2VideoEnhancedMCPServerV2:
                 
                 logger.info(f"✅ PERFECT TIMING video creation started. Project ID: {project_id}")
                 logger.info(f"📋 TEST MODE: Video submitted successfully!")
+                
+                # Start Video Status Specialist monitoring after 5 minutes
+                await self._start_video_status_monitoring(project_id, record_data)
                 
                 # In test mode, don't wait for video - just return success
                 # The 404 errors suggest videos are processing but status endpoint is different
@@ -603,6 +615,27 @@ class JSON2VideoEnhancedMCPServerV2:
                 
         logger.error(f"❌ Video creation timed out after {max_attempts} attempts ({max_attempts} minutes in TEST MODE)")
         return None
+    
+    async def _start_video_status_monitoring(self, project_id: str, record_data: Dict[str, Any]) -> None:
+        """Start Video Status Specialist monitoring for the project"""
+        try:
+            video_title = record_data.get('VideoTitle', 'Unknown Video')
+            record_id = record_data.get('record_id', 'unknown_record')
+            
+            logger.info(f"🎬 Starting Video Status Specialist monitoring for project: {project_id}")
+            logger.info(f"⏰ Monitoring will begin after 5-minute delay (10s in test mode)")
+            
+            # Start monitoring with Video Status Specialist
+            await self.video_monitor.start_monitoring(
+                project_id=project_id,
+                record_id=record_id,
+                video_title=video_title
+            )
+            
+            logger.info(f"✅ Video Status Specialist monitoring initiated for {project_id}")
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to start Video Status Specialist monitoring: {e}")
     
     async def close(self):
         """Close the HTTP client"""

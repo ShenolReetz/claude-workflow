@@ -11,7 +11,7 @@ This project implements a comprehensive automated content generation workflow en
 ## 🏗️ Architecture
 
 ### 🤖 Expert Agent System (NEW v4.0)
-The project now features **15 specialized expert AI subagents** organized into 6 color-coded categories:
+The project now features **16 specialized expert AI subagents** organized into 6 color-coded categories:
 
 #### 🔴 Critical/Security Agents (2)
 - `api-credit-monitor` - Monitors API usage and sends alerts to prevent service interruptions
@@ -22,10 +22,11 @@ The project now features **15 specialized expert AI subagents** organized into 6
 - `seo-optimization-expert` - Maximizes search visibility across all platforms
 - `product-research-validator` - Ensures only high-quality products are featured
 
-#### 🟡 Quality Control Agents (3)
+#### 🟡 Quality Control Agents (4)
 - `visual-quality-controller` - Maintains brand consistency and visual excellence
 - `audio-sync-specialist` - Ensures perfect audio-video synchronization
 - `compliance-safety-monitor` - Maintains platform policy compliance
+- `video-status-specialist` - Monitors video generation and handles errors
 
 #### 🟢 Analytics/Performance Agents (3)
 - `analytics-performance-tracker` - Tracks performance metrics and generates insights
@@ -119,6 +120,7 @@ claude-workflow/
 │   │   ├── visual-quality-controller.md # 🟡 Visual excellence
 │   │   ├── audio-sync-specialist.md  # 🟡 Audio synchronization
 │   │   ├── compliance-safety-monitor.md # 🟡 Policy compliance
+│   │   ├── video-status-specialist.md # 🟡 Video generation monitoring
 │   │   ├── analytics-performance-tracker.md # 🟢 Performance insights
 │   │   ├── trend-analysis-planner.md # 🟢 Market trends
 │   │   ├── monetization-strategist.md # 🟢 Revenue optimization
@@ -135,6 +137,7 @@ claude-workflow/
 │   │   ├── amazon_affiliate_server.py
 │   │   ├── text_length_validation_server.py
 │   │   ├── video_prerequisite_control_server.py
+│   │   ├── video_status_monitor_server.py
 │   │   └── ... (20+ servers)
 │   └── src/mcp/                      # Production MCP agents
 │       ├── amazon_affiliate_agent_mcp.py
@@ -148,6 +151,7 @@ claude-workflow/
 │   │   ├── Test_airtable_server.py
 │   │   ├── Test_default_text_validation_manager.py
 │   │   ├── Test_video_prerequisite_control_server.py
+│   │   ├── Test_video_status_monitor_server.py
 │   │   └── ... (complete mirror)
 │   └── src/mcp/Test_*                # Test MCP agents (25+ files)
 │       ├── Test_text_length_validation_agent_mcp.py

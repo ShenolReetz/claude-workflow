@@ -716,17 +716,20 @@ class ContentPipelineOrchestrator:
             if credit_monitoring_enabled:
                 print("💰 Monitoring API credits...")
                 try:
-                    from mcp_servers.credit_monitor_server import monitor_api_credits
+                    from mcp_servers.Test_credit_monitor_server import TestCreditMonitorMCPServer
                     
-                    credit_result = await monitor_api_credits(self.config)
+                    monitor = TestCreditMonitorMCPServer(self.config)
+                    credit_result = await monitor.check_all_api_credits()
                     
                     if credit_result.get('alerts'):
-                        print(f"⚠️ {len(credit_result['alerts'])} service(s) have low credits!")
+                        print(f"🚨 API Credit Alerts: {len(credit_result['alerts'])} warnings")
                         for alert in credit_result['alerts']:
-                            print(f"   {alert['message']}")
-                        print("📧 Email alert sent with top-up links")
+                            print(f"   {alert['api']}: {alert['usage_percent']:.1f}% used ({alert['alert_type']})")
+                        print("📧 Email alert would be sent to shenolb@live.com")
                     else:
-                        print(f"✅ All API credits OK (Total: €{credit_result['total_value_eur']:.2f})")
+                        print("✅ All API credits within normal limits")
+                    
+                    print(f"💰 Total API cost: ${credit_result.get('total_cost', 0):.2f}")
                         
                 except Exception as e:
                     print(f"❌ Credit monitoring error: {e}")

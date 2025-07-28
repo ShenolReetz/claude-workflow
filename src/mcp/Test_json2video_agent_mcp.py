@@ -86,6 +86,9 @@ class JSON2VideoAgentMCP:
             print(f"🎬 Creating ENHANCED video: {project_name}")
             print(f"✨ Features: Sound, Transitions, Background Photos, Reviews, Ratings")
 
+            # Add record_id to fields for Video Status Specialist monitoring
+            fields['record_id'] = record_id
+
             # Create PERFECT TIMING video (55 seconds) with word highlighting and synchronized narration
             video_result = await self.json2video_server.create_perfect_timing_video(fields)
 
