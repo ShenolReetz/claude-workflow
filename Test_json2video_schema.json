@@ -1,0 +1,831 @@
+{
+  "resolution": "instagram-story",
+  "width": 1080,
+  "height": 1920,
+  "quality": "high",
+  "draft": false,
+  "elements": [
+    {
+      "type": "subtitles",
+      "comment": "Master subtitle track for the entire video",
+      "model": "default",
+      "language": "en",
+      "captions": "{{SubtitleSRTURL}}",
+      "settings": {
+        "style": "classic-progressive",
+        "font-family": "Roboto",
+        "font-size": 60,
+        "outline-width": -1,
+        "all-caps": true,
+        "max-words-per-line": 4
+      },
+      "position": "custom",
+      "x": 2,
+      "y": 63
+    }
+  ],
+  "scenes": [
+    {
+      "id": "intro_scene",
+      "comment": "Intro Scene - 5 seconds",
+      "duration": 5,
+      "elements": [
+        {
+          "id": "intro_bg",
+          "type": "image",
+          "comment": "Background Photo with Zoom",
+          "src": "{{IntroPhoto}}",
+          "width": null,
+          "height": null,
+          "x": 0,
+          "y": 0,
+          "zoom": 5
+        },
+        {
+          "id": "intro_title",
+          "type": "text",
+          "comment": "Video Title - Montserrat Bold",
+          "text": "{{VideoTitle}}",
+          "style": "003",
+          "settings": {
+            "font-family": "Montserrat",
+            "font-weight": "700",
+            "font-size": "6.5vw",
+            "color": "#FFD700"
+          },
+          "position": "custom",
+          "x": 2,
+          "y": 63,
+          "width": 1078,
+          "height": 282,
+          "cache": true
+        },
+        {
+          "id": "intro_audio",
+          "type": "audio",
+          "comment": "Intro Voice Narration",
+          "src": "{{IntroVoiceURL}}"
+        }
+      ],
+      "transition": {
+        "style": "smoothright",
+        "duration": 0.5
+      },
+      "cache": true
+    },
+    {
+      "id": "product_5_scene",
+      "comment": "Product 5 (Countdown) - 9 seconds",
+      "duration": 9,
+      "elements": [
+        {
+          "id": "product5_bg",
+          "type": "image",
+          "comment": "Product 5 Background Photo",
+          "src": "{{ProductNo5Photo}}",
+          "width": null,
+          "height": null,
+          "x": 0,
+          "y": 0,
+          "zoom": 5
+        },
+        {
+          "id": "product5_title",
+          "type": "text",
+          "comment": "Product 5 Title - #5 Countdown",
+          "text": "#5 {{ProductNo5Title}}",
+          "style": "003",
+          "settings": {
+            "font-family": "Montserrat",
+            "font-weight": "700",
+            "font-size": "6.5vw",
+            "color": "#FFD700"
+          },
+          "position": "custom",
+          "x": 2,
+          "y": 63,
+          "width": 1078,
+          "height": 282,
+          "cache": true,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "product5_stars",
+          "type": "text",
+          "comment": "Star Rating Display",
+          "text": "{{ProductNo5StarRating}}",
+          "settings": {
+            "font-family": "Montserrat",
+            "font-weight": "700",
+            "font-size": "4vw",
+            "color": "#FFD700"
+          },
+          "position": "custom",
+          "x": 120,
+          "y": 600,
+          "cache": true,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "product5_rating",
+          "type": "text",
+          "comment": "Rating Value (4.5/5)",
+          "text": "{{ProductNo5Rating}}/5",
+          "settings": {
+            "font-family": "Montserrat",
+            "font-weight": "700",
+            "font-size": "4vw",
+            "color": "#FFFFFF"
+          },
+          "position": "custom",
+          "x": 520,
+          "y": 620,
+          "cache": true,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "product5_reviews",
+          "type": "text",
+          "comment": "Review Count",
+          "text": "{{ProductNo5Reviews}} Reviews",
+          "settings": {
+            "font-family": "Montserrat",
+            "font-weight": "700",
+            "font-size": "3vw",
+            "color": "#FFFFFF"
+          },
+          "position": "custom",
+          "x": 120,
+          "y": 750,
+          "cache": true,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "product5_price",
+          "type": "text",
+          "comment": "Product Price",
+          "text": "${{ProductNo5Price}}",
+          "settings": {
+            "font-family": "Montserrat",
+            "font-weight": "700",
+            "font-size": "5vw",
+            "color": "#FFD700"
+          },
+          "position": "custom",
+          "x": 360,
+          "y": 850,
+          "width": 360,
+          "cache": true,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "product5_audio",
+          "type": "audio",
+          "comment": "Product 5 Voice Narration",
+          "src": "{{Product5VoiceURL}}"
+        }
+      ],
+      "cache": true,
+      "transition": {
+        "style": "slideright",
+        "duration": 0.5
+      }
+    },
+    {
+      "id": "product_4_scene",
+      "comment": "Product 4 (Countdown) - 9 seconds",
+      "duration": 9,
+      "elements": [
+        {
+          "id": "product4_bg",
+          "type": "image",
+          "comment": "Product 4 Background Photo",
+          "src": "{{ProductNo4Photo}}",
+          "width": null,
+          "height": null,
+          "x": 0,
+          "y": 0,
+          "zoom": 5
+        },
+        {
+          "id": "product4_title",
+          "type": "text",
+          "comment": "Product 4 Title - #4 Countdown",
+          "text": "#4 {{ProductNo4Title}}",
+          "style": "003",
+          "settings": {
+            "font-family": "Montserrat",
+            "font-weight": "700",
+            "font-size": "6.5vw",
+            "color": "#FFD700"
+          },
+          "position": "custom",
+          "x": 2,
+          "y": 63,
+          "width": 1078,
+          "height": 282,
+          "cache": true,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "product4_stars",
+          "type": "text",
+          "comment": "Star Rating Display",
+          "text": "{{ProductNo4StarRating}}",
+          "settings": {
+            "font-family": "Montserrat",
+            "font-weight": "700",
+            "font-size": "4vw",
+            "color": "#FFD700"
+          },
+          "position": "custom",
+          "x": 120,
+          "y": 600,
+          "cache": true,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "product4_rating",
+          "type": "text",
+          "comment": "Rating Value (4.5/5)",
+          "text": "{{ProductNo4Rating}}/5",
+          "settings": {
+            "font-family": "Montserrat",
+            "font-weight": "700",
+            "font-size": "4vw",
+            "color": "#FFFFFF"
+          },
+          "position": "custom",
+          "x": 520,
+          "y": 620,
+          "cache": true,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "product4_reviews",
+          "type": "text",
+          "comment": "Review Count",
+          "text": "{{ProductNo4Reviews}} Reviews",
+          "settings": {
+            "font-family": "Montserrat",
+            "font-weight": "700",
+            "font-size": "3vw",
+            "color": "#FFFFFF"
+          },
+          "position": "custom",
+          "x": 120,
+          "y": 750,
+          "cache": true,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "product4_price",
+          "type": "text",
+          "comment": "Product Price",
+          "text": "${{ProductNo4Price}}",
+          "settings": {
+            "font-family": "Montserrat",
+            "font-weight": "700",
+            "font-size": "5vw",
+            "color": "#FFD700"
+          },
+          "position": "custom",
+          "x": 360,
+          "y": 850,
+          "width": 360,
+          "cache": true,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "product4_audio",
+          "type": "audio",
+          "comment": "Product 4 Voice Narration",
+          "src": "{{Product4VoiceURL}}"
+        }
+      ],
+      "cache": true,
+      "transition": {
+        "style": "slideright",
+        "duration": 0.5
+      }
+    },
+    {
+      "id": "product_3_scene",
+      "comment": "Product 3 (Countdown) - 9 seconds",
+      "duration": 9,
+      "elements": [
+        {
+          "id": "product3_bg",
+          "type": "image",
+          "comment": "Product 3 Background Photo",
+          "src": "{{ProductNo3Photo}}",
+          "width": null,
+          "height": null,
+          "x": 0,
+          "y": 0,
+          "zoom": 5
+        },
+        {
+          "id": "product3_title",
+          "type": "text",
+          "comment": "Product 3 Title - #3 Countdown",
+          "text": "#3 {{ProductNo3Title}}",
+          "style": "003",
+          "settings": {
+            "font-family": "Montserrat",
+            "font-weight": "700",
+            "font-size": "6.5vw",
+            "color": "#FFD700"
+          },
+          "position": "custom",
+          "x": 2,
+          "y": 63,
+          "width": 1078,
+          "height": 282,
+          "cache": true,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "product3_stars",
+          "type": "text",
+          "comment": "Star Rating Display",
+          "text": "{{ProductNo3StarRating}}",
+          "settings": {
+            "font-family": "Montserrat",
+            "font-weight": "700",
+            "font-size": "4vw",
+            "color": "#FFD700"
+          },
+          "position": "custom",
+          "x": 120,
+          "y": 600,
+          "cache": true,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "product3_rating",
+          "type": "text",
+          "comment": "Rating Value (4.5/5)",
+          "text": "{{ProductNo3Rating}}/5",
+          "settings": {
+            "font-family": "Montserrat",
+            "font-weight": "700",
+            "font-size": "4vw",
+            "color": "#FFFFFF"
+          },
+          "position": "custom",
+          "x": 520,
+          "y": 620,
+          "cache": true,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "product3_reviews",
+          "type": "text",
+          "comment": "Review Count",
+          "text": "{{ProductNo3Reviews}} Reviews",
+          "settings": {
+            "font-family": "Montserrat",
+            "font-weight": "700",
+            "font-size": "3vw",
+            "color": "#FFFFFF"
+          },
+          "position": "custom",
+          "x": 120,
+          "y": 750,
+          "cache": true,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "product3_price",
+          "type": "text",
+          "comment": "Product Price",
+          "text": "${{ProductNo3Price}}",
+          "settings": {
+            "font-family": "Montserrat",
+            "font-weight": "700",
+            "font-size": "5vw",
+            "color": "#FFD700"
+          },
+          "position": "custom",
+          "x": 360,
+          "y": 850,
+          "width": 360,
+          "cache": true,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "product3_audio",
+          "type": "audio",
+          "comment": "Product 3 Voice Narration",
+          "src": "{{Product3VoiceURL}}"
+        }
+      ],
+      "cache": true,
+      "transition": {
+        "style": "slideright",
+        "duration": 0.5
+      }
+    },
+    {
+      "id": "product_2_scene",
+      "comment": "Product 2 (Countdown) - 9 seconds",
+      "duration": 9,
+      "elements": [
+        {
+          "id": "product2_bg",
+          "type": "image",
+          "comment": "Product 2 Background Photo",
+          "src": "{{ProductNo2Photo}}",
+          "width": null,
+          "height": null,
+          "x": 0,
+          "y": 0,
+          "zoom": 5
+        },
+        {
+          "id": "product2_title",
+          "type": "text",
+          "comment": "Product 2 Title - #2 Countdown",
+          "text": "#2 {{ProductNo2Title}}",
+          "style": "003",
+          "settings": {
+            "font-family": "Montserrat",
+            "font-weight": "700",
+            "font-size": "6.5vw",
+            "color": "#FFD700"
+          },
+          "position": "custom",
+          "x": 2,
+          "y": 63,
+          "width": 1078,
+          "height": 282,
+          "cache": true,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "product2_stars",
+          "type": "text",
+          "comment": "Star Rating Display",
+          "text": "{{ProductNo2StarRating}}",
+          "settings": {
+            "font-family": "Montserrat",
+            "font-weight": "700",
+            "font-size": "4vw",
+            "color": "#FFD700"
+          },
+          "position": "custom",
+          "x": 120,
+          "y": 600,
+          "cache": true,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "product2_rating",
+          "type": "text",
+          "comment": "Rating Value (4.5/5)",
+          "text": "{{ProductNo2Rating}}/5",
+          "settings": {
+            "font-family": "Montserrat",
+            "font-weight": "700",
+            "font-size": "4vw",
+            "color": "#FFFFFF"
+          },
+          "position": "custom",
+          "x": 520,
+          "y": 620,
+          "cache": true,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "product2_reviews",
+          "type": "text",
+          "comment": "Review Count",
+          "text": "{{ProductNo2Reviews}} Reviews",
+          "settings": {
+            "font-family": "Montserrat",
+            "font-weight": "700",
+            "font-size": "3vw",
+            "color": "#FFFFFF"
+          },
+          "position": "custom",
+          "x": 120,
+          "y": 750,
+          "cache": true,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "product2_price",
+          "type": "text",
+          "comment": "Product Price",
+          "text": "${{ProductNo2Price}}",
+          "settings": {
+            "font-family": "Montserrat",
+            "font-weight": "700",
+            "font-size": "5vw",
+            "color": "#FFD700"
+          },
+          "position": "custom",
+          "x": 360,
+          "y": 850,
+          "width": 360,
+          "cache": true,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "product2_audio",
+          "type": "audio",
+          "comment": "Product 2 Voice Narration",
+          "src": "{{Product2VoiceURL}}"
+        }
+      ],
+      "cache": true,
+      "transition": {
+        "style": "slideright",
+        "duration": 0.5
+      }
+    },
+    {
+      "id": "product_1_scene",
+      "comment": "Product 1 (Winner!) - 9 seconds",
+      "duration": 9,
+      "elements": [
+        {
+          "id": "product1_bg",
+          "type": "image",
+          "comment": "Product 1 Background Photo",
+          "src": "{{ProductNo1Photo}}",
+          "width": null,
+          "height": null,
+          "x": 0,
+          "y": 0,
+          "zoom": 5
+        },
+        {
+          "id": "product1_title",
+          "type": "text",
+          "comment": "Product 1 Title - #1 WINNER",
+          "text": "#1 {{ProductNo1Title}} 🏆",
+          "style": "003",
+          "settings": {
+            "font-family": "Montserrat",
+            "font-weight": "700",
+            "font-size": "6.5vw",
+            "color": "#FFD700"
+          },
+          "position": "custom",
+          "x": 2,
+          "y": 63,
+          "width": 1078,
+          "height": 282,
+          "cache": true,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "product1_stars",
+          "type": "text",
+          "comment": "Star Rating Display",
+          "text": "{{ProductNo1StarRating}}",
+          "settings": {
+            "font-family": "Montserrat",
+            "font-weight": "700",
+            "font-size": "4vw",
+            "color": "#FFD700"
+          },
+          "position": "custom",
+          "x": 120,
+          "y": 600,
+          "cache": true,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "product1_rating",
+          "type": "text",
+          "comment": "Rating Value (4.5/5)",
+          "text": "{{ProductNo1Rating}}/5",
+          "settings": {
+            "font-family": "Montserrat",
+            "font-weight": "700",
+            "font-size": "4vw",
+            "color": "#FFFFFF"
+          },
+          "position": "custom",
+          "x": 520,
+          "y": 620,
+          "cache": true,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "product1_reviews",
+          "type": "text",
+          "comment": "Review Count",
+          "text": "{{ProductNo1Reviews}} Reviews",
+          "settings": {
+            "font-family": "Montserrat",
+            "font-weight": "700",
+            "font-size": "3vw",
+            "color": "#FFFFFF"
+          },
+          "position": "custom",
+          "x": 120,
+          "y": 750,
+          "cache": true,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "product1_price",
+          "type": "text",
+          "comment": "Product Price",
+          "text": "${{ProductNo1Price}}",
+          "settings": {
+            "font-family": "Montserrat",
+            "font-weight": "700",
+            "font-size": "5vw",
+            "color": "#FFD700"
+          },
+          "position": "custom",
+          "x": 360,
+          "y": 850,
+          "width": 360,
+          "cache": true,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "product1_audio",
+          "type": "audio",
+          "comment": "Product 1 Voice Narration",
+          "src": "{{Product1VoiceURL}}"
+        }
+      ],
+      "cache": true,
+      "transition": {
+        "style": "slideright",
+        "duration": 0.5
+      }
+    },
+    {
+      "id": "outro_scene",
+      "comment": "Outro Scene - 5 seconds",
+      "duration": 5,
+      "elements": [
+        {
+          "id": "outro_bg",
+          "type": "image",
+          "comment": "Background Photo with Zoom",
+          "src": "{{OutroPhoto}}",
+          "width": null,
+          "height": null,
+          "x": 0,
+          "y": 0,
+          "zoom": 5
+        },
+        {
+          "id": "outro_thanks",
+          "type": "text",
+          "comment": "Thanks Message - Montserrat Bold",
+          "text": "Thanks for Watching!",
+          "style": "003",
+          "settings": {
+            "font-family": "Montserrat",
+            "font-weight": "700",
+            "font-size": "6.5vw",
+            "color": "#FFD700"
+          },
+          "position": "custom",
+          "x": 2,
+          "y": 63,
+          "width": 1078,
+          "height": 282,
+          "cache": true
+        },
+        {
+          "id": "outro_cta",
+          "type": "text",
+          "comment": "Call to Action Message",
+          "text": "Follow us for more reviews!",
+          "settings": {
+            "font-family": "Montserrat",
+            "font-weight": "700",
+            "font-size": "3vw",
+            "color": "#FFFFFF",
+            "text-align": "center"
+          },
+          "position": "custom",
+          "x": 50,
+          "y": 400,
+          "width": 980,
+          "cache": true
+        },
+        {
+          "id": "outro_button",
+          "type": "component",
+          "component": "advanced/050",
+          "settings": {
+            "button": {
+              "background": "#E3170A",
+              "border": "0.2vw solid rgba(0,0,0,20%)",
+              "border-radius": "3vw",
+              "padding": "0 15vw",
+              "box-shadow": "inset -1vw -1vw 1vw rgba(0,0,0,0.2)",
+              "text": "Subscribe!",
+              "text-shadow": ".3vw .3vw rgba(0,0,0,0.4)",
+              "font-size": "5vw",
+              "font-family": "Montserrat",
+              "font-weight": "700"
+            }
+          },
+          "position": "custom",
+          "x": 0,
+          "y": 600,
+          "width": 1080
+        },
+        {
+          "id": "outro_audio",
+          "type": "audio",
+          "comment": "Outro Voice Narration",
+          "src": "{{OutroVoiceURL}}"
+        }
+      ],
+      "transition": {
+        "style": "smoothright",
+        "duration": 0.5
+      },
+      "cache": true
+    }
+  ]
+}
