@@ -1,146 +1,115 @@
 #!/usr/bin/env python3
 """
-Amazon Affiliate Agent MCP
-Handles Amazon affiliate link generation logic following your workflow architecture
+Test Amazon Affiliate Agent - Hardcoded responses for testing
+Purpose: Test affiliate generation without consuming API tokens
 """
 
-import asyncio
-import json
-import os
-import sys
-from typing import Dict, List, Optional
-from datetime import datetime
+from typing import Dict, Any, List
 
-# Add the project root to Python path
-sys.path.append('/app')
-sys.path.append('/home/claude-workflow')
-
-# Import your existing servers (following your pattern)
-from mcp_servers.Test_airtable_server import AirtableMCPServer
-from mcp_servers.Test_amazon_affiliate_server import AmazonAffiliateMCPServer
-
-class AmazonAffiliateAgentMCP:
-    """Controls the Amazon affiliate link generation workflow logic"""
-
-    def __init__(self, config: dict):
-        self.config = config
-
-        # Initialize your existing MCP servers (following your pattern)
-        self.airtable_server = AirtableMCPServer(
-            api_key=config['airtable_api_key'],
-            base_id=config['airtable_base_id'],
-            table_name=config['airtable_table_name']
-        )
-
-        # Initialize the new Amazon Affiliate MCP Server
-        self.amazon_server = AmazonAffiliateMCPServer(
-            associate_id=config.get('amazon_associate_id', 'reviewch3kr0d-20'),
-            config=config
-        )
-
-    async def check_and_generate_affiliate_links(self, record_id: str) -> Dict:
-        """
-        Main entry point - checks if product titles exist and generates affiliate links
-        This runs after content generation creates ProductNo1Title, ProductNo2Title, etc.
-        """
-        try:
-            print(f"🔗 Checking affiliate links for record: {record_id}")
-
-            # Get record from Airtable
-            record = await self.airtable_server.get_record_by_id(record_id)
-
-            if not record:
-                return {
-                    'success': False,
-                    'error': f'Record {record_id} not found',
-                    'record_id': record_id
-                }
-
-            fields = record.get('fields', {})
-            product_titles = []
-            
-            # Check if we have product titles to work with
-            for i in range(1, 6):  # Product1 through Product5
-                title_key = f'ProductNo{i}Title'
-                if fields.get(title_key):
-                    product_titles.append({
-                        'number': i,
-                        'title': fields[title_key],
-                        'field_key': title_key
-                    })
-
-            if not product_titles:
-                print(f"⚠️ No product titles found for record {record_id}")
-                return {
-                    'success': False,
-                    'error': 'No product titles found',
-                    'record_id': record_id
-                }
-
-            print(f"📦 Found {len(product_titles)} product titles to process")
-
-            # Generate affiliate links for each product
-            affiliate_results = await self.amazon_server.generate_affiliate_links_batch(
-                record_id, product_titles
-            )
-
-            # Update Airtable with the generated affiliate links
-            if affiliate_results['affiliate_links']:
-                await self.airtable_server.update_record(
-                    record_id, 
-                    affiliate_results['affiliate_links']
-                )
-                print(f"✅ Updated Airtable with {len(affiliate_results['affiliate_links'])} affiliate links")
-
-            return {
-                'success': True,
-                'record_id': record_id,
-                'products_processed': len(product_titles),
-                'affiliate_links_generated': len(affiliate_results['affiliate_links']),
-                'results': affiliate_results['results']
-            }
-
-        except Exception as e:
-            print(f"❌ Error processing affiliate links for {record_id}: {str(e)}")
-            return {
-                'success': False,
-                'error': str(e),
-                'record_id': record_id
-            }
-
-    async def close(self):
-        """Clean up resources"""
-        await self.amazon_server.close()
-
-# Integration function for workflow_runner.py
-async def run_amazon_affiliate_generation(config: dict, record_id: str) -> Dict:
-    """
-    Entry point function for workflow_runner.py integration
-    This follows the same pattern as your other MCP integrations
-    """
-    print(f"🔗 Starting Amazon affiliate link generation for record: {record_id}")
+async def test_run_amazon_affiliate_generation(title_record: Dict[str, Any], config: Dict[str, str], category_info: Dict[str, Any] = None) -> Dict[str, Any]:
+    """Generate hardcoded Amazon affiliate content for testing"""
+    print("🛍️ Running test Amazon affiliate generation (no API calls)")
     
-    affiliate_agent = AmazonAffiliateAgentMCP(config)
-    result = await affiliate_agent.check_and_generate_affiliate_links(record_id)
-    await affiliate_agent.close()
+    # Hardcoded test products with affiliate links
+    test_products = [
+        {
+            'title': 'VSGO Camera Cleaning Kit Professional DSLR Sensor Cleaning Swabs',
+            'description': 'Professional camera cleaning kit with sensor swabs, cleaning solution, and anti-static brush. Perfect for DSLR and mirrorless cameras.',
+            'price': '$24.99',
+            'rating': '4.6',
+            'reviews': '2,847',
+            'image_url': 'https://images.unsplash.com/photo-1606983340126-99ab4feaa64a?w=500&h=500',
+            'affiliate_link': 'https://amazon.com/test-affiliate-link-1?tag=testaffiliate-20',
+            'features': [
+                'Professional sensor cleaning swabs',
+                'Anti-static cleaning solution',
+                'Safe for all camera sensors',
+                'Includes precision brushes'
+            ]
+        },
+        {
+            'title': 'LensPen Camera Lens Cleaning Pen with Retractable Brush',
+            'description': 'Compact lens cleaning pen with retractable brush and cleaning tip. Essential tool for photographers on the go.',
+            'price': '$12.95',
+            'rating': '4.7',
+            'reviews': '5,234',
+            'image_url': 'https://images.unsplash.com/photo-1508423134147-addf71308178?w=500&h=500',
+            'affiliate_link': 'https://amazon.com/test-affiliate-link-2?tag=testaffiliate-20',
+            'features': [
+                'Retractable cleaning brush',
+                'Carbon cleaning tip',
+                'Compact portable design',
+                'Works on all lens types'
+            ]
+        },
+        {
+            'title': 'Altura Photo Camera Cleaning Kit with Microfiber Cloths',
+            'description': 'Complete camera cleaning solution with multiple brush sizes, microfiber cloths, and cleaning solution.',
+            'price': '$19.99',
+            'rating': '4.5',
+            'reviews': '1,923',
+            'image_url': 'https://images.unsplash.com/photo-1520637836862-4d197d17c79a?w=500&h=500',
+            'affiliate_link': 'https://amazon.com/test-affiliate-link-3?tag=testaffiliate-20',
+            'features': [
+                'Multiple brush sizes',
+                'Premium microfiber cloths',
+                'Alcohol-free cleaning solution',
+                'Protective storage case'
+            ]
+        },
+        {
+            'title': 'Rocket Blower Anti-Static Dust Removal Tool',
+            'description': 'Professional dust blower with anti-static design. Safe and effective for removing dust from camera sensors and lenses.',
+            'price': '$16.99',
+            'rating': '4.8',
+            'reviews': '3,567',
+            'image_url': 'https://images.unsplash.com/photo-1615529328331-f8917597711f?w=500&h=500',
+            'affiliate_link': 'https://amazon.com/test-affiliate-link-4?tag=testaffiliate-20',
+            'features': [
+                'Anti-static design',
+                'Safe for all sensors',
+                'Powerful air blast',
+                'Ergonomic grip'
+            ]
+        },
+        {
+            'title': 'Zeiss Lens Cleaning Wipes and Microfiber Cloth Set',
+            'description': 'Premium Zeiss lens cleaning wipes with microfiber cloth. Safely removes fingerprints, dust, and smudges.',
+            'price': '$14.95',
+            'rating': '4.9',
+            'reviews': '4,128',
+            'image_url': 'https://images.unsplash.com/photo-1606918801925-e2c914c4b2c3?w=500&h=500',
+            'affiliate_link': 'https://amazon.com/test-affiliate-link-5?tag=testaffiliate-20',
+            'features': [
+                'Zeiss premium quality',
+                'Individually wrapped wipes',
+                'Ultra-soft microfiber cloth',
+                'Safe for all lens coatings'
+            ]
+        }
+    ]
     
-    print(f"🎯 Amazon affiliate generation completed for {record_id}")
-    return result
-
-# Test function (won't hit Amazon, just tests the structure)
-async def test_affiliate_generation():
-    """Test function to verify the MCP works"""
-    print("🧪 Testing Amazon Affiliate MCP structure...")
+    # Update the record with hardcoded product data
+    updated_record = title_record.copy()
     
-    # Load config
-    with open('/home/claude-workflow/config/api_keys.json', 'r') as f:
-        config = json.load(f)
-
-    print(f"✅ Config loaded: Amazon Associate ID = {config.get('amazon_associate_id')}")
-    print("✅ MCP Agent structure is correct")
-    print("Note: Amazon blocking is normal - integration is ready for workflow")
+    for i, product in enumerate(test_products, 1):
+        updated_record[f'ProductNo{i}Title'] = product['title']
+        updated_record[f'ProductNo{i}Description'] = product['description']
+        updated_record[f'ProductNo{i}Price'] = product['price']
+        updated_record[f'ProductNo{i}Rating'] = product['rating']
+        updated_record[f'ProductNo{i}Reviews'] = product['reviews']
+        updated_record[f'ProductNo{i}Photo'] = product['image_url']
+        updated_record[f'ProductNo{i}AffiliateLink'] = product['affiliate_link']
+        
+        print(f"   📦 Product {i}: {product['title'][:40]}...")
     
-    return {'success': True, 'test': 'Structure validated'}
-
-if __name__ == "__main__":
-    asyncio.run(test_affiliate_generation())
+    return {
+        'success': True,
+        'updated_record': updated_record,
+        'products': test_products,
+        'products_found': len(test_products),
+        'category': category_info.get('category', 'Test Category') if category_info else 'Test Category',
+        'affiliate_links_generated': len(test_products),
+        'api_calls_used': 0,
+        'processing_time': '0.1s'
+    }

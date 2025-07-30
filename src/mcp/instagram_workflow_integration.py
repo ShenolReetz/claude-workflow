@@ -86,6 +86,12 @@ class InstagramWorkflowIntegration:
     def _generate_instagram_caption(self, airtable_record: dict) -> str:
         """Generate Instagram-optimized caption with visual storytelling"""
         
+        # Use platform-specific Instagram caption if available
+        instagram_caption = airtable_record.get('InstagramCaption')
+        if instagram_caption:
+            return instagram_caption
+        
+        # Otherwise, generate caption
         original_title = airtable_record.get('VideoTitle', 'Top 5 Products')
         
         # Extract Instagram hashtags from Airtable if available

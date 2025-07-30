@@ -1,76 +1,90 @@
-import asyncio
-import json
-import requests
-import base64
-from typing import Dict, List, Optional
-from mcp_servers.Test_default_audio_manager import TestDefaultAudioManager
+#!/usr/bin/env python3
+"""
+Test Voice Generation MCP Server - Hardcoded responses for testing
+Purpose: Test voice generation without consuming API tokens
+"""
 
-class VoiceGenerationMCPServer:
+from typing import Dict, Any, List
+
+class TestVoiceGenerationMCPServer:
+    """Test Voice Generation MCP Server with hardcoded responses"""
+    
     def __init__(self, elevenlabs_api_key: str):
-        self.api_key = elevenlabs_api_key
-        self.base_url = "https://api.elevenlabs.io/v1"
-        self.headers = {
-            "Accept": "audio/mpeg",
-            "Content-Type": "application/json",
-            "xi-api-key": self.api_key
-        }
+        self.elevenlabs_api_key = elevenlabs_api_key  # Not used in test mode
         
-        # Voice IDs for different types of content
-        self.voice_ids = {
-            "narrator": "21m00Tcm4TlvDq8ikWAM",  # Rachel - clear, professional
-            "intro": "21m00Tcm4TlvDq8ikWAM",     # Same voice for consistency
-            "outro": "21m00Tcm4TlvDq8ikWAM",     # Same voice for consistency
-            "products": "21m00Tcm4TlvDq8ikWAM"   # Same voice for products
-        }
+        # Hardcoded test audio URLs (publicly accessible)
+        self.test_audio_urls = [
+            'https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3',
+            'https://sample-videos.com/zip/10/mp3/SampleAudio_0.4mb_mp3.mp3',
+            'https://file-examples.com/storage/feaca9322b9931d2cb3a1b3/2017/11/file_example_MP3_700KB.mp3'
+        ]
         
-        # Initialize default audio manager
-        self.audio_manager = TestDefaultAudioManager()
+        print("🧪 Test Voice Generation Server initialized with hardcoded audio URLs")
     
-    async def generate_voice_from_text(self, text: str, voice_type: str = "narrator") -> Optional[str]:
-        """Generate voice audio (TEST MODE: Uses default audio files instead of ElevenLabs)"""
-        try:
-            print(f"🎵 TEST MODE: Using default {voice_type} audio instead of generation")
+    async def generate_voice_for_record(self, record_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate hardcoded voice URLs for all required fields"""
+        print("🎙️ Generating test voice narration (no API calls)")
+        
+        updated_record = record_data.copy()
+        
+        # Generate intro voice
+        if record_data.get('IntroHook'):
+            updated_record['IntroVoiceURL'] = self.test_audio_urls[0]
+            print(f"   🎵 Intro voice: Generated")
+        
+        # Generate outro voice
+        if record_data.get('OutroCallToAction'):
+            updated_record['OutroVoiceURL'] = self.test_audio_urls[1]
+            print(f"   🎵 Outro voice: Generated")
+        
+        # Generate product voices (1-5)
+        for i in range(1, 6):
+            description_key = f'ProductNo{i}Description'
+            voice_key = f'Product{i}VoiceURL'
             
-            # Return a placeholder to indicate we're using default audio
-            # The actual URL will be handled by the audio manager
-            return "TEST_MODE_DEFAULT_AUDIO"
-                
-        except Exception as e:
-            print(f"❌ Error in TEST MODE voice handling for {voice_type}: {e}")
-            return None
+            if record_data.get(description_key):
+                updated_record[voice_key] = self.test_audio_urls[i % len(self.test_audio_urls)]
+                print(f"   🎵 Product {i} voice: Generated")
+        
+        return {
+            'success': True,
+            'updated_record': updated_record,
+            'voices_generated': 7,  # Intro + Outro + 5 products
+            'total_duration': '55 seconds',
+            'api_calls_used': 0,
+            'cost': '$0.00'
+        }
     
-    async def generate_product_voice(self, product_name: str, product_description: str, product_rank: int) -> Optional[str]:
-        """Generate voice for a specific product (TEST MODE: Uses default audio)"""
-        print(f"🎵 TEST MODE: Using default product audio for rank {product_rank}")
-        return "TEST_MODE_DEFAULT_AUDIO"
+    async def generate_single_voice(self, text: str, voice_id: str = 'default') -> Dict[str, Any]:
+        """Generate single hardcoded voice URL"""
+        print(f"🎙️ Generating single test voice for text: {text[:30]}... (no API call)")
+        
+        return {
+            'success': True,
+            'audio_url': self.test_audio_urls[0],
+            'voice_id': voice_id,
+            'duration': '10 seconds',
+            'text_length': len(text),
+            'api_calls_used': 0,
+            'cost': '$0.00'
+        }
     
-    async def generate_intro_voice(self, intro_text: str) -> Optional[str]:
-        """Generate voice for intro (TEST MODE: Uses default audio)"""
-        print(f"🎵 TEST MODE: Using default intro audio")
-        return "TEST_MODE_DEFAULT_AUDIO"
+    async def get_available_voices(self) -> List[Dict[str, Any]]:
+        """Return hardcoded list of available test voices"""
+        print("🎤 Getting test voice list (no API call)")
+        
+        return [
+            {'voice_id': 'test_voice_1', 'name': 'Emma Test', 'language': 'en-US'},
+            {'voice_id': 'test_voice_2', 'name': 'James Test', 'language': 'en-US'},
+            {'voice_id': 'test_voice_3', 'name': 'Sarah Test', 'language': 'en-US'}
+        ]
     
-    async def generate_outro_voice(self, outro_text: str) -> Optional[str]:
-        """Generate voice for outro (TEST MODE: Uses default audio)"""
-        print(f"🎵 TEST MODE: Using default outro audio")
-        return "TEST_MODE_DEFAULT_AUDIO"
-
-# Test the server
-async def test_voice_generation():
-    with open('/home/claude-workflow/config/api_keys.json', 'r') as f:
-        config = json.load(f)
+    async def validate_audio_url(self, audio_url: str) -> bool:
+        """Always return True for test URLs"""
+        print(f"✅ Test audio URL validation: {audio_url[:50]}... (no API call)")
+        return True
     
-    server = VoiceGenerationMCPServer(config['elevenlabs_api_key'])
-    
-    # Test with sample text
-    test_text = "This is a test of the ElevenLabs voice generation for product number 5."
-    print(f"🧪 Testing voice generation...")
-    
-    voice_data = await server.generate_voice_from_text(test_text, "narrator")
-    if voice_data:
-        print(f"✅ Test successful! Generated {len(voice_data)} characters of base64 audio")
-        print(f"📊 First 100 characters: {voice_data[:100]}...")
-    else:
-        print("❌ Test failed")
-
-if __name__ == "__main__":
-    asyncio.run(test_voice_generation())
+    async def close(self):
+        """Close test server (no cleanup needed)"""
+        print("🧪 Test Voice Generation Server closed")
+        pass

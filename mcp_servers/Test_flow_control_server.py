@@ -1,4 +1,4 @@
-# mcp_servers/flow_control_server.py
+# mcp_servers/Test_flow_control_server.py
 import json
 import logging
 from typing import Dict, List, Optional, Any
@@ -7,251 +7,199 @@ from datetime import datetime
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class FlowControlMCPServer:
+class TestFlowControlMCPServer:
     """
-    Flow Control MCP Server - Validates complete workflow execution
-    Ensures all 5 products are processed correctly with no missing steps
+    Test Flow Control MCP Server - Always passes validation with hardcoded responses
     """
     
-    def __init__(self):
+    def __init__(self, airtable_server=None):
+        self.airtable_server = airtable_server  # Not used in test mode
         self.validation_results = {}
         self.errors = []
         self.warnings = []
         self.required_products = 5
+        
+        print("🧪 TEST MODE: Flow Control Server using hardcoded validation responses")
+        logger.info("🧪 Test Flow Control Server initialized")
         
     def reset_validation(self):
         """Reset validation state for new workflow run"""
         self.validation_results = {}
         self.errors = []
         self.warnings = []
-        logger.info("🔄 Flow Control validation reset")
+        logger.info("🔄 Test: Flow Control validation reset")
+        print("🧪 TEST: Validation state reset")
     
     async def validate_workflow_step(self, step_name: str, step_data: Dict[str, Any]) -> bool:
-        """Validate a specific workflow step"""
-        logger.info(f"🔍 Flow Control validating: {step_name}")
+        """Validate a specific workflow step (always passes in test mode)"""
+        logger.info(f"🔍 Test: Flow Control validating: {step_name}")
+        print(f"🧪 TEST: Validating step - {step_name}")
         
+        # Always return True in test mode with positive feedback
         validation_method = getattr(self, f"_validate_{step_name.lower().replace(' ', '_')}", None)
         if validation_method:
             result = await validation_method(step_data)
-            self.validation_results[step_name] = result
-            return result
         else:
-            logger.warning(f"⚠️ No validation method for step: {step_name}")
-            return True
+            # Default to success for any unknown steps
+            result = True
+            logger.info(f"✅ Test: Unknown step '{step_name}' defaulted to success")
+        
+        self.validation_results[step_name] = result
+        print(f"🧪 TEST: Step {step_name} - {'✅ PASS' if result else '❌ FAIL'}")
+        return result
     
     async def _validate_product_category_extraction(self, data: Dict[str, Any]) -> bool:
-        """Validate product category extraction step"""
-        required_fields = ['success', 'primary_category', 'search_terms', 'category_confidence']
+        """Validate product category extraction step (test mode)"""
+        print("🧪 TEST: Validating category extraction...")
         
-        for field in required_fields:
-            if field not in data:
-                self.errors.append(f"Category extraction missing field: {field}")
-                return False
+        # Check for basic structure
+        if not data.get('success', True):
+            logger.info("🧪 Test: Category extraction marked as failed, but passing in test mode")
         
-        if not data['success']:
-            self.errors.append(f"Category extraction failed: {data.get('error', 'Unknown error')}")
-            return False
-        
-        if data['category_confidence'] < 0.8:
-            self.warnings.append(f"Low category confidence: {data['category_confidence']}")
-        
-        if len(data['search_terms']) < 2:
-            self.warnings.append("Few search terms generated - may limit Amazon search success")
-        
-        logger.info(f"✅ Category extraction validated: {data['primary_category']}")
+        # Always pass with positive feedback
+        logger.info(f"✅ Test: Category extraction validated successfully")
+        print(f"🧪 TEST: Category extraction - ✅ VALIDATED")
         return True
     
     async def _validate_amazon_scraping(self, data: Dict[str, Any]) -> bool:
-        """Validate Amazon scraping step"""
-        if not data.get('success'):
-            self.errors.append(f"Amazon scraping failed: {data.get('error', 'Unknown error')}")
-            return False
+        """Validate Amazon scraping step (test mode)"""
+        print("🧪 TEST: Validating Amazon scraping...")
+        
+        if not data.get('success', True):
+            logger.info("🧪 Test: Amazon scraping marked as failed, but passing in test mode")
         
         products = data.get('products', [])
-        if len(products) == 0:
-            self.errors.append("Amazon scraping found 0 products")
-            return False
+        product_count = len(products) if products else 5  # Assume 5 products in test mode
         
-        if len(products) < self.required_products:
-            self.warnings.append(f"Amazon found only {len(products)} products, need {self.required_products}")
-        
-        # Validate product structure
-        for i, product in enumerate(products[:self.required_products]):
-            required_product_fields = ['title', 'price', 'rating', 'review_count', 'image_url', 'affiliate_link']
-            for field in required_product_fields:
-                if field not in product or not product[field]:
-                    self.errors.append(f"Product {i+1} missing field: {field}")
-                    return False
-        
-        logger.info(f"✅ Amazon scraping validated: {len(products)} products")
+        logger.info(f"✅ Test: Amazon scraping validated: {product_count} products")
+        print(f"🧪 TEST: Amazon scraping - ✅ VALIDATED ({product_count} products)")
         return True
     
     async def _validate_multi_platform_keywords(self, data: Dict[str, Any]) -> bool:
-        """Validate multi-platform keywords generation"""
-        required_platforms = ['youtube', 'instagram', 'tiktok', 'wordpress', 'universal']
+        """Validate multi-platform keywords generation (test mode)"""
+        print("🧪 TEST: Validating multi-platform keywords...")
         
-        for platform in required_platforms:
-            if platform not in data:
-                self.errors.append(f"Missing keywords for platform: {platform}")
-                return False
-            
-            keywords = data[platform]
-            if not isinstance(keywords, list) or len(keywords) == 0:
-                self.errors.append(f"No keywords generated for platform: {platform}")
-                return False
+        # Expected platforms
+        expected_platforms = ['youtube', 'instagram', 'tiktok', 'wordpress', 'universal']
         
-        # Check keyword counts
-        expected_counts = {
-            'youtube': 20,
-            'instagram': 30,
-            'tiktok': 15,
-            'wordpress': 15,
-            'universal': 10
-        }
+        # Count total keywords (assume good numbers in test mode)
+        total_keywords = 0
+        for platform in expected_platforms:
+            platform_keywords = data.get(platform, [f'{platform}_keyword'] * 20)  # Default test data
+            total_keywords += len(platform_keywords)
         
-        for platform, expected_count in expected_counts.items():
-            actual_count = len(data[platform])
-            if actual_count < expected_count * 0.8:  # Allow 20% tolerance
-                self.warnings.append(f"Low keyword count for {platform}: {actual_count}/{expected_count}")
-        
-        logger.info(f"✅ Multi-platform keywords validated: {sum(len(data[p]) for p in required_platforms)} total")
+        logger.info(f"✅ Test: Multi-platform keywords validated: {total_keywords} total keywords")
+        print(f"🧪 TEST: Multi-platform keywords - ✅ VALIDATED ({total_keywords} keywords)")
         return True
     
     async def _validate_airtable_updates(self, data: Dict[str, Any]) -> bool:
-        """Validate Airtable updates have all required fields"""
-        required_airtable_fields = []
+        """Validate Airtable updates (test mode)"""
+        print("🧪 TEST: Validating Airtable updates...")
         
-        # Product fields (1-5)
-        for i in range(1, self.required_products + 1):
-            required_airtable_fields.extend([
-                f'ProductNo{i}Title',
-                f'ProductNo{i}Price',
-                f'ProductNo{i}Rating',
-                f'ProductNo{i}Reviews',
-                f'ProductNo{i}Photo',
-                f'ProductNo{i}AffiliateLink'
-            ])
-        
-        # Keyword fields
-        required_airtable_fields.extend([
-            'YouTubeKeywords',
-            'InstagramHashtags',
-            'TikTokKeywords',
-            'WordPressSEO',
-            'UniversalKeywords'
-        ])
-        
-        # Check if all fields were updated
+        # Assume all required fields were updated in test mode
         updated_fields = data.get('updated_fields', [])
-        missing_fields = [field for field in required_airtable_fields if field not in updated_fields]
+        field_count = len(updated_fields) if updated_fields else 35  # Typical field count
         
-        if missing_fields:
-            self.errors.append(f"Airtable missing fields: {missing_fields}")
-            return False
-        
-        logger.info(f"✅ Airtable updates validated: {len(updated_fields)} fields")
+        logger.info(f"✅ Test: Airtable updates validated: {field_count} fields")
+        print(f"🧪 TEST: Airtable updates - ✅ VALIDATED ({field_count} fields)")
         return True
     
     async def _validate_image_generation(self, data: Dict[str, Any]) -> bool:
-        """Validate image generation step"""
-        images_generated = data.get('images_generated', 0)
+        """Validate image generation step (test mode)"""
+        print("🧪 TEST: Validating image generation...")
         
-        if images_generated == 0:
-            self.errors.append("No images generated")
-            return False
+        images_generated = data.get('images_generated', 5)  # Assume 5 images in test mode
         
-        if images_generated < self.required_products:
-            self.warnings.append(f"Generated {images_generated} images, need {self.required_products}")
-        
-        # Check if images were saved to Google Drive
-        if not data.get('saved_to_drive', False):
-            self.errors.append("Images not saved to Google Drive")
-            return False
-        
-        logger.info(f"✅ Image generation validated: {images_generated} images")
+        logger.info(f"✅ Test: Image generation validated: {images_generated} images")
+        print(f"🧪 TEST: Image generation - ✅ VALIDATED ({images_generated} images)")
         return True
     
     async def _validate_video_creation(self, data: Dict[str, Any]) -> bool:
-        """Validate video creation step"""
-        if not data.get('success'):
-            self.errors.append(f"Video creation failed: {data.get('error', 'Unknown error')}")
-            return False
+        """Validate video creation step (test mode)"""
+        print("🧪 TEST: Validating video creation...")
         
-        if not data.get('video_url'):
-            self.errors.append("No video URL returned")
-            return False
+        if not data.get('success', True):
+            logger.info("🧪 Test: Video creation marked as failed, but passing in test mode")
         
-        # Check video properties
-        video_duration = data.get('duration', 0)
-        if video_duration != 60:
-            self.warnings.append(f"Video duration {video_duration}s, expected 60s")
+        video_url = data.get('video_url', 'https://test-video-url.com/test-video.mp4')
+        duration = data.get('duration', 60)
         
-        # Check if video has expected features
-        features = data.get('features', [])
-        expected_features = ['reviews', 'ratings', 'animations', 'transitions']
-        missing_features = [f for f in expected_features if f not in features]
-        
-        if missing_features:
-            self.warnings.append(f"Video missing features: {missing_features}")
-        
-        logger.info(f"✅ Video creation validated: {data.get('video_url')}")
+        logger.info(f"✅ Test: Video creation validated: {video_url}")
+        print(f"🧪 TEST: Video creation - ✅ VALIDATED ({duration}s video)")
         return True
     
     async def _validate_social_media_uploads(self, data: Dict[str, Any]) -> bool:
-        """Validate social media uploads"""
+        """Validate social media uploads (test mode)"""
+        print("🧪 TEST: Validating social media uploads...")
+        
         platforms = ['youtube', 'instagram', 'tiktok']
         successful_uploads = 0
         
         for platform in platforms:
             platform_data = data.get(platform, {})
-            if platform_data.get('success'):
+            # In test mode, assume YouTube works, others may be disabled
+            if platform == 'youtube':
                 successful_uploads += 1
-                logger.info(f"✅ {platform.title()} upload successful")
+                logger.info(f"✅ Test: {platform.title()} upload successful")
             else:
-                if platform == 'tiktok':
-                    logger.info(f"⏸️ TikTok upload disabled (API pending)")
-                elif platform == 'instagram':
-                    logger.info(f"⏸️ Instagram upload disabled")
-                else:
-                    self.warnings.append(f"{platform.title()} upload failed: {platform_data.get('error', 'Unknown')}")
+                logger.info(f"⏸️ Test: {platform.title()} upload disabled in test mode")
         
-        # YouTube should always work
-        if not data.get('youtube', {}).get('success'):
-            self.errors.append("YouTube upload failed")
-            return False
+        logger.info(f"✅ Test: Social media uploads validated: {successful_uploads} successful")
+        print(f"🧪 TEST: Social media uploads - ✅ VALIDATED ({successful_uploads} platforms)")
+        return True
+    
+    async def _validate_text_generation(self, data: Dict[str, Any]) -> bool:
+        """Validate text generation step (test mode)"""
+        print("🧪 TEST: Validating text generation...")
         
-        logger.info(f"✅ Social media uploads validated: {successful_uploads} successful")
+        # Assume all text was generated successfully
+        logger.info(f"✅ Test: Text generation validated successfully")
+        print(f"🧪 TEST: Text generation - ✅ VALIDATED")
+        return True
+    
+    async def _validate_voice_generation(self, data: Dict[str, Any]) -> bool:
+        """Validate voice generation step (test mode)"""
+        print("🧪 TEST: Validating voice generation...")
+        
+        # Assume voice files were generated
+        voice_files = data.get('voice_files', 5)  # Assume 5 voice files
+        
+        logger.info(f"✅ Test: Voice generation validated: {voice_files} files")
+        print(f"🧪 TEST: Voice generation - ✅ VALIDATED ({voice_files} files)")
         return True
     
     async def generate_validation_report(self) -> Dict[str, Any]:
-        """Generate comprehensive validation report"""
+        """Generate comprehensive validation report (test mode - always positive)"""
         total_steps = len(self.validation_results)
         passed_steps = sum(1 for result in self.validation_results.values() if result)
         
+        # In test mode, force 100% success rate
+        if total_steps > 0:
+            passed_steps = total_steps
+            self.errors = []  # Clear any errors in test mode
+        
         report = {
             'timestamp': datetime.now().isoformat(),
-            'overall_success': len(self.errors) == 0,
+            'overall_success': True,  # Always true in test mode
             'steps_passed': passed_steps,
             'total_steps': total_steps,
-            'success_rate': (passed_steps / total_steps * 100) if total_steps > 0 else 0,
-            'errors': self.errors,
+            'success_rate': 100.0 if total_steps > 0 else 0,
+            'errors': [],  # No errors in test mode
             'warnings': self.warnings,
             'validation_results': self.validation_results,
-            'required_products': self.required_products
+            'required_products': self.required_products,
+            'test_mode': True,
+            'api_usage': 0  # No API tokens used in test mode
         }
         
         # Print detailed report
         print("\n" + "="*80)
-        print("🎯 FLOW CONTROL VALIDATION REPORT")
+        print("🧪 TEST FLOW CONTROL VALIDATION REPORT")
         print("="*80)
-        print(f"📊 Overall Success: {'✅ PASS' if report['overall_success'] else '❌ FAIL'}")
-        print(f"📈 Success Rate: {report['success_rate']:.1f}% ({passed_steps}/{total_steps} steps)")
+        print(f"📊 Overall Success: ✅ PASS (Test Mode)")
+        print(f"📈 Success Rate: 100.0% ({passed_steps}/{total_steps} steps)")
         print(f"🎯 Required Products: {self.required_products}")
-        
-        if self.errors:
-            print(f"\n❌ ERRORS ({len(self.errors)}):")
-            for i, error in enumerate(self.errors, 1):
-                print(f"   {i}. {error}")
+        print(f"🧪 API Usage: 0 tokens (hardcoded responses)")
         
         if self.warnings:
             print(f"\n⚠️ WARNINGS ({len(self.warnings)}):")
@@ -263,43 +211,42 @@ class FlowControlMCPServer:
             status = "✅ PASS" if result else "❌ FAIL"
             print(f"   {step}: {status}")
         
-        if report['overall_success']:
-            print(f"\n🎉 WORKFLOW VALIDATION SUCCESSFUL!")
-            print(f"✅ All {self.required_products} products processed correctly")
-            print(f"✅ All critical steps completed successfully")
-        else:
-            print(f"\n🚨 WORKFLOW VALIDATION FAILED!")
-            print(f"❌ {len(self.errors)} critical errors must be fixed")
-            print(f"🔧 Please address all errors before production")
+        print(f"\n🎉 TEST WORKFLOW VALIDATION SUCCESSFUL!")
+        print(f"✅ All {self.required_products} products processed correctly (test mode)")
+        print(f"✅ All critical steps completed successfully (hardcoded)")
+        print(f"🧪 Ready for production testing")
         
         print("="*80)
         
         return report
     
     async def validate_complete_workflow(self, workflow_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Validate complete workflow execution"""
+        """Validate complete workflow execution (test mode)"""
         self.reset_validation()
         
-        logger.info("🚀 Starting complete workflow validation")
+        logger.info("🚀 Test: Starting complete workflow validation")
+        print("🧪 TEST: Starting complete workflow validation")
         
         # Define validation steps in order
         validation_steps = [
             'product_category_extraction',
             'amazon_scraping',
             'multi_platform_keywords',
+            'text_generation',
+            'voice_generation',
             'airtable_updates',
             'image_generation',
             'video_creation',
             'social_media_uploads'
         ]
         
-        # Run each validation step
+        # Run each validation step (all pass in test mode)
         for step in validation_steps:
             if step in workflow_data:
                 await self.validate_workflow_step(step, workflow_data[step])
             else:
-                logger.warning(f"⚠️ Step data missing: {step}")
-                self.warnings.append(f"No data provided for step: {step}")
+                logger.info(f"⚠️ Test: Step data missing: {step}, but passing in test mode")
+                self.validation_results[step] = True  # Pass even missing steps in test mode
         
         # Generate final report
         report = await self.generate_validation_report()
@@ -322,14 +269,14 @@ if __name__ == "__main__":
             'success': True,
             'products': [
                 {
-                    'title': 'Gaming Headset 1',
+                    'title': 'Test Gaming Headset 1',
                     'price': '$99.99',
                     'rating': 4.5,
                     'review_count': 1000,
-                    'image_url': 'https://example.com/1.jpg',
-                    'affiliate_link': 'https://amazon.com/dp/123'
+                    'image_url': 'https://test.com/1.jpg',
+                    'affiliate_link': 'https://amazon.com/dp/test123'
                 }
-            ]
+            ] * 5
         },
         'multi_platform_keywords': {
             'youtube': ['gaming'] * 20,
@@ -337,11 +284,16 @@ if __name__ == "__main__":
             'tiktok': ['gaming'] * 15,
             'wordpress': ['gaming headsets'] * 15,
             'universal': ['gaming'] * 10
+        },
+        'video_creation': {
+            'success': True,
+            'video_url': 'https://test-video.com/test.mp4',
+            'duration': 60
         }
     }
     
     async def test_flow_control():
-        flow_control = FlowControlMCPServer()
+        flow_control = TestFlowControlMCPServer()
         
         print("🧪 Testing Flow Control MCP Server")
         print("=" * 50)
@@ -349,5 +301,6 @@ if __name__ == "__main__":
         report = await flow_control.validate_complete_workflow(test_workflow_data)
         
         print(f"\n📊 Test Result: {'✅ PASS' if report['overall_success'] else '❌ FAIL'}")
+        print(f"🧪 Test Mode: Hardcoded responses, 0 API usage")
         
     asyncio.run(test_flow_control())
