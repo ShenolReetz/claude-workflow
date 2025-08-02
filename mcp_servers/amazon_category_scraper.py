@@ -254,9 +254,9 @@ class AmazonCategoryScraper:
                     # If price is N/A or not a string, store as 0
                     airtable_data[f'ProductNo{i}Price'] = 0.0
                     logger.warning(f"⚠️ No valid price found for product {i}, using 0.0")
-                airtable_data[f'ProductNo{i}Rating'] = str(product['rating'])
-                airtable_data[f'ProductNo{i}Reviews'] = str(product['review_count'])
-                airtable_data[f'ProductNo{i}Score'] = str(product['review_score'])
+                airtable_data[f'ProductNo{i}Rating'] = product['rating']  # Keep as number
+                airtable_data[f'ProductNo{i}Reviews'] = product['review_count']  # Keep as number
+                # airtable_data[f'ProductNo{i}Score'] = product['review_score']  # Field doesn't exist in Airtable
                 
                 # Add to product results for other uses
                 product_results[f'product_{i}'] = product

@@ -17,7 +17,7 @@ sys.path.append('/home/claude-workflow')
 
 # Import your existing servers (following your pattern)
 from mcp_servers.airtable_server import AirtableMCPServer
-from mcp_servers.json2video_enhanced_server_v2 import JSON2VideoEnhancedMCPServerV2
+from mcp_servers.Production_json2video_server_fixed import JSON2VideoEnhancedMCPServerV2
 
 class JSON2VideoAgentMCP:
     """Controls the video creation workflow logic"""
@@ -32,7 +32,7 @@ class JSON2VideoAgentMCP:
             table_name=config['airtable_table_name']
         )
 
-        # Initialize the Enhanced JSON2Video MCP Server V2 (with PERFECT timing and word highlighting)
+        # Initialize the JSON2Video MCP Server (Production version with dynamic data)
         self.json2video_server = JSON2VideoEnhancedMCPServerV2(config['json2video_api_key'])
 
     async def create_video_from_record(self, record_id: str) -> Dict:
@@ -86,25 +86,27 @@ class JSON2VideoAgentMCP:
             print(f"🎬 Creating ENHANCED video: {project_name}")
             print(f"✨ Features: Sound, Transitions, Background Photos, Reviews, Ratings")
 
-            # Create PERFECT TIMING video (55 seconds) with word highlighting and synchronized narration
+            # Create PERFECT TIMING video using dynamic Airtable data (Production schema with real data)
             video_result = await self.json2video_server.create_perfect_timing_video(fields)
 
             if video_result['success']:
-                print(f"✅ Video creation started. Movie ID: {video_result['movie_id']}")
+                project_id = video_result.get('project_id', 'unknown')
+                print(f"✅ Video creation started. Project ID: {project_id}")
                 
-                # Update Airtable with movie ID (for tracking)
+                # Update Airtable with project ID (for tracking)
                 await self.airtable_server.update_record(
                     record_id,
-                    {'Status': 'Processing'}
+                    {'Status': 'Processing', 'VideoProjectID': project_id}
                 )
                 
                 return {
                     'success': True,
                     'record_id': record_id,
-                    'movie_id': video_result['movie_id'],
+                    'project_id': project_id,
                     'project_name': project_name,
                     'product_count': product_count,
-                    'video_url': video_result.get('video_url', '')
+                    'video_url': video_result.get('video_url', ''),
+                    'rendering_time': video_result.get('rendering_time', 'pending')
                 }
             else:
                 return {

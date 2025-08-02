@@ -157,13 +157,13 @@ class TextLengthValidationWithRegenerationAgent:
             # Extract failed fields
             failed_fields = []
             for result in validation_result.get("validation_results", []):
-                if result.get("status") == "Rejected":
+                if result.get("status") == "Rejected" and "word_count" in result:
                     failed_fields.append({
                         "field_name": result["field_name"],
-                        "current_text": result["text_preview"],
-                        "word_count": result["word_count"],
-                        "estimated_duration": result["estimated_duration"],
-                        "max_seconds": result["max_seconds"]
+                        "current_text": result.get("text_preview", ""),
+                        "word_count": result.get("word_count", 0),
+                        "estimated_duration": result.get("estimated_duration", 0),
+                        "max_seconds": result.get("max_seconds", 0)
                     })
             
             if not failed_fields:
@@ -202,7 +202,7 @@ class TextLengthValidationWithRegenerationAgent:
         
         try:
             # Get the full record from Airtable
-            record = await self.airtable_server.get_record(record_id)
+            record = await self.airtable_server.get_record_by_id(record_id)
             
             if not record:
                 return {
@@ -240,7 +240,11 @@ class TextLengthValidationWithRegenerationAgent:
                 
                 # Log result
                 emoji = "✅" if status == "Approved" else "❌"
-                message = f"{emoji} {field_name}: {result['word_count']} words, ~{result['estimated_duration']}s (limit: {result['max_seconds']}s)"
+                if 'word_count' in result:
+                    message = f"{emoji} {field_name}: {result['word_count']} words, ~{result['estimated_duration']}s (limit: {result['max_seconds']}s)"
+                else:
+                    # Handle case where text was empty/pending
+                    message = result.get('message', f"{emoji} {field_name}: {status}")
                 print(message)
                 validation_details.append(result)
             
@@ -323,7 +327,7 @@ class TextLengthValidationWithRegenerationAgent:
         
         try:
             # Get the record to extract context information
-            record = await self.airtable_server.get_record(record_id)
+            record = await self.airtable_server.get_record_by_id(record_id)
             if not record:
                 return {
                     "success": False,
@@ -371,7 +375,10 @@ class TextLengthValidationWithRegenerationAgent:
                     updates[field_name] = new_text
                     successful_regenerations += 1
                     
-                    print(f"✅ {field_name}: {result['word_count']} words (was {result['original_text'][:30]}...)")
+                    if 'word_count' in result:
+                        print(f"✅ {field_name}: {result['word_count']} words (was {result['original_text'][:30]}...)")
+                    else:
+                        print(f"✅ {field_name}: Regenerated successfully")
                 else:
                     field_name = result["field_name"]
                     print(f"❌ {field_name}: {result.get('error', 'Unknown error')}")
@@ -477,7 +484,7 @@ async def run_text_validation_with_regeneration(record_id: Optional[str] = None,
     
     if record_id:
         # Validate a specific record
-        record = await agent.airtable_server.get_record(record_id)
+        record = await agent.airtable_server.get_record_by_id(record_id)
         if record:
             title = record['fields'].get('Title', 'Unknown')
             return await agent.validate_and_regenerate_record(record_id, title)

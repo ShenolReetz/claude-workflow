@@ -1,0 +1,1040 @@
+{
+  "resolution": "instagram-story",
+  "width": 1080,
+  "height": 1920,
+  "quality": "high",
+  "draft": false,
+  "elements": [
+    {
+      "type": "subtitles",
+      "language": "en-US",
+      "settings": {
+        "style": "classic",
+        "box-color": "#000000",
+        "outline-width": 10,
+        "word-color": "#e5e826",
+        "shadow-offset": 0,
+        "shadow-color": "#000000",
+        "max-words-per-line": 3,
+        "font-size": 80,
+        "font-family": "Luckiest Guy",
+        "position": "bottom-center",
+        "outline-color": "#000000",
+        "line-color": "#FFF4E9"
+      }
+    }
+  ],
+  "scenes": [
+    {
+      "id": "qimlxkwt",
+      "comment": "Intro",
+      "elements": [
+        {
+          "id": "qew4l0fi",
+          "type": "image",
+          "src": "{{IntroPhoto}}",
+          "width": 1080,
+          "height": 1920,
+          "x": 0,
+          "y": 0,
+          "zoom": 5
+        },
+        {
+          "id": "qqgxa4w5",
+          "type": "text",
+          "style": "003",
+          "settings": {
+            "font-size": "80px",
+            "font-family": "Luckiest Guy",
+            "color": "#e1da19",
+            "text-shadow": "2px 2px 4px rgba(0,0,0,0.8)"
+          },
+          "position": "custom",
+          "x": 2,
+          "y": 63,
+          "width": 1078,
+          "height": 282,
+          "cache": true,
+          "text": "{{VideoTitle}}"
+        },
+        {
+          "id": "qio1qghl",
+          "type": "audio",
+          "src": "{{IntroAudio}}"
+        }
+      ],
+      "transition": {
+        "style": "smoothright",
+        "duration": 0.5
+      },
+      "duration": 5,
+      "cache": true
+    },
+    {
+      "id": "qtb9fbfa",
+      "comment": "Product 5",
+      "elements": [
+        {
+          "id": "qadfhufv",
+          "type": "image",
+          "src": "{{ProductNo5Photo}}",
+          "width": 1080,
+          "height": 1890,
+          "x": 0,
+          "y": 0,
+          "zoom": 5
+        },
+        {
+          "id": "qshfkxu5",
+          "type": "text",
+          "style": "003",
+          "settings": {
+            "font-size": "80px",
+            "font-family": "Luckiest Guy",
+            "color": "#e1da19",
+            "text-shadow": "2px 2px 4px rgba(0,0,0,0.8)"
+          },
+          "position": "custom",
+          "x": 2,
+          "y": 63,
+          "width": 1078,
+          "height": 282,
+          "cache": true,
+          "text": "{{ProductNo5Title}}",
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+          
+        },
+        {
+          "id": "q0vsr0mf",
+          "type": "audio",
+          "src": "{{ProductNo5Audio}}"
+        },
+        {
+          "id": "qxc36htz",
+          "type": "component",
+          "component": "advanced/070",
+          "settings": {
+            "rating": {
+              "symbol": "star",
+              "size": "8vw",
+              "off-color": "rgba(255,255,255,0.1)",
+              "color": "#e5e826",
+              "horizontal-align": "center",
+              "value": "{{ProductNo5Rating}}"
+            }
+          },
+          "cache": true,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1,
+          "position": "custom",
+          "x": 70,
+          "y": 385
+        },
+        {
+          "id": "qzcqse8u",
+          "type": "component",
+          "component": "advanced/060",
+          "settings": {
+            "counter": {
+              "text": "__num__",
+              "from": 0,
+              "to": "{{ProductNo5Reviews}}",
+              "duration": 3000,
+              "color": "white",
+              "text-shadow": ".2vw .2vw .2vw rgba(50,50,50,0.5)",
+              "font-size": "6vw",
+              "font-family": "Luckiest Guy",
+              "horizontal-align": "center"
+            }
+          },
+          "position": "custom",
+          "x": -80,
+          "y": 500,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "qc2ws9r1",
+          "type": "component",
+          "component": "advanced/060",
+          "settings": {
+            "counter": {
+              "text": "$__num__",
+              "from": 0,
+              "to": "{{ProductNo5Price}}",
+              "duration": 5000,
+              "color": "white",
+              "text-shadow": ".2vw .2vw .2vw rgba(50,50,50,0.5)",
+              "font-size": "6vw",
+              "font-family": "Luckiest Guy",
+              "horizontal-align": "center"
+            }
+          },
+          "position": "custom",
+          "y": 600,
+          "start": 1,
+          "fade-out": 1,
+          "fade-in": 1,
+          "pan": null,
+          "duration": 7,
+          "x": -70
+        },
+        {
+          "id": "q51gifdd",
+          "type": "text",
+          "style": "006",
+          "text": "Rating",
+          "settings": {
+            "font-size": "6vw",
+            "font-family": "Luckiest Guy",
+            "color": "#e5e826",
+            "horizontal-align": "left",
+            "letter-spacing": "2"
+          },
+          "position": "custom",
+          "pan-distance": 0.5,
+          "x": 80,
+          "y": 410,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "qttiiq0i",
+          "type": "text",
+          "style": "006",
+          "text": "Review's",
+          "settings": {
+            "font-size": "6vw",
+            "font-family": "Luckiest Guy",
+            "color": "#e5e826",
+            "horizontal-align": "left",
+            "letter-spacing": "2"
+          },
+          "position": "custom",
+          "pan-distance": 0.5,
+          "x": 80,
+          "y": 510,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "qug67vr4",
+          "type": "text",
+          "style": "006",
+          "text": "Price",
+          "settings": {
+            "font-size": "6vw",
+            "font-family": "Luckiest Guy",
+            "color": "#e5e826",
+            "horizontal-align": "left",
+            "letter-spacing": "2"
+          },
+          "position": "custom",
+          "pan-distance": 0.5,
+          "x": 80,
+          "y": 610,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        }
+      ],
+      "cache": true,
+      "duration": 9,
+      "transition": {
+        "style": "slideright",
+        "duration": 0.5
+      }
+    },
+    {
+      "id": "qkcbun8k",
+      "comment": "Product 4",
+      "elements": [
+        {
+          "id": "qe9megcx",
+          "type": "image",
+          "src": "{{ProductNo4Photo}}",
+          "width": null,
+          "height": 1920,
+          "x": 0,
+          "y": 0,
+          "zoom": 5
+        },
+        {
+          "id": "qe64oqzs",
+          "type": "text",
+          "style": "003",
+          "settings": {
+            "font-size": "80px",
+            "font-family": "Luckiest Guy",
+            "color": "#e1da19",
+            "text-shadow": "2px 2px 4px rgba(0,0,0,0.8)"
+          },
+          "position": "custom",
+          "x": 2,
+          "y": 63,
+          "width": 1078,
+          "height": 282,
+          "cache": true,
+          "text": "{{ProductNo4Title}}",
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "qo9ce0pj",
+          "type": "audio",
+          "src": "{{ProductNo4Audio}}"
+        },
+        {
+          "id": "qxc36htz",
+          "type": "component",
+          "component": "advanced/070",
+          "settings": {
+            "rating": {
+              "symbol": "star",
+              "size": "8vw",
+              "off-color": "rgba(255,255,255,0.1)",
+              "color": "#e5e826",
+              "horizontal-align": "center",
+              "value": "{{ProductNo4Rating}}"
+            }
+          },
+          "cache": true,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1,
+          "position": "custom",
+          "x": 70,
+          "y": 385
+        },
+        {
+          "id": "qzcqse8u",
+          "type": "component",
+          "component": "advanced/060",
+          "settings": {
+            "counter": {
+              "text": "__num__",
+              "from": 0,
+              "to": "{{ProductNo4Reviews}}",
+              "duration": 3000,
+              "color": "white",
+              "text-shadow": ".2vw .2vw .2vw rgba(50,50,50,0.5)",
+              "font-size": "6vw",
+              "font-family": "Luckiest Guy",
+              "horizontal-align": "center"
+            }
+          },
+          "position": "custom",
+          "x": -80,
+          "y": 500,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "qc2ws9r1",
+          "type": "component",
+          "component": "advanced/060",
+          "settings": {
+            "counter": {
+              "text": "$__num__",
+              "from": 0,
+              "to": "{{ProductNo4Price}}",
+              "duration": 5000,
+              "color": "white",
+              "text-shadow": ".2vw .2vw .2vw rgba(50,50,50,0.5)",
+              "font-size": "6vw",
+              "font-family": "Luckiest Guy",
+              "horizontal-align": "center"
+            }
+          },
+          "position": "custom",
+          "y": 600,
+          "start": 1,
+          "fade-out": 1,
+          "fade-in": 1,
+          "pan": null,
+          "duration": 7,
+          "x": -70
+        },
+        {
+          "id": "q51gifdd",
+          "type": "text",
+          "style": "006",
+          "text": "Rating",
+          "settings": {
+            "font-size": "6vw",
+            "font-family": "Luckiest Guy",
+            "color": "#e5e826",
+            "horizontal-align": "left",
+            "letter-spacing": "2"
+          },
+          "position": "custom",
+          "pan-distance": 0.5,
+          "x": 80,
+          "y": 410,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "qttiiq0i",
+          "type": "text",
+          "style": "006",
+          "text": "Review's",
+          "settings": {
+            "font-size": "6vw",
+            "font-family": "Luckiest Guy",
+            "color": "#e5e826",
+            "horizontal-align": "left",
+            "letter-spacing": "2"
+          },
+          "position": "custom",
+          "pan-distance": 0.5,
+          "x": 80,
+          "y": 510,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "qug67vr4",
+          "type": "text",
+          "style": "006",
+          "text": "Price",
+          "settings": {
+            "font-size": "6vw",
+            "font-family": "Luckiest Guy",
+            "color": "#e5e826",
+            "horizontal-align": "left",
+            "letter-spacing": "2"
+          },
+          "position": "custom",
+          "pan-distance": 0.5,
+          "x": 80,
+          "y": 610,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        }
+      ]
+    },
+    {
+      "id": "qeskw34i",
+      "comment": "Product 3",
+      "elements": [
+        {
+          "id": "qliynipr",
+          "type": "image",
+          "src": "{{ProductNo3Photo}}",
+          "width": 1080,
+          "x": 0,
+          "y": 0,
+          "zoom": 5,
+          "height": 1920
+        },
+        {
+          "id": "qij3o5zy",
+          "type": "text",
+          "style": "003",
+          "settings": {
+            "font-size": "80px",
+            "font-family": "Luckiest Guy",
+            "color": "#e1da19",
+            "text-shadow": "2px 2px 4px rgba(0,0,0,0.8)"
+          },
+          "position": "custom",
+          "x": 2,
+          "y": 63,
+          "width": 1078,
+          "height": 282,
+          "cache": true,
+          "text": "{{ProductNo3Title}}",
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "qb8ycyv7",
+          "type": "audio",
+          "src": "{{ProductNo3Audio}}"
+        },
+        {
+          "id": "qxc36htz",
+          "type": "component",
+          "component": "advanced/070",
+          "settings": {
+            "rating": {
+              "symbol": "star",
+              "size": "8vw",
+              "off-color": "rgba(255,255,255,0.1)",
+              "color": "#e5e826",
+              "horizontal-align": "center",
+              "value": "{{ProductNo3Rating}}"
+            }
+          },
+          "cache": true,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1,
+          "position": "custom",
+          "x": 70,
+          "y": 385
+        },
+        {
+          "id": "qzcqse8u",
+          "type": "component",
+          "component": "advanced/060",
+          "settings": {
+            "counter": {
+              "text": "__num__",
+              "from": 0,
+              "to": "{{ProductNo3Reviews}}",
+              "duration": 3000,
+              "color": "white",
+              "text-shadow": ".2vw .2vw .2vw rgba(50,50,50,0.5)",
+              "font-size": "6vw",
+              "font-family": "Luckiest Guy",
+              "horizontal-align": "center"
+            }
+          },
+          "position": "custom",
+          "x": -80,
+          "y": 500,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "qc2ws9r1",
+          "type": "component",
+          "component": "advanced/060",
+          "settings": {
+            "counter": {
+              "text": "$__num__",
+              "from": 0,
+              "to": "{{ProductNo3Price}}",
+              "duration": 5000,
+              "color": "white",
+              "text-shadow": ".2vw .2vw .2vw rgba(50,50,50,0.5)",
+              "font-size": "6vw",
+              "font-family": "Luckiest Guy",
+              "horizontal-align": "center"
+            }
+          },
+          "position": "custom",
+          "y": 600,
+          "start": 1,
+          "fade-out": 1,
+          "fade-in": 1,
+          "pan": null,
+          "duration": 7,
+          "x": -70
+        },
+        {
+          "id": "q51gifdd",
+          "type": "text",
+          "style": "006",
+          "text": "Rating",
+          "settings": {
+            "font-size": "6vw",
+            "font-family": "Luckiest Guy",
+            "color": "#e5e826",
+            "horizontal-align": "left",
+            "letter-spacing": "2"
+          },
+          "position": "custom",
+          "pan-distance": 0.5,
+          "x": 80,
+          "y": 410,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "qttiiq0i",
+          "type": "text",
+          "style": "006",
+          "text": "Review's",
+          "settings": {
+            "font-size": "6vw",
+            "font-family": "Luckiest Guy",
+            "color": "#e5e826",
+            "horizontal-align": "left",
+            "letter-spacing": "2"
+          },
+          "position": "custom",
+          "pan-distance": 0.5,
+          "x": 80,
+          "y": 510,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "qug67vr4",
+          "type": "text",
+          "style": "006",
+          "text": "Price",
+          "settings": {
+            "font-size": "6vw",
+            "font-family": "Luckiest Guy",
+            "color": "#e5e826",
+            "horizontal-align": "left",
+            "letter-spacing": "2"
+          },
+          "position": "custom",
+          "pan-distance": 0.5,
+          "x": 80,
+          "y": 610,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        }
+      ]
+    },
+    {
+      "id": "q3hxcky6",
+      "comment": "Product 2",
+      "elements": [
+        {
+          "id": "qyvl6ea4",
+          "type": "image",
+          "src": "{{ProductNo2Photo}}",
+          "width": null,
+          "height": null,
+          "x": 0,
+          "y": 0,
+          "zoom": 5
+        },
+        {
+          "id": "qdy45wf0",
+          "type": "text",
+          "style": "003",
+          "settings": {
+            "font-size": "80px",
+            "font-family": "Luckiest Guy",
+            "color": "#e1da19",
+            "text-shadow": "2px 2px 4px rgba(0,0,0,0.8)"
+          },
+          "position": "custom",
+          "x": 2,
+          "y": 63,
+          "width": 1078,
+          "height": 282,
+          "cache": true,
+          "text": "{{ProductNo2Title}}",
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "qio5k839",
+          "type": "audio",
+          "src": "{{ProductNo2Audio}}"
+        },
+        {
+          "id": "qxc36htz",
+          "type": "component",
+          "component": "advanced/070",
+          "settings": {
+            "rating": {
+              "symbol": "star",
+              "size": "8vw",
+              "off-color": "rgba(255,255,255,0.1)",
+              "color": "#e5e826",
+              "horizontal-align": "center",
+              "value": "{{ProductNo2Rating}}"
+            }
+          },
+          "cache": true,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1,
+          "position": "custom",
+          "x": 70,
+          "y": 385
+        },
+        {
+          "id": "qzcqse8u",
+          "type": "component",
+          "component": "advanced/060",
+          "settings": {
+            "counter": {
+              "text": "__num__",
+              "from": 0,
+              "to": "{{ProductNo2Reviews}}",
+              "duration": 3000,
+              "color": "white",
+              "text-shadow": ".2vw .2vw .2vw rgba(50,50,50,0.5)",
+              "font-size": "6vw",
+              "font-family": "Luckiest Guy",
+              "horizontal-align": "center"
+            }
+          },
+          "position": "custom",
+          "x": -80,
+          "y": 500,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "qc2ws9r1",
+          "type": "component",
+          "component": "advanced/060",
+          "settings": {
+            "counter": {
+              "text": "$__num__",
+              "from": 0,
+              "to": "{{ProductNo2Price}}",
+              "duration": 5000,
+              "color": "white",
+              "text-shadow": ".2vw .2vw .2vw rgba(50,50,50,0.5)",
+              "font-size": "6vw",
+              "font-family": "Luckiest Guy",
+              "horizontal-align": "center"
+            }
+          },
+          "position": "custom",
+          "y": 600,
+          "start": 1,
+          "fade-out": 1,
+          "fade-in": 1,
+          "pan": null,
+          "duration": 7,
+          "x": -70
+        },
+        {
+          "id": "q51gifdd",
+          "type": "text",
+          "style": "006",
+          "text": "Rating",
+          "settings": {
+            "font-size": "6vw",
+            "font-family": "Luckiest Guy",
+            "color": "#e5e826",
+            "horizontal-align": "left",
+            "letter-spacing": "2"
+          },
+          "position": "custom",
+          "pan-distance": 0.5,
+          "x": 80,
+          "y": 410,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "qttiiq0i",
+          "type": "text",
+          "style": "006",
+          "text": "Review's",
+          "settings": {
+            "font-size": "6vw",
+            "font-family": "Luckiest Guy",
+            "color": "#e5e826",
+            "horizontal-align": "left",
+            "letter-spacing": "2"
+          },
+          "position": "custom",
+          "pan-distance": 0.5,
+          "x": 80,
+          "y": 510,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "qug67vr4",
+          "type": "text",
+          "style": "006",
+          "text": "Price",
+          "settings": {
+            "font-size": "6vw",
+            "font-family": "Luckiest Guy",
+            "color": "#e5e826",
+            "horizontal-align": "left",
+            "letter-spacing": "2"
+          },
+          "position": "custom",
+          "pan-distance": 0.5,
+          "x": 80,
+          "y": 610,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        }
+      ]
+    },
+    {
+      "id": "qsxbr160",
+      "comment": "Product 1 (Winner)",
+      "elements": [
+        {
+          "id": "qndvbl6m",
+          "type": "image",
+          "src": "{{ProductNo1Photo}}",
+          "width": null,
+          "height": null,
+          "x": 0,
+          "y": 0,
+          "zoom": 5
+        },
+        {
+          "id": "qh3gpvul",
+          "type": "text",
+          "style": "003",
+          "settings": {
+            "font-size": "80px",
+            "font-family": "Luckiest Guy",
+            "color": "#e1da19",
+            "text-shadow": "2px 2px 4px rgba(0,0,0,0.8)"
+          },
+          "position": "custom",
+          "x": 2,
+          "y": 63,
+          "width": 1078,
+          "height": 282,
+          "cache": true,
+          "text": "{{ProductNo1Title}}",
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "qwr4qyul",
+          "type": "audio",
+          "src": "{{ProductNo1Audio}}"
+        },
+        {
+          "id": "qxc36htz",
+          "type": "component",
+          "component": "advanced/070",
+          "settings": {
+            "rating": {
+              "symbol": "star",
+              "size": "8vw",
+              "off-color": "rgba(255,255,255,0.1)",
+              "color": "#e5e826",
+              "horizontal-align": "center",
+              "value": "{{ProductNo1Rating}}"
+            }
+          },
+          "cache": true,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1,
+          "position": "custom",
+          "x": 70,
+          "y": 385
+        },
+        {
+          "id": "qzcqse8u",
+          "type": "component",
+          "component": "advanced/060",
+          "settings": {
+            "counter": {
+              "text": "__num__",
+              "from": 0,
+              "to": "{{ProductNo1Reviews}}",
+              "duration": 3000,
+              "color": "white",
+              "text-shadow": ".2vw .2vw .2vw rgba(50,50,50,0.5)",
+              "font-size": "6vw",
+              "font-family": "Luckiest Guy",
+              "horizontal-align": "center"
+            }
+          },
+          "position": "custom",
+          "x": -80,
+          "y": 500,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "qc2ws9r1",
+          "type": "component",
+          "component": "advanced/060",
+          "settings": {
+            "counter": {
+              "text": "$__num__",
+              "from": 0,
+              "to": "{{ProductNo1Price}}",
+              "duration": 5000,
+              "color": "white",
+              "text-shadow": ".2vw .2vw .2vw rgba(50,50,50,0.5)",
+              "font-size": "6vw",
+              "font-family": "Luckiest Guy",
+              "horizontal-align": "center"
+            }
+          },
+          "position": "custom",
+          "y": 600,
+          "start": 1,
+          "fade-out": 1,
+          "fade-in": 1,
+          "pan": null,
+          "duration": 7,
+          "x": -70
+        },
+        {
+          "id": "q51gifdd",
+          "type": "text",
+          "style": "006",
+          "text": "Rating",
+          "settings": {
+            "font-size": "6vw",
+            "font-family": "Luckiest Guy",
+            "color": "#e5e826",
+            "horizontal-align": "left",
+            "letter-spacing": "2"
+          },
+          "position": "custom",
+          "pan-distance": 0.5,
+          "x": 80,
+          "y": 410,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "qttiiq0i",
+          "type": "text",
+          "style": "006",
+          "text": "Review's",
+          "settings": {
+            "font-size": "6vw",
+            "font-family": "Luckiest Guy",
+            "color": "#e5e826",
+            "horizontal-align": "left",
+            "letter-spacing": "2"
+          },
+          "position": "custom",
+          "pan-distance": 0.5,
+          "x": 80,
+          "y": 510,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        },
+        {
+          "id": "qug67vr4",
+          "type": "text",
+          "style": "006",
+          "text": "Price",
+          "settings": {
+            "font-size": "6vw",
+            "font-family": "Luckiest Guy",
+            "color": "#e5e826",
+            "horizontal-align": "left",
+            "letter-spacing": "2"
+          },
+          "position": "custom",
+          "pan-distance": 0.5,
+          "x": 80,
+          "y": 610,
+          "duration": 7,
+          "start": 1,
+          "fade-in": 1,
+          "fade-out": 1
+        }
+      ]
+    },
+    {
+      "id": "qvpwlgtw",
+      "comment": "Outro",
+      "elements": [
+        {
+          "id": "q30tmxbv",
+          "type": "image",
+          "src": "{{OutroPhoto}}",
+          "width": null,
+          "height": null,
+          "x": 0,
+          "y": 0,
+          "zoom": 5
+        },
+        {
+          "id": "qw9vpcw7",
+          "type": "text",
+          "style": "003",
+          "settings": {
+            "font-size": "80px",
+            "font-family": "Luckiest Guy",
+            "color": "#e1da19",
+            "text-shadow": "2px 2px 4px rgba(0,0,0,0.8)"
+          },
+          "position": "custom",
+          "x": 2,
+          "y": 63,
+          "width": 1078,
+          "height": 282,
+          "cache": true,
+          "text": "{{OutroText}}"
+        },
+        {
+          "id": "qppghaz0",
+          "type": "audio",
+          "src": "{{OutroAudio}}"
+        },
+        {
+          "id": "q040xtrq",
+          "type": "component",
+          "component": "advanced/050",
+          "settings": {
+            "button": {
+              "background": "#E3170A",
+              "border": "0.2vw solid rgba(0,0,0,20%)",
+              "border-radius": "3vw",
+              "padding": "0 15vw",
+              "box-shadow": "inset -1vw -1vw 1vw rgba(0,0,0,0.2)",
+              "text": "Subscribe!",
+              "text-shadow": ".3vw .3vw rgba(0,0,0,0.4)",
+              "font-size": "10vw",
+              "font-family": "Anton"
+            }
+          },
+          "position": "custom",
+          "y": 600
+        }
+      ]
+    }
+  ]
+}

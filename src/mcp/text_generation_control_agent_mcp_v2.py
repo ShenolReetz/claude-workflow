@@ -114,7 +114,7 @@ class TextGenerationControlAgentMCP:
         await self.airtable_server.update_record(record_id, {
             'TextControlStatus': 'Failed',
             'GenerationAttempts': attempt,
-            'TextControlIssues': json.dumps(validation_result['products_needing_regeneration'])
+            'ValidationIssues': json.dumps(validation_result['products_needing_regeneration'])
         })
         
         return {
