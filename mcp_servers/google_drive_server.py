@@ -18,16 +18,27 @@ class GoogleDriveMCPServer:
     
     def sanitize_folder_name(self, name: str) -> str:
         """Sanitize folder name for Google Drive compatibility"""
-        # Remove or replace characters that cause Google Drive API issues
         import re
+        import unicodedata
+        
+        # Remove emojis and special unicode characters (including emoji symbols)
+        # This removes all characters in the Symbol category (which includes emojis)
+        name = ''.join(char for char in name if unicodedata.category(char)[0] not in ['S', 'C'])
+        
         # Replace problematic characters with safe alternatives
-        name = re.sub(r'[<>:"/\\|?*]', '_', name)  # Replace illegal characters
-        name = re.sub(r'[()!]', '', name)  # Remove parentheses and exclamation marks
+        name = re.sub(r'[<>:"/\\|?*$]', '', name)  # Remove illegal characters including $
+        name = re.sub(r"[()!']", '', name)  # Remove parentheses, exclamation marks, and apostrophes
         name = re.sub(r'\s+', ' ', name)  # Replace multiple spaces with single space
         name = name.strip()  # Remove leading/trailing spaces
+        
+        # Ensure name is not empty after sanitization
+        if not name:
+            name = "Untitled_Project"
+        
         # Limit length to avoid issues
         if len(name) > 50:
             name = name[:47] + "..."
+        
         return name
         
     async def initialize_drive_service(self):

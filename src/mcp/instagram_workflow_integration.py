@@ -37,8 +37,8 @@ class InstagramWorkflowIntegration:
             return {"enabled": False, "skipped": True}
         
         try:
-            # Get video data from FinalVideo field
-            video_url = airtable_record.get('FinalVideo')
+            # Get video data from FinalVideo field (check both locations for compatibility)
+            video_url = airtable_record.get('FinalVideo') or airtable_record.get('fields', {}).get('FinalVideo')
             if not video_url:
                 return {"success": False, "error": "No final video URL found"}
             

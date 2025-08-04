@@ -405,12 +405,22 @@ class ContentPipelineOrchestrator:
             # Use the already optimized products and descriptions
             processed_products = []
             for i, product in enumerate(amazon_result['products'][:5]):
+                # Get price from Airtable data if product price is N/A or 0
+                product_price = product.get('price', 25)
+                if product_price == 'N/A' or product_price == 0 or product_price == '0':
+                    # Fallback to Airtable data
+                    airtable_price = amazon_result.get('airtable_data', {}).get(f'ProductNo{i+1}Price', 25)
+                    if airtable_price and airtable_price != 0:
+                        product_price = airtable_price
+                    else:
+                        product_price = 25  # Default fallback
+                
                 # Product info for display
                 processed_product = {
                     'title': f"#{product.get('countdown_rank', 5-i)} {product.get('title', f'Product {i+1}')}",
                     'rating': product.get('rating', 4.5),
                     'review_count': product.get('review_count', 1000),
-                    'price': product.get('price', 25),
+                    'price': product_price,
                     'countdown_number': product.get('countdown_rank', 5-i),
                     'is_winner': i == 4  # Last product is the winner (#1)
                 }
@@ -689,31 +699,7 @@ class ContentPipelineOrchestrator:
                     category=clean_category
                 )
                 
-                # Use #1 product photo as outro instead of generating new image
-                # The #1 product is the winner, so use its OpenAI generated image
-                outro_image_url = None
-                # Try to get the #1 product's OpenAI image from Airtable
-                try:
-                    record_data = await self.airtable_server.get_record_by_id(pending_title['record_id'])
-                    if record_data:
-                        fields = record_data.get('fields', {})
-                        outro_image_url = fields.get('ProductNo5Photo')  # Product 5 is the #1 winner
-                        
-                        if outro_image_url:
-                            # Update Airtable with the #1 product photo as outro
-                            await self.airtable_server.update_record(
-                                pending_title['record_id'], 
-                                {'OutroPhoto': outro_image_url}
-                            )
-                            print(f"✅ Using #1 product photo as outro: {outro_image_url[:50]}...")
-                        else:
-                            print("⚠️ No #1 product photo found in ProductNo5Photo, will use placeholder")
-                except Exception as e:
-                    print(f"❌ Error getting #1 product image for outro: {e}")
-                    
-                outro_image_result = {'success': True, 'outro_image_url': outro_image_url}
-                
-                # Download and save Amazon product images
+                # Download and save Amazon product images first
                 amazon_images_result = await download_and_save_amazon_images_v2(
                     self.config,
                     pending_title['record_id'],
@@ -728,6 +714,30 @@ class ContentPipelineOrchestrator:
                     optimized_title,
                     amazon_result['products']
                 )
+                
+                # NOW use #1 product's high-resolution OpenAI image as outro 
+                # The OpenAI image is saved to ProductNo5Photo and is high-resolution
+                outro_image_url = None
+                try:
+                    record_data = await self.airtable_server.get_record_by_id(pending_title['record_id'])
+                    if record_data:
+                        fields = record_data.get('fields', {})
+                        # ProductNo5Photo contains the high-resolution OpenAI generated image
+                        outro_image_url = fields.get('ProductNo5Photo')  # Product 5 is the #1 winner
+                        
+                        if outro_image_url:
+                            # Update Airtable with the high-resolution #1 product image as outro
+                            await self.airtable_server.update_record(
+                                pending_title['record_id'], 
+                                {'OutroPhoto': outro_image_url}
+                            )
+                            print(f"✅ Using #1 product high-res OpenAI image as outro: {outro_image_url[:50]}...")
+                        else:
+                            print("⚠️ No #1 product OpenAI image found in ProductNo5Photo, will use placeholder")
+                except Exception as e:
+                    print(f"❌ Error getting #1 product OpenAI image for outro: {e}")
+                    
+                outro_image_result = {'success': True, 'outro_image_url': outro_image_url}
                 
                 print("✅ Image generation and download completed")
                 print(f"📊 Amazon images: {amazon_images_result.get('images_saved', 0)} saved")
@@ -762,42 +772,54 @@ class ContentPipelineOrchestrator:
             # Step 10: Create video
             print("🎬 Creating video...")
             
-            # CRITICAL: Add small delay to ensure all audio URLs are committed to Airtable
-            print("⏳ Waiting 3 seconds for Airtable synchronization...")
-            await asyncio.sleep(3)
-            
-            # Verify audio URLs are available before creating video
+            # Verify audio URLs with retry logic
             print("🔍 Verifying audio URLs before video creation...")
-            try:
-                verification_record = await self.airtable_server.get_record_by_id(pending_title['record_id'])
-                if verification_record:
-                    fields = verification_record.get('fields', {})
-                    intro_audio = fields.get('IntroMp3', '')
-                    outro_audio = fields.get('OutroMp3', '')
+            max_retries = 5
+            retry_delay = 3
+            audio_verified = False
+            
+            for attempt in range(1, max_retries + 1):
+                try:
+                    print(f"📊 Verification attempt {attempt}/{max_retries}...")
+                    verification_record = await self.airtable_server.get_record_by_id(pending_title['record_id'])
                     
-                    print(f"🔍 IntroMp3: {'✅ Found' if intro_audio else '❌ Missing'}")
-                    print(f"🔍 OutroMp3: {'✅ Found' if outro_audio else '❌ Missing'}")
-                    
-                    for i in range(1, 6):
-                        product_audio = fields.get(f'Product{i}Mp3', '')
-                        print(f"🔍 Product{i}Mp3: {'✅ Found' if product_audio else '❌ Missing'}")
-                    
-                    missing_audio = []
-                    if not intro_audio: missing_audio.append('IntroMp3')
-                    if not outro_audio: missing_audio.append('OutroMp3')
-                    for i in range(1, 6):
-                        if not fields.get(f'Product{i}Mp3', ''):
-                            missing_audio.append(f'Product{i}Mp3')
-                    
-                    if missing_audio:
-                        print(f"❌ CRITICAL: Missing audio URLs: {', '.join(missing_audio)}")
-                        print("❌ Video creation will fail - aborting")
-                        return
-                    else:
-                        print("✅ All audio URLs verified - proceeding with video creation")
+                    if verification_record:
+                        fields = verification_record.get('fields', {})
                         
-            except Exception as e:
-                print(f"⚠️ Could not verify audio URLs: {e} - proceeding anyway")
+                        # Check all required audio fields
+                        audio_fields = ['IntroMp3', 'OutroMp3'] + [f'Product{i}Mp3' for i in range(1, 6)]
+                        missing_audio = []
+                        
+                        for field in audio_fields:
+                            audio_url = fields.get(field, '')
+                            if audio_url:
+                                print(f"  ✅ {field}: Found")
+                            else:
+                                print(f"  ❌ {field}: Missing")
+                                missing_audio.append(field)
+                        
+                        if not missing_audio:
+                            print("✅ All audio URLs verified - proceeding with video creation")
+                            audio_verified = True
+                            break
+                        else:
+                            print(f"⚠️ Missing {len(missing_audio)} audio URLs: {', '.join(missing_audio)}")
+                            
+                            if attempt < max_retries:
+                                print(f"⏳ Waiting {retry_delay} seconds before retry...")
+                                await asyncio.sleep(retry_delay)
+                            else:
+                                print(f"❌ CRITICAL: Audio URLs still missing after {max_retries} attempts")
+                                print("❌ Video creation will fail - aborting")
+                                return
+                                
+                except Exception as e:
+                    print(f"⚠️ Error during verification attempt {attempt}: {e}")
+                    if attempt < max_retries:
+                        await asyncio.sleep(retry_delay)
+                    else:
+                        print("⚠️ Could not verify audio URLs after all attempts - proceeding anyway")
+                        audio_verified = True
             
             try:
                 video_result = await run_video_creation(
@@ -832,10 +854,13 @@ class ContentPipelineOrchestrator:
                                 print(f"❌ Error: {status_result['error']}")
                     else:
                         print("⚠️ No project ID returned, skipping status monitoring")
+                        status_result = {'success': False, 'error': 'No project ID returned'}
                 else:
                     print(f"❌ Video creation failed: {video_result.get('error', 'Unknown error')}")
+                    status_result = {'success': False, 'error': video_result.get('error', 'Video creation failed')}
             except Exception as e:
                 print(f"❌ Error creating video: {str(e)}")
+                status_result = {'success': False, 'error': str(e)}
             
             # Step 11: Upload to Google Drive
             print("☁️ Uploading video to Google Drive...")
@@ -902,7 +927,7 @@ class ContentPipelineOrchestrator:
                         print("❌ Could not fetch record data for Instagram publishing")
                         raise Exception("Could not fetch record data")
                     
-                    # Add video URL to record data at the correct level
+                    # Add video URL to record data (top level for compatibility)
                     record_data['FinalVideo'] = video_url
                     
                     instagram_result = await upload_to_instagram(self.config, record_data)
@@ -967,6 +992,11 @@ class ContentPipelineOrchestrator:
                 pending_title['record_id'],
                 {'Status': 'Completed'}
             )
+            
+            # Invoke workflow performance optimizer for analysis
+            print("\n🔍 Invoking workflow-performance-optimizer for analysis...")
+            print("📊 Note: Performance analysis will be triggered by assistant")
+            print("   This helps identify bottlenecks and optimization opportunities")
             
             return True
             
@@ -1072,7 +1102,19 @@ class ContentPipelineOrchestrator:
 
 async def main():
     orchestrator = ContentPipelineOrchestrator()
-    await orchestrator.run_complete_workflow()
+    result = await orchestrator.run_complete_workflow()
+    
+    # Trigger performance optimizer analysis after workflow completion
+    if result:
+        print("\n" + "="*60)
+        print("🎯 WORKFLOW COMPLETED - PERFORMANCE ANALYSIS REQUESTED")
+        print("="*60)
+        print("Please invoke the workflow-performance-optimizer agent to:")
+        print("  • Analyze workflow execution performance")
+        print("  • Identify bottlenecks and optimization opportunities")
+        print("  • Review success rates and timing metrics")
+        print("  • Provide recommendations for improvements")
+        print("="*60)
 
 if __name__ == "__main__":
     asyncio.run(main())

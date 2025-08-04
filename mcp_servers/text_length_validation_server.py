@@ -81,7 +81,7 @@ class TextLengthValidationMCPServer:
         estimated_duration = duration_info["estimated_duration"]
         
         if estimated_duration <= max_seconds:
-            status = "Approved"
+            status = "Ready"  # Changed from "Approved" to "Ready" for Airtable compatibility
         else:
             status = "Pending"  # Changed from "Rejected" to "Pending" for Airtable compatibility
             
@@ -93,7 +93,7 @@ class TextLengthValidationMCPServer:
             "word_count": duration_info["word_count"],
             "estimated_duration": estimated_duration,
             "duration_info": duration_info,
-            "message": f"{'✅' if status == 'Approved' else '⏳'} {scene_type.capitalize()} text: {duration_info['word_count']} words, ~{estimated_duration}s (limit: {max_seconds}s)"
+            "message": f"{'✅' if status == 'Ready' else '⏳'} {scene_type.capitalize()} text: {duration_info['word_count']} words, ~{estimated_duration}s (limit: {max_seconds}s)"
         }
     
     async def validate_batch(
@@ -136,7 +136,7 @@ class TextLengthValidationMCPServer:
             results.append(validation_result)
             
             # Update summary
-            if validation_result["status"] == "Approved":
+            if validation_result["status"] == "Ready":
                 summary["approved"] += 1
             elif validation_result["status"] == "Pending":
                 summary["pending"] += 1  # Changed from rejected to pending for consistency

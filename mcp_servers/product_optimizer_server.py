@@ -28,8 +28,8 @@ class ProductOptimizerServer:
         try:
             prompt = f"""
             Extract only the core product name from this Amazon product title.
-            Remove all descriptive text, categories, and "for X" phrases.
-            Keep only: Brand + Model Number/Name
+            Remove ALL descriptive text, categories, specifications, and "for X" phrases.
+            Keep ONLY: Brand + Model Number/Name (maximum 3-4 words)
             
             Original title: "{original_title}"
             
@@ -38,8 +38,10 @@ class ProductOptimizerServer:
             "Sony WH-1000XM5 Wireless Noise Canceling Headphones" → "Sony WH-1000XM5"
             "Logitech MX Keys Advanced Wireless Illuminated Keyboard" → "Logitech MX Keys"
             "Apple AirPods Pro (2nd Generation) with MagSafe Case" → "Apple AirPods Pro"
+            "ThermalFlow Pro X3000 Universal Laptop Cooling Pad with RGB" → "ThermalFlow Pro X3000"
+            "AICHESON Laptop Cooling Pad 5 Fans Up to 17.3 Inch" → "AICHESON S035"
             
-            Return ONLY the optimized product name, nothing else.
+            Return ONLY the short product name (Brand + Model), nothing else.
             """
             
             response = self.client.messages.create(
@@ -175,18 +177,19 @@ class ProductOptimizerServer:
             
             STRICT REQUIREMENTS:
             - Intro: EXACTLY 10 words maximum (5 seconds of speech)
-            - Outro: EXACTLY 10 words maximum (5 seconds of speech)
-            - Energetic countdown style
-            - Create urgency and excitement
+            - Outro: EXACTLY 12 words maximum (6 seconds of speech) - simple thanks message
+            - Energetic countdown style for intro
+            - Create urgency and excitement for intro
+            - Outro should be simple and direct
             
             Examples:
             Intro: "This {category} will change everything - let's count down!"
-            Outro: "Links below - prices dropping fast, grab yours now!"
+            Outro: "Thanks for watching and the affiliate links are in the video descriptions"
             
             Return as JSON:
             {{
                 "intro_hook": "10-word intro",
-                "outro_cta": "10-word outro"
+                "outro_cta": "Thanks for watching and the affiliate links are in the video descriptions"
             }}
             """
             
@@ -205,6 +208,9 @@ class ProductOptimizerServer:
             if start_idx != -1 and end_idx > start_idx:
                 json_str = response_text[start_idx:end_idx]
                 intro_outro = json.loads(json_str)
+                
+                # Always use the specific outro text requested by user
+                intro_outro['outro_cta'] = "Thanks for watching and the affiliate links are in the video descriptions"
                 
                 # Validate word counts
                 intro_words = len(intro_outro['intro_hook'].split())

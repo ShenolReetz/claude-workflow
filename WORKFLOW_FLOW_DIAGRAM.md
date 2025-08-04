@@ -2,6 +2,15 @@
 
 ## 🚀 **CLAUDE WORKFLOW - END-TO-END PROCESS MAP**
 
+**Last Updated:** August 4, 2025  
+**Status:** ✅ Flow continuation fixed, video quality improvements implemented
+
+### **Recent Fixes (August 4, 2025):**
+- ✅ **Flow Continuation:** Publishing steps now execute after video generation
+- ✅ **Product Price Display:** Fallback logic prevents $0 prices in videos  
+- ✅ **Outro Quality:** Using high-resolution OpenAI images for outro
+- ✅ **Outro Text:** Custom message: "Thanks for watching and the affiliate links are in the video descriptions"
+
 ```mermaid
 flowchart TD
     START([🎬 WORKFLOW START<br/>python3 src/workflow_runner.py]) --> INIT[🔧 Initialize Services<br/>- Airtable Server<br/>- Content Generation<br/>- Voice Generation<br/>-Product Optimizer<br/>- Amazon Validator<br/>- Google Drive]

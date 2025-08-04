@@ -239,7 +239,7 @@ class TextGenerationControlMCPServer:
         outro_seconds = outro_words / self.words_per_second
         
         intro_valid = 4 <= intro_seconds <= 6
-        outro_valid = 4 <= outro_seconds <= 6
+        outro_valid = 4 <= outro_seconds <= 8
         
         return {
             'intro': {

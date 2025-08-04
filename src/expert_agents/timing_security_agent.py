@@ -10,7 +10,7 @@ This agent ensures NO video ever fails due to timing issues by:
 
 TIMING REQUIREMENTS:
 - IntroHook: MAX 5 seconds (≤12 words)
-- OutroCallToAction: MAX 5 seconds (≤12 words)  
+- OutroCallToAction: MAX 8 seconds (≤16 words)  
 - ProductNo1-5Description: MAX 9 seconds each (≤22 words each)
 - Total video: ≤60 seconds
 
@@ -58,7 +58,7 @@ class TimingSecurityAgent:
         # Reduced to ensure video stays under 60 seconds with transitions
         self.timing_constraints = {
             'IntroHook': {'max_seconds': 4.0, 'max_words': 10},  # Reduced from 5s/12w
-            'OutroCallToAction': {'max_seconds': 4.0, 'max_words': 10},  # Reduced from 5s/12w
+            'OutroCallToAction': {'max_seconds': 8.0, 'max_words': 16},  # Extended for affiliate links
             'ProductNo1Description': {'max_seconds': 8.0, 'max_words': 20},  # Reduced from 9s/22w
             'ProductNo2Description': {'max_seconds': 8.0, 'max_words': 20},  # Reduced from 9s/22w
             'ProductNo3Description': {'max_seconds': 8.0, 'max_words': 20},  # Reduced from 9s/22w

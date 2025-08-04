@@ -856,9 +856,35 @@ class ContentGenerationMCPServer:
                 messages=[{"role": "user", "content": prompt}]
             )
             
-            result = json.loads(response.content[0].text)
-            print("✅ Generated platform-specific titles using keywords")
-            return result
+            # Safer JSON parsing with regex extraction
+            response_text = response.content[0].text
+            import re
+            
+            # Try to extract JSON from response, handling potential extra text
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            if json_match:
+                try:
+                    result = json.loads(json_match.group())
+                    print("✅ Generated platform-specific titles using keywords")
+                    return result
+                except json.JSONDecodeError:
+                    pass
+            
+            # If JSON parsing fails, try direct parsing
+            try:
+                result = json.loads(response_text)
+                print("✅ Generated platform-specific titles using keywords")
+                return result
+            except:
+                pass
+            
+            print("⚠️ Could not parse JSON response, using fallback")
+            return {
+                "youtube": original_title,
+                "tiktok": original_title,
+                "instagram": original_title,
+                "wordpress": original_title
+            }
             
         except Exception as e:
             print(f"Error generating platform titles: {e}")
@@ -969,9 +995,38 @@ class ContentGenerationMCPServer:
                 messages=[{"role": "user", "content": prompt}]
             )
             
-            result = json.loads(response.content[0].text)
-            print("✅ Generated platform-specific descriptions using keywords")
-            return result
+            # Safer JSON parsing with regex extraction
+            response_text = response.content[0].text
+            import re
+            
+            # Try to extract JSON from response, handling potential extra text
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            if json_match:
+                try:
+                    # Clean up potential control characters before parsing
+                    clean_json = json_match.group().replace('\n', '\\n').replace('\r', '\\r').replace('\t', '\\t')
+                    result = json.loads(clean_json)
+                    print("✅ Generated platform-specific descriptions using keywords")
+                    return result
+                except json.JSONDecodeError:
+                    pass
+            
+            # If JSON parsing fails, try direct parsing
+            try:
+                clean_text = response_text.replace('\n', '\\n').replace('\r', '\\r').replace('\t', '\\t')
+                result = json.loads(clean_text)
+                print("✅ Generated platform-specific descriptions using keywords")
+                return result
+            except:
+                pass
+            
+            print("⚠️ Could not parse JSON response, using fallback")
+            return {
+                "youtube": "Check out these amazing products!",
+                "tiktok": "You need to see these!",
+                "instagram": "These products are incredible!",
+                "wordpress": "Discover the best products in this category."
+            }
             
         except Exception as e:
             print(f"Error generating platform descriptions: {e}")
@@ -1189,13 +1244,13 @@ class ContentGenerationMCPServer:
                     validation_results["suggestions"].append("Shorten IntroHook to under 12 words")
                     validation_results["regeneration_needed"] = True
             
-            # Check OutroCallToAction (max 5 seconds)
+            # Check OutroCallToAction (max 8 seconds)
             if 'outro_cta' in content_data:
                 outro_time = estimate_seconds(content_data['outro_cta'])
-                if outro_time > 5.0:
+                if outro_time > 8.0:
                     validation_results["is_valid"] = False
-                    validation_results["issues"].append(f"OutroCallToAction: {outro_time:.1f}s (FAILED - max 5s)")
-                    validation_results["suggestions"].append("Shorten OutroCallToAction to under 12 words")
+                    validation_results["issues"].append(f"OutroCallToAction: {outro_time:.1f}s (FAILED - max 8s)")
+                    validation_results["suggestions"].append("Shorten OutroCallToAction to under 16 words")
                     validation_results["regeneration_needed"] = True
             
             # Check Product Descriptions (max 9 seconds each)

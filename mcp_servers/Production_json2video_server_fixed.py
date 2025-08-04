@@ -79,7 +79,7 @@ class JSON2VideoEnhancedMCPServerV2:
         
         # Video content
         json_str = json_str.replace('{{VideoTitle}}', str(record_data.get('VideoTitle', 'Top 5 Products')))
-        json_str = json_str.replace('{{OutroText}}', 'Thanks for Watching!')
+        json_str = json_str.replace('{{OutroText}}', str(record_data.get('OutroCallToAction', 'Thanks for Watching!')))
         
         # Images
         json_str = json_str.replace('{{IntroPhoto}}', str(record_data.get('IntroPhoto', 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=1080&h=1920&fit=crop&crop=center')))

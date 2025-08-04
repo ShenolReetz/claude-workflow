@@ -238,8 +238,8 @@ class TextLengthValidationWithRegenerationAgent:
                 # Update status column
                 updates[status_column] = status
                 
-                # Log result
-                emoji = "✅" if status == "Approved" else "❌"
+                # Log result - Map to existing Airtable values
+                emoji = "✅" if status == "Ready" else "❌"
                 if 'word_count' in result:
                     message = f"{emoji} {field_name}: {result['word_count']} words, ~{result['estimated_duration']}s (limit: {result['max_seconds']}s)"
                 else:
