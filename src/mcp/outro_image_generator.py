@@ -33,49 +33,57 @@ class OutroImageGenerator:
             "Content-Type": "application/json"
         }
     
-    async def generate_outro_image(self, category: str, record_id: str) -> Dict:
+    async def generate_outro_image(self, category: str, record_id: str, winner_product: Dict = None) -> Dict:
         """Generate standardized outro image with social media elements"""
         
-        logger.info(f"🎨 Generating outro image for category: {category}")
+        winner_name = winner_product.get('title', 'Top Product') if winner_product else f"#1 {category} Product"
+        logger.info(f"🎨 Generating outro image featuring winner: {winner_name[:30]}...")
         
-        # Create detailed prompt for outro image
-        prompt = f"""Create a professional video outro image for a {category} product review channel.
+        # Create detailed prompt for outro image with #1 product focus
+        prompt = f"""Create a professional video outro image featuring the WINNING product from a Top 5 countdown.
 
-The image should include:
-- "Thanks for Watching!" as the main heading
-- Social media call-to-action elements:
-  * YouTube subscribe button with notification bell
-  * "👍 LIKE" button
-  * "💬 COMMENT" text
-  * "🔔 SUBSCRIBE" text
-  * "📱 FOLLOW US" text
-- Professional branding elements:
-  * Clean, modern design
-  * Tech/product review channel aesthetic
-  * Warm, inviting colors (blues, oranges, whites)
-- Text elements:
-  * "Check product links in description"
-  * "More reviews coming soon"
-  * Amazon affiliate disclosure note
-- Visual elements:
-  * Professional gradient background
-  * Clean typography
-  * Social media icons (YouTube, Instagram, TikTok)
-  * Subscribe notification animation feel
+WINNER PRODUCT TO FEATURE:
+{winner_name}
 
-Requirements:
-- 16:9 aspect ratio suitable for YouTube end screens
-- High contrast text for readability
-- Professional, trustworthy design
-- Clean layout with clear hierarchy
-- Suitable for {category} product review content
-- Include space for end screen elements
-- Modern, engaging design that encourages interaction
+REQUIRED ELEMENTS:
+1. **WINNER PRODUCT SHOWCASE:**
+   - Large, prominent display of the #1 winning product
+   - Golden "#1" or "🏆 #1" badge next to the product
+   - Product should take center focus as the clear winner
+   - Professional product photography lighting
 
-Style: Professional YouTube outro design, clean and modern
-Colors: Professional blues, oranges, whites with good contrast
-Layout: Clean hierarchy with clear call-to-action placement
-Typography: Modern, readable fonts with good contrast"""
+2. **SOCIAL MEDIA ELEMENTS:**
+   - YouTube logo with "SUBSCRIBE" text
+   - Instagram logo with handle
+   - TikTok logo with handle  
+   - Website text: "www.ReviewCh3kr.com"
+   - All social media logos should be clearly visible and professional
+
+3. **CALL-TO-ACTION TEXT:**
+   - "🏆 #1 WINNER!" prominently displayed
+   - "FOLLOW US FOR MORE REVIEWS"
+   - "Links in Description ⬇️"
+   - "Thanks for Watching!"
+
+4. **DESIGN REQUIREMENTS:**
+   - 9:16 vertical aspect ratio for mobile video
+   - Professional, high-quality design
+   - Clean background that doesn't compete with the product
+   - Excellent contrast for readability
+   - Modern, trustworthy aesthetic
+   - Gold accents to emphasize "winner" theme
+   - Premium look suitable for product reviews
+
+5. **LAYOUT:**
+   - Winner product in upper center
+   - Social media logos arranged attractively
+   - Clear hierarchy: Product → Social Media → Call-to-Action
+   - Professional spacing and alignment
+
+Category: {category}
+Style: Professional winner announcement with social media integration
+Colors: Premium golds, professional blues/whites, high contrast
+Quality: Commercial-grade design suitable for video outro"""
 
         try:
             # Call OpenAI DALL-E 3 API
@@ -86,7 +94,7 @@ Typography: Modern, readable fonts with good contrast"""
                     "model": "dall-e-3",
                     "prompt": prompt,
                     "n": 1,
-                    "size": "1792x1024",  # 16:9 aspect ratio
+                    "size": "1024x1792",  # 9:16 aspect ratio for vertical video
                     "quality": "hd",
                     "response_format": "b64_json"
                 }
@@ -105,8 +113,9 @@ Typography: Modern, readable fonts with good contrast"""
                     'image_url': drive_url,
                     'prompt_used': prompt,
                     'category': category,
+                    'winner_product': winner_name,
                     'model': 'dall-e-3',
-                    'aspect_ratio': '16:9'
+                    'aspect_ratio': '9:16'
                 }
             else:
                 error_msg = f"OpenAI API error: {response.status_code} - {response.text}"
@@ -135,10 +144,9 @@ Typography: Modern, readable fonts with good contrast"""
             # Convert base64 to bytes
             image_bytes = base64.b64decode(image_base64)
             
-            # Create project folder structure
-            safe_category = "".join(c for c in category if c.isalnum() or c in (' ', '-', '_')).rstrip()
-            folder_name = f"Outro_Images_{safe_category}"
-            folder_ids = await drive_agent.drive_server.create_project_structure(folder_name)
+            # Create project folder structure - use same structure as other components
+            # This should match the project title folder structure used by other components
+            folder_ids = await drive_agent.drive_server.create_project_structure(f"Project_{record_id}")
             
             # Upload to Photos folder
             photos_folder_id = folder_ids.get('photos')
@@ -146,8 +154,8 @@ Typography: Modern, readable fonts with good contrast"""
                 logger.error("❌ Could not create photos folder")
                 return f"https://drive.google.com/file/d/outro_{record_id}/view"
             
-            # Upload outro image
-            filename = f"{record_id}_outro_social_media.jpg"
+            # Upload outro image with winner and social media
+            filename = f"outro_winner_social_media.jpg"
             
             # Use the Google Drive service directly
             try:
@@ -204,13 +212,18 @@ Typography: Modern, readable fonts with good contrast"""
 
 
 # Integration function for workflow
-async def generate_outro_image_for_workflow(config: Dict, record_id: str, category: str) -> Dict:
+async def generate_outro_image_for_workflow(config: Dict, record_id: str, category: str, products: List[Dict] = None) -> Dict:
     """Generate outro image and integrate into workflow"""
     
     generator = OutroImageGenerator(config)
     
     try:
-        result = await generator.generate_outro_image(category, record_id)
+        # Get the winner product (Product #1 = ProductNo5 in our countdown system)
+        winner_product = None
+        if products and len(products) >= 5:
+            winner_product = products[4]  # Index 4 = ProductNo5 = #1 winner
+        
+        result = await generator.generate_outro_image(category, record_id, winner_product)
         
         # Update Airtable with outro image URL
         if result['success']:

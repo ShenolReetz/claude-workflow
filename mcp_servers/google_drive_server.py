@@ -15,29 +15,41 @@ class GoogleDriveMCPServer:
         self.service = None
         self.parent_folder_id = None
         self.use_oauth = config.get('google_drive_token') is not None
+    
+    def sanitize_folder_name(self, name: str) -> str:
+        """Sanitize folder name for Google Drive compatibility"""
+        # Remove or replace characters that cause Google Drive API issues
+        import re
+        # Replace problematic characters with safe alternatives
+        name = re.sub(r'[<>:"/\\|?*]', '_', name)  # Replace illegal characters
+        name = re.sub(r'[()!]', '', name)  # Remove parentheses and exclamation marks
+        name = re.sub(r'\s+', ' ', name)  # Replace multiple spaces with single space
+        name = name.strip()  # Remove leading/trailing spaces
+        # Limit length to avoid issues
+        if len(name) > 50:
+            name = name[:47] + "..."
+        return name
         
     async def initialize_drive_service(self):
         """Initialize Google Drive service with OAuth2 or service account credentials"""
         try:
             if self.use_oauth:
-                # Use OAuth2 credentials
-                token_path = self.config.get('google_drive_token')
-                if not os.path.exists(token_path):
-                    print(f"❌ OAuth token file not found at {token_path}")
-                    print("   Run setup_google_drive_oauth.py first")
+                # Use improved token manager for automatic refresh
+                import sys
+                sys.path.append('/home/claude-workflow')
+                from src.utils.google_drive_token_manager import GoogleDriveTokenManager
+                
+                token_manager = GoogleDriveTokenManager()
+                creds = token_manager.get_valid_credentials()
+                
+                if not creds:
+                    print("❌ Could not obtain valid Google Drive credentials")
+                    print("   Token may have expired and requires manual re-authorization")
+                    print("   Workflow will continue without Google Drive integration")
                     return False
                 
-                creds = Credentials.from_authorized_user_file(token_path)
-                
-                # Refresh token if expired
-                if creds and creds.expired and creds.refresh_token:
-                    creds.refresh(Request())
-                    # Save refreshed token
-                    with open(token_path, 'w') as token:
-                        token.write(creds.to_json())
-                
                 self.service = build('drive', 'v3', credentials=creds)
-                print("✅ Google Drive service initialized with OAuth2")
+                print("✅ Google Drive service initialized with automatic token management")
             else:
                 # Fallback to service account (for folder operations only)
                 from google.oauth2.service_account import Credentials as ServiceAccountCredentials
@@ -95,7 +107,11 @@ class GoogleDriveMCPServer:
                 if not self.parent_folder_id:
                     return {}
             
-            video_folder_id = await self.find_or_create_folder(video_title, self.parent_folder_id)
+            # Sanitize video title for Google Drive compatibility
+            safe_title = self.sanitize_folder_name(video_title)
+            print(f"📁 Sanitized folder name: '{video_title}' → '{safe_title}'")
+            
+            video_folder_id = await self.find_or_create_folder(safe_title, self.parent_folder_id)
             if not video_folder_id:
                 return {}
             folder_ids['project'] = video_folder_id
@@ -106,7 +122,7 @@ class GoogleDriveMCPServer:
                 if subfolder_id:
                     folder_ids[subfolder.lower()] = subfolder_id
             
-            print(f"✅ Created project structure for: {video_title}")
+            print(f"✅ Created project structure for: {safe_title}")
             return folder_ids
             
         except Exception as e:

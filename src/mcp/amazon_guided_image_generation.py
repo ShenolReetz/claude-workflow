@@ -127,8 +127,8 @@ async def generate_amazon_guided_openai_images(config: Dict, record_id: str,
                     # Get the Drive URL
                     drive_url = uploaded_file.get('webViewLink', '')
                     
-                    # Update Airtable with OpenAI Drive image URL
-                    airtable_updates[f'ProductNo{i}OpenAIImageURL'] = drive_url
+                    # Update Airtable ProductNoXPhoto field with OpenAI generated image URL
+                    airtable_updates[f'ProductNo{i}Photo'] = drive_url
                     
                     results['images_saved'] += 1
                     results['products_processed'] += 1

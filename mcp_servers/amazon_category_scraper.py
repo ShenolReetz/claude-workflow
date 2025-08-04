@@ -256,6 +256,7 @@ class AmazonCategoryScraper:
                     logger.warning(f"⚠️ No valid price found for product {i}, using 0.0")
                 airtable_data[f'ProductNo{i}Rating'] = product['rating']  # Keep as number
                 airtable_data[f'ProductNo{i}Reviews'] = product['review_count']  # Keep as number
+                airtable_data[f'ProductNo{i}Photo'] = product.get('image_url', '')  # Amazon image URL
                 # airtable_data[f'ProductNo{i}Score'] = product['review_score']  # Field doesn't exist in Airtable
                 
                 # Add to product results for other uses

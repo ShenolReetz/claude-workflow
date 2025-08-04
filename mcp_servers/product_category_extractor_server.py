@@ -75,7 +75,7 @@ Important context:
 """
 
             response = await self.client.messages.create(
-                model="claude-3-haiku-20240307",
+                model="claude-3-5-sonnet-20241022",
                 max_tokens=500,
                 temperature=0.1,
                 messages=[

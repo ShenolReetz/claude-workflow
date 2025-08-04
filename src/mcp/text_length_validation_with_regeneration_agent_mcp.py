@@ -157,7 +157,7 @@ class TextLengthValidationWithRegenerationAgent:
             # Extract failed fields
             failed_fields = []
             for result in validation_result.get("validation_results", []):
-                if result.get("status") == "Rejected" and "word_count" in result:
+                if result.get("status") == "Pending" and result.get("needs_fixing", False):
                     failed_fields.append({
                         "field_name": result["field_name"],
                         "current_text": result.get("text_preview", ""),

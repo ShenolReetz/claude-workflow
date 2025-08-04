@@ -59,8 +59,8 @@ class VoiceGenerationMCPServer:
     
     async def generate_product_voice(self, product_name: str, product_description: str, product_rank: int) -> Optional[str]:
         """Generate voice for a specific product"""
-        # Create a more natural script for voiceover
-        voice_script = f"Number {product_rank}. {product_name}. {product_description}"
+        # Use only the description for voice - the title is shown visually in video
+        voice_script = product_description
         
         return await self.generate_voice_from_text(voice_script, "products")
     

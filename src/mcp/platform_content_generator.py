@@ -176,7 +176,7 @@ DESCRIPTION: [YouTube description here]"""
                 "https://api.anthropic.com/v1/messages",
                 headers=self.headers,
                 json={
-                    "model": "claude-3-opus-20240229",
+                    "model": "claude-3-5-sonnet-20241022",
                     "messages": [{"role": "user", "content": prompt}],
                     "max_tokens": 1000,
                     "temperature": 0.7
@@ -246,7 +246,7 @@ DESCRIPTION: [TikTok description here]"""
                 "https://api.anthropic.com/v1/messages",
                 headers=self.headers,
                 json={
-                    "model": "claude-3-opus-20240229",
+                    "model": "claude-3-5-sonnet-20241022",
                     "messages": [{"role": "user", "content": prompt}],
                     "max_tokens": 500,
                     "temperature": 0.8
@@ -316,7 +316,7 @@ CAPTION: [Instagram caption here]"""
                 "https://api.anthropic.com/v1/messages",
                 headers=self.headers,
                 json={
-                    "model": "claude-3-opus-20240229",
+                    "model": "claude-3-5-sonnet-20241022",
                     "messages": [{"role": "user", "content": prompt}],
                     "max_tokens": 800,
                     "temperature": 0.7
@@ -439,7 +439,7 @@ CONTENT: [WordPress content here with all placeholders and structure]"""
                 "https://api.anthropic.com/v1/messages",
                 headers=self.headers,
                 json={
-                    "model": "claude-3-opus-20240229",
+                    "model": "claude-3-5-sonnet-20241022",
                     "messages": [{"role": "user", "content": prompt}],
                     "max_tokens": 2000,
                     "temperature": 0.6

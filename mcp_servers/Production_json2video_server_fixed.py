@@ -75,10 +75,7 @@ class JSON2VideoEnhancedMCPServerV2:
     
     def _replace_placeholders_with_airtable_data(self, json_str: str, record_data: Dict) -> str:
         """Replace {{placeholder}} values with actual Airtable data"""
-        # Import Google Drive audio configuration
-        import sys
-        sys.path.append('/home/claude-workflow/config')
-        from google_drive_audio_config import get_audio_url
+        # DO NOT use hardcoded audio - use dynamically generated ElevenLabs audio from Airtable
         
         # Video content
         json_str = json_str.replace('{{VideoTitle}}', str(record_data.get('VideoTitle', 'Top 5 Products')))
@@ -88,14 +85,24 @@ class JSON2VideoEnhancedMCPServerV2:
         json_str = json_str.replace('{{IntroPhoto}}', str(record_data.get('IntroPhoto', 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=1080&h=1920&fit=crop&crop=center')))
         json_str = json_str.replace('{{OutroPhoto}}', str(record_data.get('OutroPhoto', 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=1080&h=1920&fit=crop&crop=center')))
         
-        # Audio files from Google Drive
-        try:
-            json_str = json_str.replace('{{IntroAudio}}', get_audio_url('intro'))
-            json_str = json_str.replace('{{OutroAudio}}', get_audio_url('outro'))
-        except Exception as e:
-            logger.warning(f"Could not get audio URLs: {e}")
-            json_str = json_str.replace('{{IntroAudio}}', '')
-            json_str = json_str.replace('{{OutroAudio}}', '')
+        # Audio files - Use ElevenLabs generated audio from Airtable (correct field names)
+        intro_audio = record_data.get('IntroMp3', '')
+        outro_audio = record_data.get('OutroMp3', '')
+        
+        # DEBUG: Log what we found
+        logger.info(f"🔍 DEBUG: IntroMp3 from database: '{intro_audio}'")
+        logger.info(f"🔍 DEBUG: OutroMp3 from database: '{outro_audio}'")
+        
+        if not intro_audio:
+            logger.error("❌ CRITICAL: IntroMp3 is empty - this will cause video creation to fail!")
+        if not outro_audio:
+            logger.error("❌ CRITICAL: OutroMp3 is empty - this will cause video creation to fail!")
+        
+        json_str = json_str.replace('{{IntroAudio}}', intro_audio)
+        json_str = json_str.replace('{{OutroAudio}}', outro_audio)
+        
+        logger.info(f"🎵 Using ElevenLabs intro audio: {intro_audio[:50] if intro_audio else 'EMPTY!'}...")
+        logger.info(f"🎵 Using ElevenLabs outro audio: {outro_audio[:50] if outro_audio else 'EMPTY!'}...")
         
         # Product data (1-5)
         for i in range(1, 6):
@@ -107,17 +114,33 @@ class JSON2VideoEnhancedMCPServerV2:
                 product_title = f"#{i} {product_title}"
             json_str = json_str.replace(f'{{{{ProductNo{i}Title}}}}', str(product_title))
             
-            # Product images
-            product_photo = record_data.get(f'ProductNo{i}Photo', 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=1080&h=1920&fit=crop&crop=center')
+            # Product images - Use OpenAI generated images from ProductNoXPhoto field
+            product_photo = record_data.get(f'ProductNo{i}Photo')
+            
+            # OpenAI images should be in ProductNoXPhoto field after generation
+            if not product_photo:
+                logger.warning(f"⚠️ No image found in ProductNo{i}Photo field - using placeholder")
+                product_photo = 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=1080&h=1920&fit=crop&crop=center'
+            else:
+                logger.info(f"🖼️ Using image for Product {i}: {product_photo[:50]}...")
+                
             json_str = json_str.replace(f'{{{{ProductNo{i}Photo}}}}', str(product_photo))
             
-            # Product audio
-            try:
-                audio_url = get_audio_url(f'product_{i}')
-                json_str = json_str.replace(f'{{{{ProductNo{i}Audio}}}}', audio_url)
-            except Exception as e:
-                logger.warning(f"Could not get product {i} audio: {e}")
-                json_str = json_str.replace(f'{{{{ProductNo{i}Audio}}}}', '')
+            # Product audio - Use ElevenLabs generated audio from Airtable (correct field names)
+            product_audio = record_data.get(f'Product{i}Mp3', '')
+            
+            # DEBUG: Log what we found
+            logger.info(f"🔍 DEBUG: Product{i}Mp3 from database: '{product_audio}'")
+            
+            if not product_audio:
+                logger.error(f"❌ CRITICAL: Product{i}Mp3 is empty - this will cause video creation to fail!")
+            
+            json_str = json_str.replace(f'{{{{ProductNo{i}Audio}}}}', product_audio)
+            
+            if product_audio:
+                logger.info(f"🎵 Using ElevenLabs audio for Product {i}: {product_audio[:50]}...")
+            else:
+                logger.warning(f"⚠️ No ElevenLabs audio found for Product {i}")
             
             # Product ratings, reviews, prices (ensure numeric values)
             rating = float(record_data.get(f'ProductNo{i}Rating', 4.5))

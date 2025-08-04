@@ -180,10 +180,35 @@ class AmazonProductValidator:
                                 rating_text = rating_elem.text if rating_elem else '0 out of 5 stars'
                                 rating = float(rating_text.split()[0]) if rating_text else 0.0
                                 
+                                # Extract price
+                                price = 'N/A'
+                                price_selectors = [
+                                    '.a-price-whole',
+                                    '.a-price .a-offscreen',
+                                    '.a-price-fraction',
+                                    '.a-price',
+                                    'span.a-price-whole'
+                                ]
+                                
+                                for selector in price_selectors:
+                                    price_elem = product.select_one(selector)
+                                    if price_elem:
+                                        price_text = price_elem.text.strip()
+                                        # Clean price text
+                                        if '$' in price_text:
+                                            price_text = price_text.replace('$', '').replace(',', '')
+                                            try:
+                                                price_num = float(price_text.split()[0])
+                                                price = f"${price_num:.2f}"
+                                                break
+                                            except:
+                                                continue
+                                
                                 quality_products.append({
                                     'title': title,
                                     'reviews': review_count,
                                     'rating': rating,
+                                    'price': price,
                                     'score': review_count * rating
                                 })
                     except Exception as e:

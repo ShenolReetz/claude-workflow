@@ -134,7 +134,7 @@ Generate a shorter, more compelling description:"""
                 # Generate new text
                 response = await asyncio.to_thread(
                     self.anthropic_client.messages.create,
-                    model="claude-3-haiku-20240307",
+                    model="claude-3-5-sonnet-20241022",
                     max_tokens=100,  # Short response
                     temperature=0.7,
                     messages=[{

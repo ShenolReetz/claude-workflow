@@ -38,36 +38,73 @@ class IntroImageGenerator:
         """Generate intro image featuring all 5 products"""
         
         logger.info(f"🎨 Generating intro image for: {video_title}")
+        logger.info(f"📐 Layout: Dynamic angled arrangement with 5 products positioned near each other")
+        logger.info(f"📏 Sizing: OpenAI will determine optimal dimensions with winner emphasis")
         
-        # Build product list for prompt
+        # Build detailed product list with specifications for optimal integration
         product_descriptions = []
         for i, product in enumerate(products[:5], 1):
             product_name = product.get('title', f'Product {i}')
-            product_descriptions.append(f"{i}. {product_name}")
+            countdown_position = 6 - i  # Convert to countdown: 1->5, 2->4, 3->3, 4->2, 5->1
+            
+            # Add product with positioning guidance
+            product_descriptions.append(f"#{countdown_position}: {product_name}")
         
-        # Create detailed prompt for intro image
-        prompt = f"""Create a professional product showcase image for "{video_title}".
+        # Create professional product showcase intro image
+        prompt = f"""Create a premium, professional intro image for "{video_title}" featuring a dynamic product showcase.
 
-The image should feature all 5 products arranged in an appealing layout:
+PRODUCTS TO FEATURE (in countdown order):
 {chr(10).join(product_descriptions)}
 
-Requirements:
-- All 5 products should be visible and clearly displayed
-- Arrange products in a dynamic, eye-catching composition
-- Clean, modern background with subtle gradient
-- Professional lighting that highlights each product
-- Include subtle "#1-5" ranking indicators near each product
-- Use warm, inviting colors that suggest quality and trust
-- Products should appear to be floating or arranged on a clean surface
-- Style should be suitable for a tech/product review video
-- High resolution, commercial quality
-- No text or logos overlaid on the image
+PROFESSIONAL SHOWCASE CONCEPT:
 
-Category: {category}
-Style: Professional product photography, clean and modern
-Lighting: Soft, even lighting with subtle shadows
-Background: Clean gradient or solid color, not distracting
-Composition: Dynamic arrangement showing all products clearly"""
+1. **CLEAN MODERN DESIGN:**
+   - Bright, clean white or light gradient background
+   - Professional studio lighting with soft shadows
+   - Modern, minimalist aesthetic that looks premium
+   - High-quality product photography style
+   - Commercial-grade professional appearance
+
+2. **DYNAMIC PRODUCT ARRANGEMENT:**
+   - Show ALL 5 products clearly and attractively
+   - Arrange in a circular or dynamic flowing composition
+   - #1 product (winner): Slightly larger, central or prominent position with subtle glow
+   - Products should be crystal clear, well-lit, and appealing
+   - Use depth and layering for visual interest
+   - Each product should be easily recognizable
+
+3. **PROFESSIONAL LIGHTING:**
+   - Soft, even studio lighting that makes products look premium
+   - Subtle drop shadows for depth
+   - Clean highlights that enhance product features
+   - No harsh shadows or dark areas
+   - Bright, inviting, and premium feel
+
+4. **VISUAL ELEMENTS:**
+   - Bold, clear countdown numbers (#5, #4, #3, #2, #1) with modern typography
+   - Subtle geometric shapes or lines for structure
+   - Minimal but elegant design elements
+   - Include "TOP 5" text prominently
+   - Professional color scheme (whites, blues, or brand colors)
+
+5. **TECHNICAL SPECIFICATIONS:**
+   - 9:16 aspect ratio (1024x1792) for vertical mobile video
+   - High resolution and crystal clear detail
+   - Optimized for video compression and mobile viewing
+   - Professional commercial quality
+   - Bright and vibrant colors
+
+6. **MOOD & ATMOSPHERE:**
+   - Premium, trustworthy, and professional
+   - Clean and modern aesthetic
+   - Suggests high-quality products and expert curation
+   - Inviting and engaging for viewers
+   - Should look like a professional product review channel
+
+Category: {category} professional product showcase
+Style: Clean, modern, professional product photography with dynamic arrangement
+Mood: Premium, trustworthy, expert curation, high-quality
+Quality: Professional commercial showcase optimized for engagement"""
 
         try:
             # Call OpenAI DALL-E 3 API
@@ -78,7 +115,7 @@ Composition: Dynamic arrangement showing all products clearly"""
                     "model": "dall-e-3",
                     "prompt": prompt,
                     "n": 1,
-                    "size": "1024x1024",
+                    "size": "1024x1792",  # 9:16 aspect ratio for vertical video
                     "quality": "hd",
                     "response_format": "b64_json"
                 }
@@ -97,6 +134,9 @@ Composition: Dynamic arrangement showing all products clearly"""
                     'image_url': drive_url,
                     'prompt_used': prompt,
                     'products_featured': len(products),
+                    'layout_style': 'dynamic_angled_arrangement',
+                    'sizing_approach': 'winner_emphasized_with_optimal_dimensions',
+                    'aspect_ratio': '9:16',
                     'model': 'dall-e-3'
                 }
             else:
@@ -136,8 +176,8 @@ Composition: Dynamic arrangement showing all products clearly"""
                 logger.error("❌ Could not create photos folder")
                 return f"https://drive.google.com/file/d/intro_{record_id}/view"
             
-            # Upload intro image using audio file upload method as template
-            filename = f"{record_id}_intro_all_products.jpg"
+            # Upload intro image with countdown products
+            filename = f"intro_top5_countdown.jpg"
             
             # Use the Google Drive service directly
             try:

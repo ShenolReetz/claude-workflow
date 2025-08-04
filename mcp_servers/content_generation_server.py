@@ -460,7 +460,7 @@ class ContentGenerationMCPServer:
         """Generate a single product based on specific requirements"""
         try:
             response = self.client.messages.create(
-                model="claude-3-haiku-20240307",
+                model="claude-3-5-sonnet-20241022",
                 max_tokens=200,
                 messages=[
                     {"role": "user", "content": prompt}
@@ -820,6 +820,434 @@ class ContentGenerationMCPServer:
         except Exception as e:
             print(f"❌ Error generating platform metadata: {e}")
             return {}
+
+    async def generate_platform_titles_from_keywords(self, original_title: str, platform_keywords: Dict[str, List[str]]) -> Dict[str, str]:
+        """Generate platform-specific titles USING platform keywords (SEO-first approach)"""
+        try:
+            prompt = f"""
+            Generate platform-optimized titles using their specific keywords for SEO.
+            Original title: "{original_title}"
+            
+            Platform Keywords:
+            - YouTube: {', '.join(platform_keywords.get('youtube', [])[:10])}
+            - TikTok: {', '.join(platform_keywords.get('tiktok', [])[:8])}
+            - Instagram: {', '.join([h.replace('#', '') for h in platform_keywords.get('instagram', [])[:8]])}
+            - WordPress: {', '.join(platform_keywords.get('wordpress', [])[:8])}
+            
+            CRITICAL: Each title MUST include relevant keywords from its platform for SEO.
+            
+            YouTube (60 chars max): Include keywords like "2025", "best", "top 5"
+            TikTok (100 chars max): Include trending keywords, make it clickable
+            Instagram (125 chars max): Include relevant hashtag terms naturally
+            WordPress (150 chars max): Include long-tail SEO keywords
+            
+            Return as JSON:
+            {{
+                "youtube": "YouTube title with keywords",
+                "tiktok": "TikTok title with keywords", 
+                "instagram": "Instagram title with keywords",
+                "wordpress": "WordPress title with keywords"
+            }}
+            """
+            
+            response = self.client.messages.create(
+                model="claude-3-5-sonnet-20241022",
+                max_tokens=800,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            
+            result = json.loads(response.content[0].text)
+            print("✅ Generated platform-specific titles using keywords")
+            return result
+            
+        except Exception as e:
+            print(f"Error generating platform titles: {e}")
+            return {
+                "youtube": original_title,
+                "tiktok": original_title,
+                "instagram": original_title,
+                "wordpress": original_title
+            }
+    
+    async def generate_platform_descriptions_from_keywords(self, products: List[Dict], platform_keywords: Dict[str, List[str]], platform_titles: Dict[str, str], affiliate_data: Dict = None, video_url: str = None, product_photos: Dict = None) -> Dict[str, str]:
+        """Generate platform-specific descriptions USING platform keywords with affiliate links"""
+        try:
+            # Get product info with affiliate links for context
+            product_info = ""
+            affiliate_links_section = ""
+            
+            for i, product in enumerate(products[:5], 1):
+                product_title = product.get('title', f'Product {i}')
+                product_price = product.get('price', 0)
+                product_rating = product.get('rating', 0)
+                
+                product_info += f"#{i}: {product_title} - ${product_price} - {product_rating}⭐\n"
+                
+                # Add affiliate link if available
+                if affiliate_data and affiliate_data.get(f'ProductNo{i}AffiliateLink'):
+                    affiliate_url = affiliate_data[f'ProductNo{i}AffiliateLink']
+                    affiliate_links_section += f"🛒 #{i} {product_title}: {affiliate_url}\n"
+            
+            # Add affiliate disclosure
+            if affiliate_links_section:
+                affiliate_links_section += "\n💡 As an Amazon Associate, I earn from qualifying purchases at no extra cost to you.\n"
+            
+            # Prepare WordPress-specific content with photos and video
+            wordpress_photos_section = ""
+            if product_photos:
+                wordpress_photos_section = "\n### Product Images:\n"
+                for i in range(1, 6):
+                    if product_photos.get(f'ProductNo{i}Photo'):
+                        product_name = products[i-1].get('title', f'Product {i}') if i <= len(products) else f'Product {i}'
+                        photo_url = product_photos[f'ProductNo{i}Photo']
+                        wordpress_photos_section += f"![{product_name}]({photo_url})\n"
+            
+            wordpress_video_section = ""
+            if video_url:
+                wordpress_video_section = f"\n### Watch the Full Review:\n[🎥 Click here to watch our detailed video review]({video_url})\n"
+            
+            prompt = f"""
+            Generate platform-optimized descriptions using their specific keywords and include affiliate links.
+            
+            Products to feature:
+            {product_info}
+            
+            Platform Titles (for context):
+            - YouTube: {platform_titles.get('youtube', '')}
+            - TikTok: {platform_titles.get('tiktok', '')}
+            - Instagram: {platform_titles.get('instagram', '')}
+            - WordPress: {platform_titles.get('wordpress', '')}
+            
+            Platform Keywords to include:
+            - YouTube: {', '.join(platform_keywords.get('youtube', [])[:15])}
+            - TikTok: {', '.join(platform_keywords.get('tiktok', [])[:10])}
+            - Instagram: {', '.join(platform_keywords.get('instagram', [])[:15])}
+            - WordPress: {', '.join(platform_keywords.get('wordpress', [])[:12])}
+            
+            AFFILIATE LINKS TO INCLUDE:
+            {affiliate_links_section}
+            
+            PLATFORM-SPECIFIC REQUIREMENTS:
+            
+            YouTube: 
+            - 200-300 words with timestamps (0:05 #5, 0:15 #4, etc.)
+            - Include keywords naturally
+            - Add affiliate links section at the end
+            - Include affiliate disclosure
+            
+            TikTok: 
+            - 100-150 words with trending keywords
+            - Add relevant hashtags
+            - Include "Link in bio for deals!" 
+            - Keep affiliate links concise
+            
+            Instagram: 
+            - 150-200 words, engaging tone
+            - Integrate hashtags naturally throughout
+            - Include "Link in bio for exclusive deals!" 
+            - Add affiliate links in a clean format
+            
+            WordPress: 
+            - 300-500 words, SEO-optimized with long-tail keywords
+            - Include affiliate links integrated naturally in content
+            - Add product photos section: {wordpress_photos_section}
+            - Add video section: {wordpress_video_section}
+            - Include comprehensive affiliate disclosure
+            
+            Return as JSON:
+            {{
+                "youtube": "YouTube description with keywords, timestamps, and affiliate links",
+                "tiktok": "TikTok description with keywords, hashtags, and affiliate links",
+                "instagram": "Instagram caption with keywords, hashtags, and affiliate links", 
+                "wordpress": "WordPress blog post with keywords, affiliate links, photos, and video"
+            }}
+            """
+            
+            response = self.client.messages.create(
+                model="claude-3-5-sonnet-20241022",
+                max_tokens=2000,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            
+            result = json.loads(response.content[0].text)
+            print("✅ Generated platform-specific descriptions using keywords")
+            return result
+            
+        except Exception as e:
+            print(f"Error generating platform descriptions: {e}")
+            return {
+                "youtube": "Check out these amazing products!",
+                "tiktok": "You need to see these!",
+                "instagram": "These products are incredible!",
+                "wordpress": "Discover the best products in this category."
+            }
+    
+    async def generate_intro_hook_and_outro_cta(self, video_title: str) -> Dict[str, str]:
+        """Generate IntroHook (5s) and OutroCallToAction (5s) from VideoTitle"""
+        try:
+            prompt = f"""
+            Transform this video title into engaging video content:
+            VideoTitle: "{video_title}"
+            
+            Generate TWO components with STRICT timing:
+            
+            1. IntroHook (MAX 5 seconds when spoken):
+            - Grab attention immediately
+            - Create curiosity/urgency about #1 product
+            - Make viewers want to watch until the end
+            - Examples: "The #1 product shocked even me!", "Wait until you see #1!"
+            
+            2. OutroCallToAction (MAX 5 seconds when spoken):
+            - Drive immediate action
+            - Create urgency
+            - Direct to links/engagement
+            - Examples: "Grab these deals NOW - links below!", "Which one will you buy?"
+            
+            CRITICAL: Keep both under 5 seconds of spoken audio!
+            
+            Return as JSON:
+            {{
+                "intro_hook": "5-second attention grabber",
+                "outro_cta": "5-second call to action"
+            }}
+            """
+            
+            response = self.client.messages.create(
+                model="claude-3-5-sonnet-20241022",
+                max_tokens=500,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            
+            # Extract JSON from response, handling potential extra text
+            response_text = response.content[0].text.strip()
+            
+            # Try to find JSON block in response
+            if '{' in response_text and '}' in response_text:
+                start_idx = response_text.find('{')
+                end_idx = response_text.rfind('}') + 1
+                json_text = response_text[start_idx:end_idx]
+                result = json.loads(json_text)
+            else:
+                raise ValueError("No JSON found in response")
+            
+            print("✅ Generated IntroHook and OutroCallToAction with timing validation")
+            return result
+            
+        except Exception as e:
+            print(f"Error generating intro/outro: {e}")
+            return {
+                "intro_hook": "Check out these amazing products!",
+                "outro_cta": "Links below - which one will you choose?"
+            }
+    
+    async def format_products_with_countdown(self, products: List[Dict]) -> List[Dict]:
+        """Format products with countdown numbering (#5 to #1)"""
+        try:
+            formatted_products = []
+            
+            for i, product in enumerate(products[:5]):
+                # Countdown: Product 1 = #5, Product 5 = #1
+                countdown_number = 5 - i
+                winner_emoji = " 🏆" if countdown_number == 1 else ""
+                
+                formatted_product = product.copy()
+                formatted_product['countdown_title'] = f"#{countdown_number}{winner_emoji} {product.get('title', f'Product {i+1}')}"
+                formatted_product['countdown_number'] = countdown_number
+                formatted_product['is_winner'] = countdown_number == 1
+                
+                formatted_products.append(formatted_product)
+                print(f"🏆 Formatted: {formatted_product['countdown_title']}")
+            
+            return formatted_products
+            
+        except Exception as e:
+            print(f"Error formatting countdown products: {e}")
+            return products
+    
+    async def calculate_seo_metrics(self, title: str, description: str, keywords: List[str], platform: str = "youtube") -> Dict[str, float]:
+        """Calculate SEO metrics for content optimization"""
+        try:
+            import re
+            from collections import Counter
+            
+            # Combine title and description for analysis
+            full_text = f"{title} {description}".lower()
+            word_count = len(full_text.split())
+            
+            # Calculate keyword density
+            keyword_mentions = 0
+            for keyword in keywords[:10]:  # Use top 10 keywords
+                keyword_mentions += len(re.findall(r'\b' + re.escape(keyword.lower()) + r'\b', full_text))
+            
+            keyword_density = (keyword_mentions / word_count * 100) if word_count > 0 else 0
+            
+            # SEO Score calculation (0-100)
+            seo_score = 0
+            
+            # Title optimization (30 points)
+            if len(title) >= 40 and len(title) <= 70:  # Optimal title length
+                seo_score += 15
+            if any(keyword.lower() in title.lower() for keyword in keywords[:5]):  # Keywords in title
+                seo_score += 15
+            
+            # Content optimization (40 points)
+            if word_count >= 100:  # Sufficient content length
+                seo_score += 10
+            if keyword_density >= 1.0 and keyword_density <= 3.0:  # Optimal keyword density
+                seo_score += 15
+            if keyword_mentions >= 3:  # Multiple keyword mentions
+                seo_score += 15
+            
+            # Platform-specific optimization (30 points)
+            platform_score = 0
+            if platform == "youtube":
+                if "2025" in full_text: platform_score += 10
+                if any(word in full_text for word in ["best", "top", "review"]): platform_score += 10
+                if len(description) >= 200: platform_score += 10
+            elif platform == "tiktok":
+                if any(word in full_text for word in ["viral", "trending", "must"]): platform_score += 10
+                if "#" in description: platform_score += 10
+                if len(description) <= 300: platform_score += 10
+            elif platform == "instagram":
+                hashtag_count = len(re.findall(r'#\w+', description))
+                if hashtag_count >= 5 and hashtag_count <= 30: platform_score += 20
+                if len(description) <= 2200: platform_score += 10
+            elif platform == "wordpress":
+                if len(description) >= 300: platform_score += 10
+                if keyword_density >= 0.5: platform_score += 10
+                if "http" in description: platform_score += 10  # Contains links
+            
+            seo_score += platform_score
+            
+            # Title optimization score (0-100)
+            title_score = 0
+            if len(title) >= 30 and len(title) <= 70: title_score += 40
+            if any(keyword.lower() in title.lower() for keyword in keywords[:3]): title_score += 30
+            if any(word in title.lower() for word in ["2025", "best", "top"]): title_score += 20
+            if title.count(" ") >= 4 and title.count(" ") <= 12: title_score += 10  # Good word count
+            
+            # Engagement prediction (0-100)
+            engagement_score = 50  # Base score
+            
+            # Engagement factors
+            if any(word in title.lower() for word in ["shocking", "amazing", "incredible", "best", "top"]): 
+                engagement_score += 15
+            if "!" in title or "?" in title: engagement_score += 10
+            if any(word in title.lower() for word in ["you", "your", "need", "must"]): engagement_score += 10
+            if len(title.split()) >= 5 and len(title.split()) <= 10: engagement_score += 10
+            if keyword_density >= 1.5: engagement_score += 5
+            
+            # Platform-specific engagement
+            if platform == "tiktok" and any(word in full_text.lower() for word in ["viral", "trend", "hack"]):
+                engagement_score += 10
+            elif platform == "youtube" and "review" in full_text.lower():
+                engagement_score += 10
+            
+            engagement_score = min(engagement_score, 100)  # Cap at 100
+            
+            return {
+                "seo_score": round(min(seo_score, 100), 1),
+                "title_optimization_score": round(title_score, 1),
+                "keyword_density": round(keyword_density, 2),
+                "engagement_prediction": round(engagement_score, 1),
+                "word_count": word_count,
+                "keyword_mentions": keyword_mentions
+            }
+            
+        except Exception as e:
+            print(f"Error calculating SEO metrics: {e}")
+            return {
+                "seo_score": 50.0,
+                "title_optimization_score": 50.0,
+                "keyword_density": 1.0,
+                "engagement_prediction": 50.0,
+                "word_count": 0,
+                "keyword_mentions": 0
+            }
+    
+    async def validate_content_timing(self, content_data: Dict[str, str]) -> Dict[str, any]:
+        """Validate content meets timing requirements and suggest fixes"""
+        try:
+            validation_results = {
+                "is_valid": True,
+                "issues": [],
+                "suggestions": [],
+                "regeneration_needed": False
+            }
+            
+            # Estimate speaking time (average 150 words per minute, 2.5 words per second)
+            def estimate_seconds(text: str) -> float:
+                word_count = len(text.split())
+                return word_count / 2.5
+            
+            # Check IntroHook (max 5 seconds)
+            if 'intro_hook' in content_data:
+                intro_time = estimate_seconds(content_data['intro_hook'])
+                if intro_time > 5.0:
+                    validation_results["is_valid"] = False
+                    validation_results["issues"].append(f"IntroHook: {intro_time:.1f}s (FAILED - max 5s)")
+                    validation_results["suggestions"].append("Shorten IntroHook to under 12 words")
+                    validation_results["regeneration_needed"] = True
+            
+            # Check OutroCallToAction (max 5 seconds)
+            if 'outro_cta' in content_data:
+                outro_time = estimate_seconds(content_data['outro_cta'])
+                if outro_time > 5.0:
+                    validation_results["is_valid"] = False
+                    validation_results["issues"].append(f"OutroCallToAction: {outro_time:.1f}s (FAILED - max 5s)")
+                    validation_results["suggestions"].append("Shorten OutroCallToAction to under 12 words")
+                    validation_results["regeneration_needed"] = True
+            
+            # Check Product Descriptions (max 9 seconds each)
+            for i in range(1, 6):
+                product_key = f'ProductNo{i}Description'
+                if product_key in content_data:
+                    product_time = estimate_seconds(content_data[product_key])
+                    if product_time > 9.0:
+                        validation_results["is_valid"] = False
+                        validation_results["issues"].append(f"Product{i}Description: {product_time:.1f}s (FAILED - max 9s)")
+                        validation_results["suggestions"].append(f"Shorten Product {i} description to under 22 words")
+                        validation_results["regeneration_needed"] = True
+            
+            # Calculate total video time
+            total_time = 0
+            if 'intro_hook' in content_data:
+                total_time += estimate_seconds(content_data['intro_hook'])
+            if 'outro_cta' in content_data:
+                total_time += estimate_seconds(content_data['outro_cta'])
+            
+            product_times = []
+            for i in range(1, 6):
+                product_key = f'ProductNo{i}Description'
+                if product_key in content_data:
+                    product_time = estimate_seconds(content_data[product_key])
+                    product_times.append(product_time)
+                    total_time += product_time
+            
+            # Check total video time (must be under 60 seconds)
+            if total_time > 60.0:
+                validation_results["is_valid"] = False
+                validation_results["issues"].append(f"Total video: {total_time:.1f}s (FAILED - max 60s)")
+                validation_results["suggestions"].append("Reduce overall content length by 10-15 words")
+                validation_results["regeneration_needed"] = True
+            
+            validation_results["timing_breakdown"] = {
+                "intro_hook": estimate_seconds(content_data.get('intro_hook', '')) if 'intro_hook' in content_data else 0,
+                "outro_cta": estimate_seconds(content_data.get('outro_cta', '')) if 'outro_cta' in content_data else 0,
+                "products": product_times,
+                "total_time": total_time
+            }
+            
+            return validation_results
+            
+        except Exception as e:
+            print(f"Error validating content timing: {e}")
+            return {
+                "is_valid": False,
+                "issues": [f"Validation error: {str(e)}"],
+                "suggestions": ["Re-run validation"],
+                "regeneration_needed": True
+            }
 
 # Test the server
 async def test_content_generation():

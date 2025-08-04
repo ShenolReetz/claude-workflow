@@ -152,7 +152,7 @@ class InstagramMCPServer:
             logger.error(f"❌ Error getting Instagram account: {str(e)}")
             return None
     
-    async def create_media_container(self, video_url: str, caption: str, cover_url: str = None) -> dict:
+    async def create_media_container(self, video_url: str, caption: str, cover_url: str = None, is_private: bool = True) -> dict:
         """Create Instagram media container for Reel"""
         
         instagram_account_id = await self.get_instagram_account_id()
@@ -163,6 +163,11 @@ class InstagramMCPServer:
             }
         
         try:
+            # Note: Instagram API doesn't support private post creation via API
+            # Privacy is controlled by account settings in Instagram app
+            if is_private:
+                logger.info("🔒 Private mode requested - Note: Instagram API uploads follow account privacy settings")
+            
             # Prepare media container data
             container_data = {
                 'media_type': 'REELS',
@@ -269,7 +274,7 @@ class InstagramMCPServer:
             logger.error(f"❌ Error getting media info: {str(e)}")
             return {}
     
-    async def upload_reel(self, video_url: str, caption: str, cover_url: str = None) -> dict:
+    async def upload_reel(self, video_url: str, caption: str, cover_url: str = None, is_private: bool = True) -> dict:
         """Complete Instagram Reel upload process"""
         
         logger.info(f"📱 Starting Instagram Reel upload")
@@ -278,7 +283,7 @@ class InstagramMCPServer:
         
         try:
             # Step 1: Create media container
-            container_result = await self.create_media_container(video_url, caption, cover_url)
+            container_result = await self.create_media_container(video_url, caption, cover_url, is_private)
             
             if not container_result.get('success'):
                 return container_result

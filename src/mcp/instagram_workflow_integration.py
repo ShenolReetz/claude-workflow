@@ -52,7 +52,7 @@ class InstagramWorkflowIntegration:
             
             # Upload reel
             result = await self.server.upload_reel(
-                video_path=video_url,
+                video_url=video_url,
                 caption=caption,
                 cover_url=cover_url
             )
