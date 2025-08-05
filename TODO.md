@@ -165,6 +165,63 @@ python3 src/workflow_runner.py
 
 ---
 
+## 🚀 **PRIMARY COST OPTIMIZATION IMPROVEMENTS**
+
+### **PHASE 1: Local Text-to-Speech MCP Implementation** 🎵
+**Priority: HIGH | Potential Savings: $100-500+ monthly**  
+**✅ CONFIRMED:** 7 MP3s per video × **~1,500 titles** = **~10,500 TTS API calls**
+- Solution: Install local TTS MCP server (Tortoise TTS, Bark, or Coqui)
+- Impact: Zero per-request costs after setup
+- **Tasks:**
+  - [ ] Research and select optimal TTS MCP server
+  - [ ] Install and configure local TTS models
+  - [ ] Integrate TTS MCP into workflow_runner.py
+  - [ ] Test audio quality vs current paid service
+  - [ ] Implement fallback to paid TTS if local fails
+
+### **PHASE 2: Local Image Generation MCP** 🎨  
+**Priority: HIGH | Potential Savings: $80-400+ monthly**  
+**✅ CONFIRMED:** DALL-E costs $0.02-0.08 per image × **~4,500 images** (3 per video × 1,500 titles)
+- Solution: Stable Diffusion MCP or ComfyUI MCP for local generation
+- Impact: Unlimited generations after initial setup
+- **Tasks:**
+  - [ ] Install Stable Diffusion or ComfyUI MCP server
+  - [ ] Configure models for product/marketing imagery
+  - [ ] Integrate image generation into content pipeline
+  - [ ] Quality comparison vs paid services
+  - [ ] Implement paid service fallback for critical images
+
+### **PHASE 3: FFmpeg Video Processing MCP** 🎬
+**Priority: MEDIUM | Potential Savings: $50-200+ monthly**
+- Current: Cloud video processing APIs per video × **1,500 videos**
+- Solution: Local FFmpeg MCP for video editing/processing
+- Impact: No per-video processing costs + better control
+- **Tasks:**
+  - [ ] Install FFmpeg MCP server
+  - [ ] Migrate video processing workflows to local
+  - [ ] Optimize video quality and rendering times
+  - [ ] Test performance vs cloud services
+
+### **PHASE 4: Local LLM Content Optimization** 🤖
+**Priority: MEDIUM | Cost Reduction: Moderate**
+- Current: High OpenAI API usage for content editing/refinement
+- Solution: Ollama MCP with optimized local models
+- Impact: Reduce API dependency for secondary tasks
+- **Tasks:**
+  - [ ] Install Ollama MCP server
+  - [ ] Configure local models for content editing
+  - [ ] Integrate into workflow for non-critical content tasks
+  - [ ] Monitor API call reduction
+
+### **PHASE 5: Enhanced File Management MCP** 📁
+**Priority: LOW | Cost Reduction: Small but Cumulative**
+- Current: Cloud storage API calls for file operations
+- Solution: Optimized local file operations and batch processing
+- Impact: Reduced cloud API dependency
+
+**📊 PROJECTED TOTAL SAVINGS: $230-1,100+ monthly** (based on 1,500 titles)
+**🎯 Implementation Order: TTS → Images → Video → Content → File Ops**
+
 ## 🔧 **DEVELOPMENT - Future Enhancements**
 
 ### **8. Advanced Features (Lower Priority)**

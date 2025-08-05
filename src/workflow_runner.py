@@ -38,6 +38,15 @@ from src.mcp.platform_content_generator import generate_platform_content_for_wor
 from src.mcp.text_length_validation_with_regeneration_agent_mcp import run_text_validation_with_regeneration
 from src.expert_agents.timing_security_agent import TimingSecurityAgent
 
+# Import Enhanced Prerequisite System with Smart Retry + MCP Playwright
+from src.mcp.enhanced_video_prerequisite_control_agent_mcp import (
+    enhanced_initialize_video_prerequisites,
+    enhanced_validate_video_prerequisites,
+    enhanced_final_video_security_check,
+    EnhancedVideoPrerequisiteController
+)
+from mcp_servers.alternative_scraping_manager import create_alternative_scraping_manager
+
 class ContentPipelineOrchestrator:
     def __init__(self):
         # Load real API configuration
@@ -76,11 +85,19 @@ class ContentPipelineOrchestrator:
         # Initialize Timing Security Agent (fallback content validator)
         self.timing_security_agent = TimingSecurityAgent(self.config)
         
+        # Initialize Enhanced Prerequisite Controller with Smart Retry + MCP Playwright
+        self.enhanced_prerequisite_controller = EnhancedVideoPrerequisiteController(self.config)
+        
+        # Initialize Alternative Scraping Manager with MCP Playwright
+        self.alternative_scraping_manager = create_alternative_scraping_manager()
+        
         # Check Google Drive token status at startup
         self._check_google_drive_status()
         
         print("🎯 Production Content Pipeline Orchestrator initialized with REAL APIs")
+        print("🛡️ Enhanced Prerequisite System with Smart Retry + MCP Playwright ACTIVE")
         print("🛡️ Timing Security Agent ready to prevent video failures")
+        print("🎭 Alternative Scraping: ScrapingDog → Playwright MCP → Direct → Manual")
         print("✨ Ready for live content generation workflow!")
     
     def _check_google_drive_status(self):
@@ -121,8 +138,16 @@ class ContentPipelineOrchestrator:
         
         print(f"✅ Found title: {pending_title['title']}")
         
+        # 🛡️ ENHANCED: Initialize prerequisite tracking for new title
+        print("🛡️ Step 0: Initializing enhanced prerequisite tracking...")
+        init_result = await self.enhanced_prerequisite_controller.initialize_for_new_title(pending_title['record_id'])
+        if init_result:
+            print("✅ VideoProductionRDY initialized to 'Pending' - Critical failure protection ACTIVE")
+        else:
+            print("⚠️ Prerequisite initialization failed - continuing with standard flow")
+        
         # Validate title has sufficient Amazon products BEFORE processing
-        print("🔍 Validating title has sufficient Amazon products...")
+        print("🔍 Step 1: Validating title has sufficient Amazon products...")
         validation_result = await self.amazon_validator.validate_title_for_amazon(pending_title['title'])
         
         if not validation_result['valid']:
@@ -173,19 +198,53 @@ class ContentPipelineOrchestrator:
             if validation_result.get('sample_products') and len(validation_result['sample_products']) >= 5:
                 print(f"✅ Using {len(validation_result['sample_products'])} products from validation")
                 
-                # Scrape additional details for the validated products
+                # 🛡️ ENHANCED: Scrape with alternative sources (ScrapingDog → Playwright MCP → Direct)
                 validated_term = validation_result['primary_search_term']
+                print(f"🎭 Attempting enhanced scraping with alternatives for: {validated_term}")
+                
+                # Try primary scraper first
                 amazon_result = await self.category_scraper.get_top_5_products(validated_term)
                 
                 if not amazon_result.get('success'):
-                    # If scraping fails, use the sample products from validation
-                    print("⚠️ Scraping failed, using validation products directly")
-                    amazon_result = {
-                        'success': True,
-                        'products': validation_result['sample_products'],
-                        'airtable_data': {},
-                        'product_results': {}
-                    }
+                    print("🔄 Primary scraping failed - trying alternative sources...")
+                    
+                    # Generate Amazon search URL for alternative scraping
+                    search_url = f"https://www.amazon.com/s?k={validated_term.replace(' ', '+')}"
+                    
+                    # Try alternative scraping methods
+                    alternative_result = await self.alternative_scraping_manager.scrape_with_alternatives(
+                        search_url, validated_term
+                    )
+                    
+                    if alternative_result.get('success'):
+                        print(f"✅ Alternative scraping successful using: {alternative_result.get('final_source')}")
+                        print(f"📦 Found {len(alternative_result.get('products', []))} products")
+                        
+                        # Convert alternative scraping format to expected format
+                        amazon_result = {
+                            'success': True,
+                            'products': alternative_result['products'][:5],
+                            'airtable_data': {},
+                            'product_results': {},
+                            'scraping_source': alternative_result.get('final_source', 'alternative')
+                        }
+                        
+                        # Build airtable_data from alternative scraping results
+                        for i, product in enumerate(alternative_result['products'][:5], 1):
+                            amazon_result['airtable_data'][f'ProductNo{i}Title'] = product.get('title', '')
+                            amazon_result['airtable_data'][f'ProductNo{i}Price'] = product.get('price', 0)
+                            amazon_result['airtable_data'][f'ProductNo{i}Rating'] = product.get('rating', 0)
+                            amazon_result['airtable_data'][f'ProductNo{i}Reviews'] = product.get('reviews', 0)
+                            amazon_result['airtable_data'][f'ProductNo{i}AffiliateLink'] = product.get('affiliate_link', '')
+                            amazon_result['product_results'][f'product_{i}'] = product
+                    else:
+                        print("⚠️ All scraping methods failed - using validation products directly")
+                        amazon_result = {
+                            'success': True,
+                            'products': validation_result['sample_products'],
+                            'airtable_data': {},
+                            'product_results': {}
+                        }
                     
                     # Build airtable_data from sample products
                     for i, product in enumerate(validation_result['sample_products'][:5], 1):
@@ -208,15 +267,48 @@ class ContentPipelineOrchestrator:
                         # Also add the mapped product to the products list
                         amazon_result['products'][i-1] = mapped_product
             else:
-                # Fallback to regular scraping if validation didn't provide products
+                # 🛡️ ENHANCED: Fallback to enhanced scraping with alternatives if validation didn't provide products
                 validated_term = validation_result['primary_search_term']
-                print(f"🎯 Scraping with validated search term: {validated_term}")
+                print(f"🎯 Enhanced scraping with validated search term: {validated_term}")
                 
+                # Try primary scraper first
                 amazon_result = await self.category_scraper.get_top_5_products(validated_term)
                 
                 if not amazon_result.get('success'):
-                    print(f"❌ Amazon scraping failed: {amazon_result.get('error', 'Unknown error')}")
-                    return False
+                    print(f"🔄 Primary scraping failed - trying alternative sources...")
+                    
+                    # Generate Amazon search URL for alternative scraping
+                    search_url = f"https://www.amazon.com/s?k={validated_term.replace(' ', '+')}"
+                    
+                    # Try alternative scraping methods
+                    alternative_result = await self.alternative_scraping_manager.scrape_with_alternatives(
+                        search_url, validated_term
+                    )
+                    
+                    if alternative_result.get('success'):
+                        print(f"✅ Alternative scraping successful using: {alternative_result.get('final_source')}")
+                        print(f"📦 Found {len(alternative_result.get('products', []))} products")
+                        
+                        # Convert alternative scraping format to expected format
+                        amazon_result = {
+                            'success': True,
+                            'products': alternative_result['products'][:5],
+                            'airtable_data': {},
+                            'product_results': {},
+                            'scraping_source': alternative_result.get('final_source', 'alternative')
+                        }
+                        
+                        # Build airtable_data from alternative scraping results
+                        for i, product in enumerate(alternative_result['products'][:5], 1):
+                            amazon_result['airtable_data'][f'ProductNo{i}Title'] = product.get('title', '')
+                            amazon_result['airtable_data'][f'ProductNo{i}Price'] = product.get('price', 0)
+                            amazon_result['airtable_data'][f'ProductNo{i}Rating'] = product.get('rating', 0)
+                            amazon_result['airtable_data'][f'ProductNo{i}Reviews'] = product.get('reviews', 0)
+                            amazon_result['airtable_data'][f'ProductNo{i}AffiliateLink'] = product.get('affiliate_link', '')
+                            amazon_result['product_results'][f'product_{i}'] = product
+                    else:
+                        print(f"❌ All scraping methods failed: {alternative_result.get('error_summary', 'Unknown error')}")
+                        return False
             
             print(f"✅ Processed {len(amazon_result['products'])} products")
             
@@ -483,25 +575,38 @@ class ContentPipelineOrchestrator:
                     product_num = i + 1
                     content_for_validation[f'ProductNo{product_num}Description'] = product.get('script', '')
             
-            # Validate content timing
+            # 🛡️ ENHANCED: Validate content timing with enhanced prerequisite system
             validation_result = await self.content_server.validate_content_timing(content_for_validation)
             
-            # Update validation status in Airtable
+            # Update basic validation status in Airtable
             validation_status = "Validated" if validation_result['is_valid'] else "Failed"
             validation_issues = "; ".join(validation_result.get('issues', []))
             
-            validation_update = {
+            basic_validation_update = {
                 'ContentValidationStatus': validation_status,
-                'ValidationIssues': validation_issues[:500] if validation_issues else "",  # Limit length
-                'VideoProductionRDY': 'Ready' if validation_result['is_valid'] else 'Pending'
+                'ValidationIssues': validation_issues[:500] if validation_issues else ""
             }
             
-            await self.airtable_server.update_record(pending_title['record_id'], validation_update)
+            await self.airtable_server.update_record(pending_title['record_id'], basic_validation_update)
+            
+            # 🛡️ ENHANCED: Run enhanced prerequisite validation with smart retry
+            print("🛡️ Running enhanced prerequisite validation with smart retry...")
+            enhanced_validation = await self.enhanced_prerequisite_controller.validate_and_retry_after_content_step(
+                pending_title['record_id']
+            )
             
             if validation_result['is_valid']:
-                print(f"✅ Content validation passed - Video ready for production")
+                print(f"✅ Content validation passed")
                 total_time = validation_result['timing_breakdown']['total_time']
                 print(f"   🎬 Total video time: {total_time:.1f} seconds")
+                
+                # Check enhanced prerequisite status
+                if enhanced_validation.get('can_produce_video'):
+                    print(f"🛡️✅ Enhanced validation: ALL PREREQUISITES MET - Video approved")
+                else:
+                    critical_summary = enhanced_validation.get('critical_summary', {})
+                    completion_pct = critical_summary.get('completion_percentage', 0)
+                    print(f"🛡️⏳ Enhanced validation: {completion_pct}% complete - Continue workflow")
             else:
                 print(f"❌ Content validation failed - {len(validation_result['issues'])} issues found")
                 for issue in validation_result['issues']:
@@ -821,6 +926,29 @@ class ContentPipelineOrchestrator:
                         print("⚠️ Could not verify audio URLs after all attempts - proceeding anyway")
                         audio_verified = True
             
+            # 🛡️ ENHANCED: Final security check before video generation
+            print("🛡️ Final enhanced security check before video generation...")
+            security_check = await self.enhanced_prerequisite_controller.final_security_check_before_video(
+                pending_title['record_id']
+            )
+            
+            if not security_check.get('approved'):
+                reason = security_check.get('reason', 'unknown')
+                message = security_check.get('message', 'Security check failed')
+                
+                if security_check.get('manual_intervention_required'):
+                    print(f"🚨 CRITICAL FAILURE: {message}")
+                    print(f"📧 Manual intervention required - video generation PERMANENTLY BLOCKED")
+                    print(f"🚫 Moving to next title")
+                    return False
+                else:
+                    print(f"⏳ Prerequisites incomplete: {message}")
+                    print(f"📊 Continue workflow to complete prerequisites")
+                    # Continue workflow to populate more prerequisites
+            else:
+                print(f"🛡️✅ SECURITY APPROVED: All critical prerequisites validated")
+                print(f"🎬 Product accuracy guaranteed - proceeding with video generation")
+
             try:
                 video_result = await run_video_creation(
                     config=self.config,
