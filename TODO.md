@@ -1,293 +1,79 @@
-# 📋 TODO List - Claude Workflow Project
+# TODO List - Production Flow Implementation
 
-**Last Updated:** August 4, 2025  
-**Current Status:** ✅ Flow Continuation Fixed + Video Quality Improvements Completed
+## ✅ TODO List Updated for Production Flow Implementation
 
----
+### 📋 Production Flow Conversion Plan:
 
-## ✅ **COMPLETED - Recent Fixes (August 4, 2025)**
+1. Copy Test_workflow_runner.py to create Production_workflow_runner.py
+2. Rename class from TestContentPipelineOrchestrator to ProductionContentPipelineOrchestrator
+3. Replace hardcoded config with real API keys from config/api_keys.json
+4. Convert all Test MCP Servers to Production versions with real API calls
+5. Convert all Test MCP Agents to Production versions with real API calls
+6. Replace Claude API with OpenAI API for content generation (titles, descriptions)
+7. Replace hardcoded images with OpenAI DALL-E API for photo generation
+8. Replace hardcoded scraping with ScrapingDog API for Amazon product scraping
+9. Replace hardcoded audio with ElevenLabs API for voice generation
+10. Update all import statements to use production MCP servers and agents
+11. Keep Test_workflow_runner.py structure but replace hardcoded values with dynamic API calls
+12. Ensure all APIs use the provided keys: OpenAI, ScrapingDog, ElevenLabs, Airtable, etc.
+13. Maintain the same workflow steps and expert agent integration
+14. Test production workflow integration and API connectivity
 
-### **1. Flow Continuation After JSON2Video Generation** 
-**Status:** ✅ **FIXED - Workflow now continues properly**
-- **Issue:** Workflow stopped after video generation due to undefined `status_result` variable
-- **Solution:** Added proper variable initialization in all code paths (workflow_runner.py:847-853)
-- **Impact:** Publishing steps now execute regardless of video monitoring outcome
+### 📊 JSON2Video Schema Improvements (Based on Official Documentation Analysis):
 
-### **2. Product #1 Price Display Issue**
-**Status:** ✅ **FIXED - Price fallback logic implemented**
-- **Issue:** Product #1 showing $0 instead of actual price ($21)
-- **Solution:** Added fallback to Airtable price data when scraper returns "N/A" (workflow_runner.py:408-416)
-- **Impact:** All product prices now display correctly in videos
+15. **Duration Consistency Fixes:**
+    - Add explicit `"duration": 9` to all product scenes (Product 2, 3, 4)
+    - Add explicit `"duration": 5` to intro/outro scenes
+    - Ensure all scenes have consistent duration properties
 
-### **3. Outro Resolution Quality**
-**Status:** ✅ **FIXED - Using high-resolution OpenAI images**
-- **Issue:** Outro using low-resolution Amazon image instead of OpenAI generated image
-- **Solution:** Reordered operations to generate OpenAI images before setting outro (workflow_runner.py:718-740)
-- **Impact:** Outro now uses high-quality OpenAI generated product images
+16. **Audio Duration Synchronization:**
+    - Validate ElevenLabs audio duration matches scene duration exactly
+    - Add audio duration validation (audio ≤ scene duration)
+    - Implement audio trimming/padding if duration mismatch occurs
 
-### **4. Outro Text Customization**
-**Status:** ✅ **FIXED - Using custom outro message**
-- **Issue:** Hardcoded "Thanks for Watching!" instead of dynamic OutroCallToAction
-- **Solution 1:** Fixed JSON2Video server to use OutroCallToAction field (Production_json2video_server_fixed.py:82)
-- **Solution 2:** Updated outro generation to use preferred text: "Thanks for watching and the affiliate links are in the video descriptions" (product_optimizer_server.py:213)
-- **Impact:** Videos now end with consistent, professional outro message
+17. **Scene Transition Standardization:**
+    - Apply consistent `"slideright"` transitions to all product scenes
+    - Standardize transition duration to `0.5` seconds
+    - Ensure intro uses `"smoothright"` transition
 
----
+18. **Dynamic Content Integration Validation:**
+    - Add text length validation for generated titles within element boundaries
+    - Replace Unsplash URLs with dynamic Amazon product images
+    - Ensure rating/review/price components match scraped data exactly
 
-## 🚨 **REMAINING - Critical Fixes Required**
+19. **ElevenLabs Audio Integration:**
+    - Configure subtitle auto-generation from ElevenLabs audio
+    - Validate subtitle timing matches audio speech patterns
+    - Ensure subtitle styling remains consistent with current schema
 
-### **1. Google Drive Folder Name Sanitization** 
-**Status:** 🔴 **CRITICAL - Blocking video creation**
-- **Issue:** Folder creation fails with special characters ($, emojis, apostrophes)
-- **Impact:** Audio files can't upload, video creation aborted (0% success rate)
-- **Error:** "Invalid Value" when querying Google Drive API with unsanitized names
-- **Solution Required:** Fix sanitize_folder_name() method in google_drive_server.py
+20. **Production Quality Controls:**
+    - Add schema validation before JSON2Video API calls
+    - Implement timing consistency checks across all elements
+    - Add fallback handling for audio/image loading failures
 
-#### **Immediate Fix Required:**
-```python
-# In google_drive_server.py, update sanitize_folder_name():
-def sanitize_folder_name(self, name: str) -> str:
-    import re
-    import unicodedata
-    
-    # Remove emojis and special unicode characters
-    name = ''.join(char for char in name if unicodedata.category(char)[0] != 'S')
-    
-    # Replace problematic characters
-    name = re.sub(r'[<>:"/\\|?*$]', '', name)
-    name = re.sub(r"[()!']", '', name)
-    name = re.sub(r'\s+', ' ', name)
-    name = name.strip()
-    
-    if len(name) > 50:
-        name = name[:47] + "..."
-    return name
-```
+### 🎯 Key Requirements:
+- Follow exact Test_workflow_runner.py structure (proven and tested)
+- Replace hardcoded values with dynamic API generation
+- Use OpenAI instead of Claude for content generation
+- Use OpenAI DALL-E for image generation
+- Use ScrapingDog for Amazon scraping
+- Use ElevenLabs for audio generation
+- Use real Airtable API
+- All API keys are provided in config/api_keys.json
+- Ready for fine-tuning after initial implementation
 
-### **2. Airtable Permission Error**
-**Status:** 🟡 **MEDIUM - Preventing status tracking**
-- **Issue:** Cannot create new select option "Approved"
-- **Solution:** Map to existing values: "Ready" or "Pending"
+### ⚠️ Schema Issues Identified:
+- **Duration Missing**: Product scenes 2, 3, 4 need explicit duration values
+- **Audio Sync Risk**: ElevenLabs audio must match scene timing precisely  
+- **Transition Inconsistency**: Standardize all scene transitions
+- **Dynamic Content Validation**: Ensure generated content fits schema constraints
 
-### **3. JSON Parsing Errors**
-**Status:** 🟡 **LOW - Degrading SEO**
-- **Issue:** Claude responses contain unescaped characters
-- **Solution:** Add JSON extraction regex and retry logic
-
----
-
-## 📊 **Workflow Test Results - August 4, 2025**
-
-### **Test Execution Summary**
-**Status:** ✅ **MAJOR IMPROVEMENTS - Flow continuation fixed, video quality enhanced**
-- **Success Rate:** 85% (11/13 components succeeded)
-- **Timing Security Agent:** ✅ Successfully validated content (41.2s total)
-- **Flow Continuation:** ✅ Fixed - Publishing steps now execute properly
-- **Video Creation:** ✅ Started successfully (Project ID: 7IhSDQDsALZCePhG)
-- **Remaining Issue:** JSON2Video status monitoring API response format
-
-#### **Run Command:**
-```bash
-python3 src/workflow_runner.py
-```
-
-#### **Expected Results:**
-- ✅ Title selection and Amazon validation
-- ✅ Content generation with keywords-first SEO
-- ✅ Timing security validation (auto-regeneration of long content)
-- ✅ Voice generation and Google Drive storage
-- ✅ Image generation and storage
-- ✅ Video creation with JSON2Video
-- ✅ Multi-platform publishing (YouTube, Instagram, WordPress)
-
-### **3. Video Generation Monitoring**
-**Status:** 🟡 **VERIFY - Ensure JSON2Video monitoring works**
-- **Agent:** `src/expert_agents/json2video_status_monitor.py`
-- **Feature:** 5-minute delay + 1-minute intervals for server-friendly monitoring
-- **Verify:** Real API error detection and Airtable status updates
+### ✅ Schema Strengths Confirmed:
+- **Subtitle Structure**: Ready for ElevenLabs auto-generation
+- **Element Timing**: Proper start/duration/fade configurations
+- **Text Elements**: Correct positioning and styling
+- **Component Integration**: Rating/counter elements properly structured
 
 ---
-
-## 🛡️ **PREVENTION - Long-term Improvements**
-
-### **4. Enhanced Token Management**
-**Status:** 🟢 **IMPLEMENTED - Add monitoring**
-- ✅ **Automatic refresh system** created (`src/utils/google_drive_token_manager.py`)
-- ✅ **Startup status checks** integrated into workflow
-- ✅ **Graceful degradation** when tokens fail
-
-#### **Additional Enhancements to Add:**
-1. **Email Alert System**
-   - Send alerts when refresh tokens are < 30 days from expiry
-   - Weekly status reports
-   - Immediate alerts on refresh failures
-
-2. **Background Token Refresh**
-   - Scheduled job to refresh tokens before expiry
-   - Cron job or systemd timer
-   - Logs all refresh attempts
-
-3. **Backup Authentication Methods**
-   - Service account credentials as fallback
-   - Multiple OAuth applications for redundancy
-
-### **5. Workflow Optimization**
-**Status:** 🟢 **COMPLETED - Monitor performance**
-- ✅ **Timing Security Agent** prevents video failures
-- ✅ **Field mapping fixes** prevent Airtable errors
-- ✅ **JSON parsing improvements** handle malformed responses
-
-#### **Performance Monitoring:**
-- Track average workflow completion time
-- Monitor success/failure rates
-- Log timing security interventions
-
----
-
-## 📊 **MONITORING - Ongoing Maintenance**
-
-### **6. Production Readiness Verification**
-**Status:** 🟡 **VERIFY - After Google Drive fix**
-
-#### **Checklist:**
-- [ ] Google Drive tokens valid and auto-refreshing
-- [ ] Complete workflow runs without errors
-- [ ] All 3 platforms publish successfully (YouTube, Instagram, WordPress)
-- [ ] JSON2Video monitoring detects real errors
-- [ ] Timing security agent prevents content failures
-- [ ] Airtable updates all required fields
-
-### **7. Go-Live Configuration**
-**Status:** 🟢 **READY - TikTok commented out**
-- ✅ **3/4 platforms active:** YouTube, Instagram (private), WordPress (main page)
-- ✅ **TikTok disabled:** Code commented out pending API approval
-- ✅ **Error handling:** Comprehensive failure detection and recovery
-
----
-
-## 🚀 **PRIMARY COST OPTIMIZATION IMPROVEMENTS**
-
-### **PHASE 1: Local Text-to-Speech MCP Implementation** 🎵
-**Priority: HIGH | Potential Savings: $100-500+ monthly**  
-**✅ CONFIRMED:** 7 MP3s per video × **~1,500 titles** = **~10,500 TTS API calls**
-- Solution: Install local TTS MCP server (Tortoise TTS, Bark, or Coqui)
-- Impact: Zero per-request costs after setup
-- **Tasks:**
-  - [ ] Research and select optimal TTS MCP server
-  - [ ] Install and configure local TTS models
-  - [ ] Integrate TTS MCP into workflow_runner.py
-  - [ ] Test audio quality vs current paid service
-  - [ ] Implement fallback to paid TTS if local fails
-
-### **PHASE 2: Local Image Generation MCP** 🎨  
-**Priority: HIGH | Potential Savings: $80-400+ monthly**  
-**✅ CONFIRMED:** DALL-E costs $0.02-0.08 per image × **~4,500 images** (3 per video × 1,500 titles)
-- Solution: Stable Diffusion MCP or ComfyUI MCP for local generation
-- Impact: Unlimited generations after initial setup
-- **Tasks:**
-  - [ ] Install Stable Diffusion or ComfyUI MCP server
-  - [ ] Configure models for product/marketing imagery
-  - [ ] Integrate image generation into content pipeline
-  - [ ] Quality comparison vs paid services
-  - [ ] Implement paid service fallback for critical images
-
-### **PHASE 3: FFmpeg Video Processing MCP** 🎬
-**Priority: MEDIUM | Potential Savings: $50-200+ monthly**
-- Current: Cloud video processing APIs per video × **1,500 videos**
-- Solution: Local FFmpeg MCP for video editing/processing
-- Impact: No per-video processing costs + better control
-- **Tasks:**
-  - [ ] Install FFmpeg MCP server
-  - [ ] Migrate video processing workflows to local
-  - [ ] Optimize video quality and rendering times
-  - [ ] Test performance vs cloud services
-
-### **PHASE 4: Local LLM Content Optimization** 🤖
-**Priority: MEDIUM | Cost Reduction: Moderate**
-- Current: High OpenAI API usage for content editing/refinement
-- Solution: Ollama MCP with optimized local models
-- Impact: Reduce API dependency for secondary tasks
-- **Tasks:**
-  - [ ] Install Ollama MCP server
-  - [ ] Configure local models for content editing
-  - [ ] Integrate into workflow for non-critical content tasks
-  - [ ] Monitor API call reduction
-
-### **PHASE 5: Enhanced File Management MCP** 📁
-**Priority: LOW | Cost Reduction: Small but Cumulative**
-- Current: Cloud storage API calls for file operations
-- Solution: Optimized local file operations and batch processing
-- Impact: Reduced cloud API dependency
-
-**📊 PROJECTED TOTAL SAVINGS: $230-1,100+ monthly** (based on 1,500 titles)
-**🎯 Implementation Order: TTS → Images → Video → Content → File Ops**
-
-## 🔧 **DEVELOPMENT - Future Enhancements**
-
-### **8. Advanced Features (Lower Priority)**
-- **Enhanced Analytics Dashboard**
-- **A/B Testing for Content**  
-- **Additional Platform Integrations** (Pinterest, Facebook, Twitter)
-- **Advanced Monetization Strategies**
-- **Performance Optimization** for faster processing
-
-### **9. Documentation Updates**
-- **Update CLAUDE.md** with final production status after Google Drive fix
-- **Create deployment guide** for new environments
-- **Document troubleshooting procedures** for common issues
-
----
-
-## 📝 **NOTES FOR TOMORROW**
-
-### **Working Features (Verified August 4, 2025):**
-✅ **Google Drive Token Refresh** - Auto-refresh working (1-hour access tokens)  
-✅ **Timing Security Agent** - Successfully validated content at 36.8s (well under 60s limit)  
-✅ **Amazon Product Validation** - Found 10 quality products for tablet displays  
-✅ **Keyword Generation** - All platforms generated successfully  
-✅ **Product Optimization** - Titles and descriptions formatted correctly  
-✅ **Intro Image Generation** - Successfully created and uploaded to Drive  
-✅ **Platform Content Generation** - 4 platforms generated content successfully  
-
-### **Issues Fixed (August 4):**
-✅ **Flow Continuation** - Publishing steps now execute after video generation  
-✅ **Product #1 Price Display** - Fallback logic prevents $0 prices  
-✅ **Outro Resolution** - Using high-quality OpenAI images instead of low-res Amazon  
-✅ **Outro Text** - Custom message: "Thanks for watching and the affiliate links are in the video descriptions"  
-
-### **Remaining Issues:**
-❌ **Google Drive Folder Creation** - Fails with special characters/emojis in title  
-❌ **JSON2Video Status Monitoring** - API response format changed, needs investigation  
-❌ **Airtable Permission Error** - "API Error" not valid Status option    
-
-### **Current Architecture Status:**
-- **Main Entry Point:** `src/workflow_runner.py` ✅
-- **Timing Security:** `src/expert_agents/timing_security_agent.py` ✅  
-- **Token Management:** `src/utils/google_drive_token_manager.py` ✅
-- **Documentation:** Organized in `documentation/` folder ✅
-
-### **Test Results from Today:**
-- **Timing Agent Test:** ✅ 2 fields auto-regenerated, 41.2s total video time
-- **Schema Validation:** ✅ All 107 Airtable fields confirmed and mapped
-- **Workflow Initialization:** ✅ All MCP servers and agents load successfully
-
----
-
-## 🎯 **SUCCESS CRITERIA - UPDATED**
-
-### **Immediate Fixes Required (P0 - Critical):**
-1. ❌ **Fix Google Drive folder name sanitization** - Remove emojis/special chars
-2. ❌ **Add audio URL verification with retry** - Ensure all 7 URLs present
-3. ❌ **Map Airtable status values correctly** - Use "Ready" not "Approved"
-
-### **Performance Metrics from Test:**
-- **Component Success Rate:** 58.3% (7/12 succeeded)
-- **Workflow Completion:** 0% (blocked by audio upload)
-- **Execution Time:** ~3 minutes (fast but incomplete)
-- **Timing Validation:** 100% success (36.8s < 60s limit)
-
-**Next Steps:** Fix Google Drive sanitization immediately to unblock pipeline
-
----
-
-*This TODO reflects the current state after implementing the Timing Security Agent and fixing all major workflow issues. The only remaining blocker is the Google Drive token refresh.*
+*Last Updated: August 6, 2025*
+*Status: Ready for Production Implementation + Schema Refinements*

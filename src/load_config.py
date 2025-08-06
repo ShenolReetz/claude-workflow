@@ -3,7 +3,14 @@ import json
 import os
 import sys
 
-config_path = "/app/config/api_keys.json"
+def load_config():
+    """Load configuration from api_keys.json"""
+    config_path = "/home/claude-workflow/config/api_keys.json"
+    with open(config_path, 'r') as f:
+        return json.load(f)
+
+# Load config for environment variables
+config_path = "/home/claude-workflow/config/api_keys.json"
 with open(config_path, 'r') as f:
     config = json.load(f)
 
