@@ -11,7 +11,22 @@ from datetime import datetime
 async def production_run_video_creation(record: Dict, config: Dict) -> Dict:
     """Create video using JSON2Video API with real data"""
     try:
+        # Ensure record has proper structure
+        if not isinstance(record, dict):
+            print(f"❌ Error: Record is not a dictionary, got {type(record)}")
+            record = {'record_id': '', 'fields': {}}
+        if 'fields' not in record:
+            print("⚠️ Warning: Record missing 'fields' key, adding empty fields")
+            record['fields'] = {}
+        
         api_key = config.get('json2video_api_key')
+        if not api_key:
+            print("❌ Error: json2video_api_key not found in config")
+            return {
+                'success': False,
+                'error': 'Missing json2video_api_key',
+                'updated_record': record
+            }
         
         # Build JSON2Video schema from record data
         video_schema = await _build_video_schema(record, config)
@@ -28,18 +43,28 @@ async def production_run_video_creation(record: Dict, config: Dict) -> Dict:
                 if response.status in [200, 201]:
                     data = await response.json()
                     
-                    project_id = data.get('project', {}).get('id', '')
-                    video_url = data.get('project', {}).get('video_url', '')
+                    # ✅ FIXED: JSON2Video API returns project ID directly, not nested
+                    project_id = data.get('project', '')  # Direct string, not nested object
+                    
+                    # Construct video URL from project ID  
+                    video_url = f"https://app.json2video.com/projects/{project_id}" if project_id else ''
+                    direct_video_url = f"https://d1oco4z2z1fhwp.cloudfront.net/projects/{project_id}/project.mp4" if project_id else ''
+                    
+                    print(f"✅ JSON2Video Response: Project ID = {project_id}")
+                    print(f"✅ Dashboard URL: {video_url}")
+                    print(f"✅ Direct Video URL: {direct_video_url}")
                     
                     # Update record with video data
                     record['fields']['JSON2VideoProjectID'] = project_id
-                    record['fields']['VideoURL'] = video_url
+                    record['fields']['VideoURL'] = direct_video_url  # Use direct video URL
+                    record['fields']['VideoDashboardURL'] = video_url  # Dashboard URL
                     record['fields']['VideoCreatedAt'] = datetime.now().isoformat()
                     
                     return {
                         'success': True,
                         'project_id': project_id,
-                        'video_url': video_url,
+                        'video_url': direct_video_url,
+                        'dashboard_url': video_url,
                         'updated_record': record
                     }
                 else:
@@ -61,8 +86,12 @@ async def production_run_video_creation(record: Dict, config: Dict) -> Dict:
 
 async def _build_video_schema(record: Dict, config: Dict) -> Dict:
     """Build JSON2Video schema with REAL scraped product data and correct durations"""
+    # Ensure record has proper structure
+    if not isinstance(record, dict):
+        record = {'record_id': 'default', 'fields': {}}
+    
     fields = record.get('fields', {})
-    record_id = record.get('record_id', 'default')[:8]
+    record_id = str(record.get('record_id', 'default'))[:8] if record.get('record_id') else 'default'
     
     # Base schema structure with subtitle integration from ElevenLabs
     schema = {

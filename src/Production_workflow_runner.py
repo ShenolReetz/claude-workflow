@@ -42,6 +42,7 @@ from src.mcp.Production_intro_image_generator import production_generate_intro_i
 from src.mcp.Production_outro_image_generator import production_generate_outro_image_for_workflow
 from src.mcp.Production_platform_content_generator import production_generate_platform_content_for_workflow
 from src.mcp.Production_text_length_validation_with_regeneration_agent_mcp import production_run_text_validation_with_regeneration
+from src.mcp.Production_amazon_images_workflow_v2 import production_generate_enhanced_product_images
 
 # Use OpenAI Python client for DALL-E image generation
 import openai
@@ -172,6 +173,28 @@ class ProductionContentPipelineOrchestratorV2:
             
             print("✅ All 5 products saved to Airtable with complete data")
             
+            # Step 5.5: Generate enhanced product images from scraped references
+            print("\n🎨 Step 5.5: Generating enhanced product images with preserved details...")
+            print("   📸 Using scraped images as references")
+            print("   🏷️ Preserving logos, text, and specifications")
+            print("   ✨ Optimizing for video content (9:16 ratio)")
+            
+            image_result = await production_generate_enhanced_product_images(updated_record, self.config)
+            
+            if image_result.get('success', False):
+                updated_record = image_result['updated_record']
+                print("✅ Enhanced product images generated with all details preserved")
+                
+                # Update Airtable with generated image URLs
+                for i in range(1, 6):
+                    generated_url = updated_record['fields'].get(f'ProductNo{i}GeneratedPhoto')
+                    if generated_url:
+                        await self.airtable_server.update_record_field(
+                            record_id, f'ProductNo{i}Photo', generated_url
+                        )
+            else:
+                print("⚠️ Using original scraped images (enhancement failed)")
+            
             # Step 6: THEN - Generate content based on scraped products
             print("\n📝 Step 6: Generating content based on saved products...")
             
@@ -210,8 +233,42 @@ class ProductionContentPipelineOrchestratorV2:
             
             print("✅ Platform-optimized content saved to Airtable")
             
+            # Step 6.5: Generate scripts for intro, outro, and products
+            print("\n✍️ Step 6.5: Generating scripts for narration...")
+            
+            # Generate scripts using the text generation control agent
+            script_result = await production_run_text_control_with_regeneration(
+                updated_record, self.config
+            )
+            
+            if script_result.get('success', False):
+                updated_record = script_result['updated_record']
+                print("✅ Scripts generated for intro, products, and outro")
+                
+                # Combine all scripts into VideoScript field
+                all_scripts = []
+                if 'IntroScript' in updated_record['fields']:
+                    all_scripts.append(f"INTRO: {updated_record['fields']['IntroScript']}")
+                for i in range(1, 6):
+                    script_field = f'Product{i}Script'
+                    if script_field in updated_record['fields']:
+                        all_scripts.append(f"PRODUCT {i}: {updated_record['fields'][script_field]}")
+                if 'OutroScript' in updated_record['fields']:
+                    all_scripts.append(f"OUTRO: {updated_record['fields']['OutroScript']}")
+                
+                combined_script = "\n\n".join(all_scripts)
+                await self.airtable_server.update_record_field(
+                    record_id, 'VideoScript', combined_script
+                )
+            else:
+                print("❌ Script generation failed")
+                return
+            
             # Step 7: Continue with rest of workflow (voice, images, video, publishing)
             print("\n🎙️ Step 7: Generating voice narration...")
+            # Ensure we have proper record structure
+            if not isinstance(updated_record, dict) or 'fields' not in updated_record:
+                updated_record = {'record_id': record_id, 'fields': updated_record if isinstance(updated_record, dict) else {}}
             voice_result = await self.voice_server.generate_voice_for_record(updated_record)
             print("✅ Voice narration generated")
             
@@ -251,10 +308,33 @@ class ProductionContentPipelineOrchestratorV2:
             )
             
             if video_result.get('success', False):
+                # ✅ FIXED: Save video URLs and project ID to Airtable
+                project_id = video_result.get('project_id', '')
+                video_url = video_result.get('video_url', '')
+                dashboard_url = video_result.get('dashboard_url', '')
+                
+                # Update Airtable with video information
+                if project_id:
+                    await self.airtable_server.update_record_field(
+                        record_id, 'JSON2VideoProjectID', project_id
+                    )
+                if video_url:
+                    await self.airtable_server.update_record_field(
+                        record_id, 'VideoURL', video_url
+                    )
+                if dashboard_url:
+                    await self.airtable_server.update_record_field(
+                        record_id, 'VideoDashboardURL', dashboard_url
+                    )
+                    
                 await self.airtable_server.update_record_field(
                     record_id, 'VideoProductionRDY', 'Ready'
                 )
+                
                 print("✅ Video created successfully")
+                print(f"🎬 Direct Video URL: {video_url}")
+                print(f"🌐 Dashboard URL: {dashboard_url}")
+                print(f"🆔 Project ID: {project_id}")
             else:
                 print("❌ Video creation failed")
                 return
@@ -281,13 +361,20 @@ class ProductionContentPipelineOrchestratorV2:
             print("\n📤 Step 12: Publishing to platforms...")
             
             # YouTube upload
-            youtube_result = await self.youtube_service.upload_short(
-                drive_result['updated_record']
+            fields = drive_result['updated_record'].get('fields', {})
+            youtube_result = await self.youtube_service.upload_video(
+                video_url=fields.get('VideoURL', ''),
+                title=fields.get('YouTubeTitle', 'Product Review'),
+                description=fields.get('YouTubeDescription', ''),
+                tags=fields.get('UniversalKeywords', '').split(',')[:10]
             )
             
             # WordPress publishing
-            wordpress_result = await self.wordpress_service.publish_post(
-                drive_result['updated_record']
+            wordpress_result = await self.wordpress_service.create_post(
+                title=fields.get('WordPressTitle', 'Product Review'),
+                content=fields.get('WordPressContent', ''),
+                excerpt=fields.get('VideoDescription', '')[:200],
+                tags=fields.get('UniversalKeywords', '').split(',')[:10]
             )
             
             # Update platform readiness
