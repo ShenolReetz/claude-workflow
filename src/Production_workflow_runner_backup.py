@@ -47,7 +47,7 @@ from src.mcp.Production_intro_image_generator import production_generate_intro_i
 from src.mcp.Production_outro_image_generator import production_generate_outro_image_for_workflow
 from src.mcp.Production_platform_content_generator import production_generate_platform_content_for_workflow
 from src.mcp.Production_text_length_validation_with_regeneration_agent_mcp import production_run_text_validation_with_regeneration
-from src.mcp.Production_amazon_images_workflow_v2 import production_download_and_save_amazon_images_v2
+from src.mcp.Production_amazon_images_workflow_v2 import production_generate_enhanced_product_images
 
 # Use OpenAI Python client for DALL-E image generation
 import openai
@@ -326,7 +326,7 @@ class ProductionContentPipelineOrchestratorV2:
             print("   🏷️ Preserving logos, text, and specifications")
             print("   ✨ Optimizing for video content (9:16 ratio)")
             
-            image_result = await production_download_and_save_amazon_images_v2(updated_record, self.config)
+            image_result = await production_generate_enhanced_product_images(updated_record, self.config)
             
             if image_result.get('success', False):
                 updated_record = image_result['updated_record']
