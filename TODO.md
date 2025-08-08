@@ -42,14 +42,62 @@
 - Dual URL storage (view and download links)
 - Comprehensive error handling
 
-## 🔥 UPDATED HIGH PRIORITY - Post Latest Flow Run (August 7, 2025)
+## 🚨 CRITICAL WORKFLOW LOOP ISSUE - August 8, 2025
+
+### 🔴 WORKFLOW EXECUTION HANG - CRITICAL BLOCKER
+**Issue**: Production workflow gets stuck in infinite loop after credential validation  
+**Status**: 🔴 BLOCKING ALL WORKFLOW EXECUTION  
+**Location**: `src/Production_workflow_runner.py` - after credential validation completes  
+
+**Symptoms**:
+- ✅ Credential validation completes successfully (Health Score: 93/100)
+- ❌ **NEVER progresses to Step 2** (Fetch pending title from Airtable)  
+- ❌ **Debug statements after validation never print**
+- ❌ **Gets stuck in OpenAI API call loop**:
+  - One successful call (200 OK)
+  - One failed call (400 Bad Request)  
+  - Continuous image generation calls (200 OK)
+- ❌ **Main workflow execution never continues**
+
+**Evidence**:
+```
+22:06:40,769 - ✅ Validation complete. Health Score: 93/100
+22:06:44,428 - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+22:06:49,053 - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 400 Bad Request"  
+22:07:22,118 - HTTP Request: POST https://api.openai.com/v1/images/generations "HTTP/1.1 200 OK"
+[LOOPS INDEFINITELY - NO WORKFLOW PROGRESS]
+```
+
+**Root Cause Analysis**:
+- `await self.credential_validator.validate_all_credentials()` call never returns control to main workflow
+- Background processes or threads started during validation don't terminate
+- OpenAI/image calls likely from background validation processes, not main workflow
+- Added timeouts to OpenAI usage API calls but didn't resolve issue
+
+**Investigation Done**:
+- ✅ Fixed invalid GPT-5 model names (`gpt-5-mini-2025-08-07` → `gpt-5`, `gpt-5-mini`)  
+- ✅ Added timeouts to credential validation HTTP calls (15s timeout)
+- ✅ Added extensive debug logging - **NEVER PRINTS** (confirms validation hang)
+- ✅ Tested with GPT-4 models - **SAME ISSUE** (not GPT-5 related)
+
+**Next Steps** (To Continue Tomorrow):
+1. **Isolate credential validation**: Run validation independently to identify hanging component
+2. **Background process audit**: Find what processes start during validation and don't terminate  
+3. **Validation simplification**: Bypass problematic validation steps temporarily
+4. **Alternative approach**: Implement minimal validation or skip entirely for testing
+
+**Impact**: 🔴 **COMPLETE WORKFLOW BLOCKAGE** - No workflows can run until resolved
+
+---
+
+## 🔥 PREVIOUS ISSUES - Post Latest Flow Run (August 7, 2025)
 
 ### ✅ FIXED: Video Creation (Step 10) - NOW WORKING!
 **Status**: ✅ Video creation completed successfully  
 **Evidence**: "✅ Video created successfully" in latest run  
 **Achievement**: Complete video generation pipeline operational  
 
-### 🚨 NEW CRITICAL ISSUES FROM LATEST RUN:
+### 🚨 PREVIOUS CRITICAL ISSUES FROM LATEST RUN:
 
 ### 1. ☁️ Google Drive Authentication (Step 11) - CRITICAL  
 **Issue**: `Token refresh failed: ('invalid_scope: Bad Request', {'error': 'invalid_scope'})`  

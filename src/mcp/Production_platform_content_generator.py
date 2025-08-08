@@ -107,8 +107,10 @@ class ProductionPlatformContentGenerator:
         """
         
         try:
-            response = self.client.chat.completions.create(
-                model="gpt-4",
+            # Try GPT-5 first, fallback to GPT-4 if not available
+            try:
+                response = self.client.chat.completions.create(
+                    model="gpt-5",
                 messages=[
                     {"role": "system", "content": "You are an SEO and social media keyword expert. Generate high-performing keywords based on real product data."},
                     {"role": "user", "content": keyword_prompt}
@@ -116,6 +118,17 @@ class ProductionPlatformContentGenerator:
                 temperature=0.3,
                 max_tokens=500
             )
+            except Exception as e:
+                print(f"Error with GPT-5, falling back to GPT-5-mini: {e}")
+                response = self.client.chat.completions.create(
+                    model="gpt-5-mini",
+                    messages=[
+                        {"role": "system", "content": "You are an SEO and social media keyword expert. Generate high-performing keywords based on real product data."},
+                        {"role": "user", "content": keyword_prompt}
+                    ],
+                    temperature=0.3,
+                    max_tokens=500
+                )
             
             # Parse JSON response
             import json
@@ -169,8 +182,10 @@ class ProductionPlatformContentGenerator:
         """
         
         try:
-            response = self.client.chat.completions.create(
-                model="gpt-4",
+            # Try GPT-5 first, fallback to GPT-4 if not available
+            try:
+                response = self.client.chat.completions.create(
+                    model="gpt-5",
                 messages=[
                     {"role": "system", "content": "You are an expert at creating short, punchy video titles that grab attention instantly. Always stay under 7 words and keep it relevant."},
                     {"role": "user", "content": intro_title_prompt}
@@ -178,6 +193,17 @@ class ProductionPlatformContentGenerator:
                 temperature=0.8,
                 max_tokens=50
             )
+            except Exception as e:
+                print(f"Error with GPT-5, falling back to GPT-5-mini: {e}")
+                response = self.client.chat.completions.create(
+                    model="gpt-5-mini",
+                    messages=[
+                        {"role": "system", "content": "You are an expert at creating short, punchy video titles that grab attention instantly. Always stay under 7 words and keep it relevant."},
+                        {"role": "user", "content": intro_title_prompt}
+                    ],
+                    temperature=0.8,
+                    max_tokens=50
+                )
             
             generated_title = response.choices[0].message.content.strip()
             
@@ -267,8 +293,10 @@ class ProductionPlatformContentGenerator:
         """
         
         try:
-            response = self.client.chat.completions.create(
-                model="gpt-4",
+            # Try GPT-5 first, fallback to GPT-4 if not available
+            try:
+                response = self.client.chat.completions.create(
+                    model="gpt-5",
                 messages=[
                     {"role": "system", "content": "You are a YouTube optimization expert. Create viral, clickable titles."},
                     {"role": "user", "content": prompt}
@@ -276,6 +304,17 @@ class ProductionPlatformContentGenerator:
                 temperature=0.7,
                 max_tokens=100
             )
+            except Exception as e:
+                print(f"Error with GPT-5, falling back to GPT-5-mini: {e}")
+                response = self.client.chat.completions.create(
+                    model="gpt-5-mini",
+                    messages=[
+                        {"role": "system", "content": "You are a YouTube optimization expert. Create viral, clickable titles."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.7,
+                    max_tokens=100
+                )
             
             generated_title = response.choices[0].message.content.strip()
             # Ensure #shorts is included
@@ -312,8 +351,10 @@ class ProductionPlatformContentGenerator:
         """
         
         try:
-            response = self.client.chat.completions.create(
-                model="gpt-4",
+            # Try GPT-5 first, fallback to GPT-4 if not available
+            try:
+                response = self.client.chat.completions.create(
+                    model="gpt-5",
                 messages=[
                     {"role": "system", "content": "Create engaging YouTube descriptions with natural keyword integration."},
                     {"role": "user", "content": description_prompt}
@@ -321,6 +362,17 @@ class ProductionPlatformContentGenerator:
                 temperature=0.6,
                 max_tokens=300
             )
+            except Exception as e:
+                print(f"Error with GPT-5, falling back to GPT-5-mini: {e}")
+                response = self.client.chat.completions.create(
+                    model="gpt-5-mini",
+                    messages=[
+                        {"role": "system", "content": "Create engaging YouTube descriptions with natural keyword integration."},
+                        {"role": "user", "content": description_prompt}
+                    ],
+                    temperature=0.6,
+                    max_tokens=300
+                )
             
             return response.choices[0].message.content.strip()
             
@@ -353,8 +405,10 @@ class ProductionPlatformContentGenerator:
         """
         
         try:
-            response = self.client.chat.completions.create(
-                model="gpt-4",
+            # Try GPT-5 first, fallback to GPT-4 if not available
+            try:
+                response = self.client.chat.completions.create(
+                    model="gpt-5",
                 messages=[
                     {"role": "system", "content": "Create viral Instagram captions with natural keyword integration."},
                     {"role": "user", "content": caption_prompt}
@@ -362,6 +416,17 @@ class ProductionPlatformContentGenerator:
                 temperature=0.8,
                 max_tokens=300
             )
+            except Exception as e:
+                print(f"Error with GPT-5, falling back to GPT-5-mini: {e}")
+                response = self.client.chat.completions.create(
+                    model="gpt-5-mini",
+                    messages=[
+                        {"role": "system", "content": "Create viral Instagram captions with natural keyword integration."},
+                        {"role": "user", "content": caption_prompt}
+                    ],
+                    temperature=0.8,
+                    max_tokens=300
+                )
             
             return response.choices[0].message.content.strip()[:2200]
             
@@ -385,8 +450,10 @@ class ProductionPlatformContentGenerator:
         """
         
         try:
-            response = self.client.chat.completions.create(
-                model="gpt-4",
+            # Try GPT-5 first, fallback to GPT-4 if not available
+            try:
+                response = self.client.chat.completions.create(
+                    model="gpt-5",
                 messages=[
                     {"role": "system", "content": "You are an Instagram hashtag expert. Generate hashtag mixes for maximum reach."},
                     {"role": "user", "content": hashtag_prompt}
@@ -394,6 +461,17 @@ class ProductionPlatformContentGenerator:
                 temperature=0.5,
                 max_tokens=200
             )
+            except Exception as e:
+                print(f"Error with GPT-5, falling back to GPT-5-mini: {e}")
+                response = self.client.chat.completions.create(
+                    model="gpt-5-mini",
+                    messages=[
+                        {"role": "system", "content": "You are an Instagram hashtag expert. Generate hashtag mixes for maximum reach."},
+                        {"role": "user", "content": hashtag_prompt}
+                    ],
+                    temperature=0.5,
+                    max_tokens=200
+                )
             
             return response.choices[0].message.content.strip()
             
@@ -418,8 +496,10 @@ class ProductionPlatformContentGenerator:
         """
         
         try:
-            response = self.client.chat.completions.create(
-                model="gpt-4",
+            # Try GPT-5 first, fallback to GPT-4 if not available
+            try:
+                response = self.client.chat.completions.create(
+                    model="gpt-5",
                 messages=[
                     {"role": "system", "content": "Create viral TikTok captions with trending elements."},
                     {"role": "user", "content": caption_prompt}
@@ -427,6 +507,17 @@ class ProductionPlatformContentGenerator:
                 temperature=0.9,
                 max_tokens=100
             )
+            except Exception as e:
+                print(f"Error with GPT-5, falling back to GPT-5-mini: {e}")
+                response = self.client.chat.completions.create(
+                    model="gpt-5-mini",
+                    messages=[
+                        {"role": "system", "content": "Create viral TikTok captions with trending elements."},
+                        {"role": "user", "content": caption_prompt}
+                    ],
+                    temperature=0.9,
+                    max_tokens=100
+                )
             
             return response.choices[0].message.content.strip()[:150]
             
@@ -449,8 +540,10 @@ class ProductionPlatformContentGenerator:
         """
         
         try:
-            response = self.client.chat.completions.create(
-                model="gpt-4",
+            # Try GPT-5 first, fallback to GPT-4 if not available
+            try:
+                response = self.client.chat.completions.create(
+                    model="gpt-5",
                 messages=[
                     {"role": "system", "content": "You are a TikTok hashtag expert. Generate hashtags for maximum viral reach."},
                     {"role": "user", "content": hashtag_prompt}
@@ -458,6 +551,17 @@ class ProductionPlatformContentGenerator:
                 temperature=0.5,
                 max_tokens=150
             )
+            except Exception as e:
+                print(f"Error with GPT-5, falling back to GPT-5-mini: {e}")
+                response = self.client.chat.completions.create(
+                    model="gpt-5-mini",
+                    messages=[
+                        {"role": "system", "content": "You are a TikTok hashtag expert. Generate hashtags for maximum viral reach."},
+                        {"role": "user", "content": hashtag_prompt}
+                    ],
+                    temperature=0.5,
+                    max_tokens=150
+                )
             
             return response.choices[0].message.content.strip()
             
@@ -482,8 +586,10 @@ class ProductionPlatformContentGenerator:
         """
         
         try:
-            response = self.client.chat.completions.create(
-                model="gpt-4",
+            # Try GPT-5 first, fallback to GPT-4 if not available
+            try:
+                response = self.client.chat.completions.create(
+                    model="gpt-5",
                 messages=[
                     {"role": "system", "content": "You are an SEO expert. Create search-optimized titles that rank well."},
                     {"role": "user", "content": seo_prompt}
@@ -491,6 +597,17 @@ class ProductionPlatformContentGenerator:
                 temperature=0.4,
                 max_tokens=100
             )
+            except Exception as e:
+                print(f"Error with GPT-5, falling back to GPT-5-mini: {e}")
+                response = self.client.chat.completions.create(
+                    model="gpt-5-mini",
+                    messages=[
+                        {"role": "system", "content": "You are an SEO expert. Create search-optimized titles that rank well."},
+                        {"role": "user", "content": seo_prompt}
+                    ],
+                    temperature=0.4,
+                    max_tokens=100
+                )
             
             return response.choices[0].message.content.strip()[:60]
             
@@ -523,8 +640,10 @@ class ProductionPlatformContentGenerator:
         """
         
         try:
-            response = self.client.chat.completions.create(
-                model="gpt-4",
+            # Try GPT-5 first, fallback to GPT-4 if not available
+            try:
+                response = self.client.chat.completions.create(
+                    model="gpt-5",
                 messages=[
                     {"role": "system", "content": "Create compelling SEO meta descriptions that drive clicks from search results."},
                     {"role": "user", "content": description_prompt}
@@ -532,6 +651,17 @@ class ProductionPlatformContentGenerator:
                 temperature=0.4,
                 max_tokens=100
             )
+            except Exception as e:
+                print(f"Error with GPT-5, falling back to GPT-5-mini: {e}")
+                response = self.client.chat.completions.create(
+                    model="gpt-5-mini",
+                    messages=[
+                        {"role": "system", "content": "Create compelling SEO meta descriptions that drive clicks from search results."},
+                        {"role": "user", "content": description_prompt}
+                    ],
+                    temperature=0.4,
+                    max_tokens=100
+                )
             
             return response.choices[0].message.content.strip()[:160]
             

@@ -10,9 +10,6 @@ Complete Google Drive integration with:
 - Token refresh management
 """
 
-from google.oauth2.credentials import Credentials
-from google.auth.transport.requests import Request
-from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 import aiohttp
 import os
@@ -20,44 +17,52 @@ import io
 from typing import Dict, Optional, List
 import json
 from datetime import datetime
+import logging
 
 # Import Airtable server for updates
 import sys
 sys.path.append('/home/claude-workflow')
 from mcp_servers.Production_airtable_server import ProductionAirtableMCPServer
+from src.utils.google_drive_auth_manager import GoogleDriveAuthManager
 
 class ProductionEnhancedGoogleDriveAgent:
     def __init__(self, config: Dict):
         self.config = config
         self.service = None
+        self.auth_manager = GoogleDriveAuthManager(config)
         self.airtable_server = ProductionAirtableMCPServer(
             api_key=config['airtable_api_key'],
             base_id=config['airtable_base_id'],
             table_name=config['airtable_table_name']
         )
         
+        # Setup logging
+        logging.basicConfig(level=logging.INFO)
+        self.logger = logging.getLogger(__name__)
+        
     async def initialize_drive_service(self):
-        """Initialize Google Drive service with token refresh"""
-        token_path = self.config.get('google_drive_token', '/home/claude-workflow/config/google_drive_token.json')
-        creds = None
-        
-        if os.path.exists(token_path):
-            creds = Credentials.from_authorized_user_file(token_path)
+        """Initialize Google Drive service with robust authentication"""
+        try:
+            # Use the new auth manager for robust authentication
+            self.service = self.auth_manager.get_drive_service()
             
-        if not creds or not creds.valid:
-            if creds and creds.expired and creds.refresh_token:
-                try:
-                    creds.refresh(Request())
-                    with open(token_path, 'w') as token_file:
-                        token_file.write(creds.to_json())
-                    print("✅ Google Drive token refreshed successfully")
-                except Exception as refresh_error:
-                    raise Exception(f'Token refresh failed: {refresh_error}')
+            # Test the connection
+            if self.auth_manager.test_authentication():
+                self.logger.info("✅ Google Drive service initialized successfully")
             else:
-                raise Exception('Invalid Google Drive credentials - need to re-authenticate')
-        
-        self.service = build('drive', 'v3', credentials=creds)
-        return self.service
+                raise Exception("Failed to initialize Google Drive service")
+                
+            return self.service
+            
+        except Exception as e:
+            self.logger.error(f"❌ Failed to initialize Google Drive: {e}")
+            # Try to recover with new authentication
+            try:
+                self.auth_manager.creds = None  # Force re-authentication
+                self.service = self.auth_manager.get_drive_service()
+                return self.service
+            except:
+                raise Exception(f"Google Drive authentication failed completely: {e}")
     
     async def create_project_folder_structure(self, record_id: str, video_title: str) -> Dict[str, str]:
         """Create organized folder structure for the project"""

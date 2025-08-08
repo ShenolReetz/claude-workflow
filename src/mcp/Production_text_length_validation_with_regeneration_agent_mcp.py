@@ -8,6 +8,12 @@ from typing import Dict
 async def production_run_text_validation_with_regeneration(record: Dict, config: Dict) -> Dict:
     """Validate and regenerate text for proper timing"""
     try:
+        # Ensure record has proper structure
+        if not isinstance(record, dict):
+            record = {'record_id': '', 'fields': {}}
+        if 'fields' not in record:
+            record['fields'] = {}
+        
         # Text is already validated in the control agent
         # This is a secondary validation step
         

@@ -197,13 +197,17 @@ class ProductionAirtableMCPServer:
                     if response.status == 200:
                         result = await response.json()
                         print(f"✅ Saved {len(products)} products to Airtable with Ready status")
-                        return result
+                        # Return properly formatted record structure
+                        return {
+                            'record_id': record_id,
+                            'fields': result.get('fields', {})
+                        }
                     else:
                         print(f"❌ Failed to save products: {response.status}")
-                        return {}
+                        return {'record_id': record_id, 'fields': {}}
         except Exception as e:
             print(f"❌ Error saving products: {e}")
-            return {}
+            return {'record_id': record_id, 'fields': {}}
     
     async def save_generated_content(self, record_id: str, content: Dict) -> bool:
         """Save generated content (titles, descriptions, scripts) to Airtable with status updates"""

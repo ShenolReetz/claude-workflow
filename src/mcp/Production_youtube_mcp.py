@@ -1,74 +1,183 @@
 #!/usr/bin/env python3
 """
-Production YouTube MCP - Upload to YouTube
+Production YouTube MCP - Upload to YouTube with Robust Authentication
 """
 
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload
+from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
+from googleapiclient.errors import HttpError
 from typing import Dict, List, Optional
 import json
 import os
+import aiohttp
+import tempfile
+import logging
+import asyncio
+import time
+
+# Import authentication manager
+import sys
+sys.path.append('/home/claude-workflow')
+from src.utils.youtube_auth_manager import YouTubeAuthManager
 
 class ProductionYouTubeMCP:
     def __init__(self, config: Dict):
         self.config = config
-        self.credentials_path = config.get('youtube_credentials')
-        self.token_path = config.get('youtube_token')
+        self.auth_manager = YouTubeAuthManager(config)
+        
+        # Setup logging
+        logging.basicConfig(level=logging.INFO)
+        self.logger = logging.getLogger(__name__)
+        
+        # Retry configuration
+        self.max_retries = 3
+        self.retry_delay = 5  # seconds
         
     async def upload_video(self, video_url: str, title: str, description: str, tags: List[str]) -> Dict:
-        """Upload video to YouTube"""
+        """Upload video to YouTube with robust error handling"""
         try:
-            # Load credentials
-            creds = None
-            if self.token_path and os.path.exists(self.token_path):
-                creds = Credentials.from_authorized_user_file(self.token_path)
+            # Get authenticated YouTube service
+            youtube = self.auth_manager.get_youtube_service()
             
-            if not creds or not creds.valid:
-                if creds and creds.expired and creds.refresh_token:
-                    creds.refresh(Request())
-                else:
-                    return {
-                        'success': False,
-                        'error': 'YouTube credentials not valid'
-                    }
+            # First, download the video file
+            video_path = await self._download_video(video_url)
+            if not video_path:
+                return {
+                    'success': False,
+                    'error': 'Failed to download video for upload'
+                }
             
-            # Build YouTube service
-            youtube = build('youtube', 'v3', credentials=creds)
-            
-            # Video metadata
+            # Prepare video metadata
             body = {
                 'snippet': {
                     'title': title[:100],  # YouTube title limit
                     'description': description[:5000],  # YouTube description limit
-                    'tags': tags[:30],  # YouTube tags limit
+                    'tags': tags[:30] if tags else [],  # YouTube tags limit
                     'categoryId': self.config.get('youtube_category', '28'),  # Science & Technology
                     'defaultLanguage': 'en',
                     'defaultAudioLanguage': 'en'
                 },
                 'status': {
-                    'privacyStatus': self.config.get('youtube_privacy', 'private'),
-                    'madeForKids': False
+                    'privacyStatus': self.config.get('youtube_privacy', 'public'),
+                    'madeForKids': False,
+                    'selfDeclaredMadeForKids': False
                 }
             }
             
-            # Note: In production, you'd download the video file first
-            # For now, we'll simulate the upload
+            # Upload with retries
+            for attempt in range(self.max_retries):
+                try:
+                    self.logger.info(f"Uploading video to YouTube (attempt {attempt + 1}/{self.max_retries})...")
+                    
+                    # Call the YouTube API
+                    media = MediaFileUpload(
+                        video_path,
+                        chunksize=-1,
+                        resumable=True,
+                        mimetype='video/mp4'
+                    )
+                    
+                    request = youtube.videos().insert(
+                        part=','.join(body.keys()),
+                        body=body,
+                        media_body=media
+                    )
+                    
+                    # Execute upload with resumable support
+                    response = None
+                    while response is None:
+                        status, response = request.next_chunk()
+                        if status:
+                            progress = int(status.progress() * 100)
+                            self.logger.info(f"Upload progress: {progress}%")
+                    
+                    # Clean up temp file
+                    if os.path.exists(video_path):
+                        os.remove(video_path)
+                    
+                    video_id = response.get('id')
+                    video_url = f"https://www.youtube.com/watch?v={video_id}"
+                    
+                    self.logger.info(f"✅ Video uploaded successfully: {video_url}")
+                    
+                    return {
+                        'success': True,
+                        'video_id': video_id,
+                        'video_url': video_url,
+                        'response': response
+                    }
+                    
+                except HttpError as e:
+                    self.logger.warning(f"YouTube API error (attempt {attempt + 1}): {e}")
+                    
+                    if e.resp.status == 401:
+                        # Try to refresh authentication
+                        self.logger.info("Refreshing authentication...")
+                        self.auth_manager.creds = None
+                        youtube = self.auth_manager.get_youtube_service()
+                    
+                    if attempt < self.max_retries - 1:
+                        await asyncio.sleep(self.retry_delay * (attempt + 1))
+                    else:
+                        raise
+                        
+                except Exception as e:
+                    self.logger.error(f"Upload error (attempt {attempt + 1}): {e}")
+                    if attempt < self.max_retries - 1:
+                        await asyncio.sleep(self.retry_delay)
+                    else:
+                        raise
             
-            # Simulate upload response
-            video_id = f"dQw4w9WgXcQ_{hash(video_url) % 10000}"  # Fake video ID
-            video_response_url = f"https://www.youtube.com/watch?v={video_id}"
-            
-            return {
-                'success': True,
-                'video_id': video_id,
-                'video_url': video_response_url
-            }
             
         except Exception as e:
-            print(f"❌ Error uploading to YouTube: {e}")
+            self.logger.error(f"❌ Error uploading to YouTube: {e}")
+            # Clean up temp file if it exists
+            if 'video_path' in locals() and os.path.exists(video_path):
+                os.remove(video_path)
             return {
                 'success': False,
                 'error': str(e)
             }
+    
+    async def _download_video(self, video_url: str) -> Optional[str]:
+        """Download video from URL to temp file"""
+        try:
+            # Handle different URL types (Google Drive, direct URL, etc.)
+            if 'drive.google.com' in video_url:
+                # Extract file ID from Google Drive URL
+                if '/file/d/' in video_url:
+                    file_id = video_url.split('/file/d/')[1].split('/')[0]
+                elif 'id=' in video_url:
+                    file_id = video_url.split('id=')[1].split('&')[0]
+                else:
+                    self.logger.error(f"Cannot extract file ID from URL: {video_url}")
+                    return None
+                
+                # Use Google Drive direct download URL
+                download_url = f"https://drive.google.com/uc?export=download&id={file_id}"
+            else:
+                download_url = video_url
+            
+            # Download video to temp file
+            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4')
+            temp_path = temp_file.name
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.get(download_url) as response:
+                    if response.status == 200:
+                        with open(temp_path, 'wb') as f:
+                            async for chunk in response.content.iter_chunked(8192):
+                                f.write(chunk)
+                        
+                        self.logger.info(f"✅ Video downloaded to {temp_path}")
+                        return temp_path
+                    else:
+                        self.logger.error(f"Failed to download video: HTTP {response.status}")
+                        return None
+                        
+        except Exception as e:
+            self.logger.error(f"Error downloading video: {e}")
+            return None
+    
+    async def test_authentication(self) -> bool:
+        """Test YouTube authentication"""
+        return self.auth_manager.test_authentication()

@@ -56,15 +56,28 @@ class ProductionScrapingVariantGenerator:
         """
         
         try:
-            response = self.client.chat.completions.create(
-                model="gpt-4",
-                messages=[
-                    {"role": "system", "content": "You are an expert at creating Amazon search variations for product discovery."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.7,
-                max_tokens=200
-            )
+            # Try GPT-5 first, fallback to GPT-5-mini
+            try:
+                response = self.client.chat.completions.create(
+                    model="gpt-5",
+                    messages=[
+                        {"role": "system", "content": "You are an expert at creating Amazon search variations for product discovery."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.7,
+                    max_tokens=200
+                )
+            except Exception:
+                # Fallback to GPT-5-mini
+                response = self.client.chat.completions.create(
+                    model="gpt-5-mini",
+                    messages=[
+                        {"role": "system", "content": "You are an expert at creating Amazon search variations for product discovery."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.7,
+                    max_tokens=200
+                )
             
             variants_text = response.choices[0].message.content.strip()
             variants = [v.strip() for v in variants_text.split('\n') if v.strip()]

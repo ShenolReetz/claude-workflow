@@ -10,7 +10,7 @@ from typing import Dict, Optional
 class ProductionProductCategoryExtractorMCPServer:
     def __init__(self, openai_api_key: str):
         self.client = openai.OpenAI(api_key=openai_api_key)
-        self.model = "gpt-4-turbo-preview"
+        self.model = "gpt-5"  # Use gpt-5 for category extraction, fallback to gpt-5-mini
         
     async def extract_category(self, title: str) -> Dict:
         """Extract product category from title using OpenAI"""

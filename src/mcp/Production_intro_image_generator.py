@@ -11,6 +11,12 @@ async def production_generate_intro_image_for_workflow(record: Dict, config: Dic
     try:
         openai.api_key = config.get('openai_api_key')
         
+        # Ensure record has proper structure
+        if not isinstance(record, dict):
+            record = {'record_id': '', 'fields': {}}
+        if 'fields' not in record:
+            record['fields'] = {}
+        
         title = record.get('fields', {}).get('VideoTitle', 'Top Products')
         
         prompt = f"Create a professional intro image for a video titled '{title}'. Style: modern, clean, 9:16 aspect ratio, vibrant colors."

@@ -55,6 +55,21 @@ class ProductionVoiceGenerationMCPServer:
                 if outro_voice:
                     voice_urls['outro_voice'] = outro_voice
             
+            # Update record with voice URLs
+            if 'fields' not in record:
+                record = {'record_id': record.get('record_id', ''), 'fields': {}}
+            
+            # Add voice URLs to record fields
+            for key, url in voice_urls.items():
+                if 'intro_voice' in key:
+                    record['fields']['IntroMp3'] = url
+                elif 'outro_voice' in key:
+                    record['fields']['OutroMp3'] = url
+                elif 'product' in key:
+                    # Extract product number from key (e.g., 'product1_voice' -> '1')
+                    product_num = key.replace('product', '').replace('_voice', '')
+                    record['fields'][f'Product{product_num}Mp3'] = url
+            
             return {
                 'success': True,
                 'updated_record': record,
