@@ -1,0 +1,100 @@
+{
+  "test_mode_enabled": true,
+  "description": "Default audio files for Test workflow - 2 second clips with first 2 words only",
+  "default_audio": {
+    "intro_mp3": "https://drive.google.com/file/d/1AUDIO_intro_welcome_today/view?usp=sharing",
+    "outro_mp3": "https://drive.google.com/file/d/1AUDIO_outro_thanks_subscribe/view?usp=sharing",
+    "product_mp3s": {
+      "product_1": "https://drive.google.com/file/d/1AUDIO_number_five/view?usp=sharing",
+      "product_2": "https://drive.google.com/file/d/1AUDIO_number_four/view?usp=sharing",
+      "product_3": "https://drive.google.com/file/d/1AUDIO_number_three/view?usp=sharing",
+      "product_4": "https://drive.google.com/file/d/1AUDIO_number_two/view?usp=sharing",
+      "product_5": "https://drive.google.com/file/d/1AUDIO_number_one/view?usp=sharing"
+    },
+    "fallback_audio": {
+      "generic_intro": "https://drive.google.com/file/d/1AUDIO_generic_intro/view?usp=sharing",
+      "generic_outro": "https://drive.google.com/file/d/1AUDIO_generic_outro/view?usp=sharing",
+      "generic_product": "https://drive.google.com/file/d/1AUDIO_generic_product/view?usp=sharing"
+    }
+  },
+  "audio_content": {
+    "intro": {
+      "text": "Welcome! Today",
+      "duration": 2,
+      "word_count": 2,
+      "description": "Standard intro greeting - 2 seconds"
+    },
+    "outro": {
+      "text": "Thanks! Subscribe", 
+      "duration": 2,
+      "word_count": 2,
+      "description": "Standard outro call-to-action - 2 seconds"
+    },
+    "products": {
+      "product_1": {
+        "text": "Number 5",
+        "duration": 2,
+        "word_count": 2,
+        "description": "Product countdown #5 - 2 seconds"
+      },
+      "product_2": {
+        "text": "Number 4",
+        "duration": 2,
+        "word_count": 2,
+        "description": "Product countdown #4 - 2 seconds"
+      },
+      "product_3": {
+        "text": "Number 3",
+        "duration": 2,
+        "word_count": 2,
+        "description": "Product countdown #3 - 2 seconds"
+      },
+      "product_4": {
+        "text": "Number 2",
+        "duration": 2,
+        "word_count": 2,
+        "description": "Product countdown #2 - 2 seconds"
+      },
+      "product_5": {
+        "text": "Number 1",
+        "duration": 2,
+        "word_count": 2,
+        "description": "Product countdown #1 - 2 seconds"
+      }
+    }
+  },
+  "category_specific_intros": {
+    "electronics": {
+      "intro_mp3": "https://drive.google.com/file/d/1AUDIO_tech_intro/view?usp=sharing",
+      "text": "Tech Today"
+    },
+    "home_kitchen": {
+      "intro_mp3": "https://drive.google.com/file/d/1AUDIO_home_intro/view?usp=sharing",
+      "text": "Home Today"
+    },
+    "sports_outdoors": {
+      "intro_mp3": "https://drive.google.com/file/d/1AUDIO_sports_intro/view?usp=sharing",
+      "text": "Sports Today"
+    },
+    "beauty_personal_care": {
+      "intro_mp3": "https://drive.google.com/file/d/1AUDIO_beauty_intro/view?usp=sharing",
+      "text": "Beauty Today"
+    },
+    "automotive": {
+      "intro_mp3": "https://drive.google.com/file/d/1AUDIO_auto_intro/view?usp=sharing",
+      "text": "Auto Today"
+    },
+    "fashion": {
+      "intro_mp3": "https://drive.google.com/file/d/1AUDIO_fashion_intro/view?usp=sharing",
+      "text": "Style Today"
+    }
+  },
+  "usage_notes": {
+    "purpose": "Pre-generated 2-second audio clips for fast test workflow execution",
+    "format": "MP3 files hosted on Google Drive",
+    "voice": "ElevenLabs Rachel voice (professional, clear)",
+    "duration": "Each clip is exactly 2 seconds long",
+    "content": "Each clip contains exactly 2 words for proper timing",
+    "update_instructions": "To use real audio files, generate with ElevenLabs and update URLs here"
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "test_mode_enabled": true,
+  "description": "Pre-generated affiliate links for Test workflow - avoids Amazon scraping and API costs",
+  "default_affiliate_links": {
+    "product_1": {
+      "affiliate_link": "https://amzn.to/TEST_product_1_default",
+      "price": "$39.99",
+      "rating": "4.7",
+      "reviews": "15,432",
+      "title": "Premium Surge Protector Power Strip",
+      "description": "12-outlet surge protector with USB charging ports"
+    },
+    "product_2": {
+      "affiliate_link": "https://amzn.to/TEST_product_2_default", 
+      "price": "$24.99",
+      "rating": "4.5",
+      "reviews": "8,976",
+      "title": "Extended Length Power Strip",
+      "description": "20ft power strip with surge protection"
+    },
+    "product_3": {
+      "affiliate_link": "https://amzn.to/TEST_product_3_default",
+      "price": "$32.49",
+      "rating": "4.6", 
+      "reviews": "12,543",
+      "title": "Smart Power Strip with WiFi",
+      "description": "WiFi-enabled smart power strip with app control"
+    },
+    "product_4": {
+      "affiliate_link": "https://amzn.to/TEST_product_4_default",
+      "price": "$18.99",
+      "rating": "4.4",
+      "reviews": "6,789",
+      "title": "Compact Desktop Power Strip",
+      "description": "8-outlet compact power strip for desk use"
+    },
+    "product_5": {
+      "affiliate_link": "https://amzn.to/TEST_product_5_default",
+      "price": "$45.99", 
+      "rating": "4.8",
+      "reviews": "22,156",
+      "title": "Heavy Duty Industrial Power Strip",
+      "description": "Industrial grade 15-outlet power strip"
+    }
+  },
+  "category_specific_links": {
+    "electronics": {
+      "product_1": {
+        "affiliate_link": "https://amzn.to/TEST_electronics_1",
+        "price": "$49.99",
+        "rating": "4.8",
+        "reviews": "18,432",
+        "title": "Gaming Power Strip RGB",
+        "description": "RGB gaming power strip with USB-C charging"
+      }
+    },
+    "home_kitchen": {
+      "product_1": {
+        "affiliate_link": "https://amzn.to/TEST_home_kitchen_1", 
+        "price": "$29.99",
+        "rating": "4.6",
+        "reviews": "11,234",
+        "title": "Kitchen Counter Power Strip",
+        "description": "Under-cabinet power strip for kitchen appliances"
+      }
+    },
+    "automotive": {
+      "product_1": {
+        "affiliate_link": "https://amzn.to/TEST_automotive_1",
+        "price": "$34.99",
+        "rating": "4.5",
+        "reviews": "9,876",
+        "title": "Car Power Inverter Strip",
+        "description": "12V to 110V car power inverter with outlets"
+      }
+    }
+  },
+  "fallback_links": {
+    "generic_product": {
+      "affiliate_link": "https://amzn.to/TEST_fallback_generic",
+      "price": "$25.99",
+      "rating": "4.5", 
+      "reviews": "5,000",
+      "title": "Quality Power Strip",
+      "description": "Reliable power strip with surge protection"
+    }
+  },
+  "usage_notes": {
+    "purpose": "Pre-generated affiliate links with pricing data for fast test workflow execution",
+    "format": "Amazon affiliate links with amzn.to shortener format",
+    "data_included": "Price, rating, review count, title, description for each product",
+    "cost_savings": "Eliminates ScrapingDog API calls and Amazon scraping during testing",
+    "update_instructions": "To use real affiliate links, generate with Amazon Associates and update URLs here"
+  }
+}

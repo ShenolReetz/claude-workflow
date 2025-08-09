@@ -22,8 +22,10 @@ import logging
 # Add the project root to Python path
 sys.path.append('/home/claude-workflow')
 
-# Import resilience manager
+# Import resilience manager and token managers
 from src.utils.api_resilience_manager import APIResilienceManager
+from src.utils.google_drive_token_manager import GoogleDriveTokenManager
+from src.utils.youtube_auth_manager import YouTubeAuthManager
 
 # Import Production MCP servers
 from mcp_servers.Production_airtable_server import ProductionAirtableMCPServer
@@ -120,10 +122,55 @@ class ProductionContentPipelineOrchestratorV2:
         print("📋 Enhanced with scraping variants and progressive testing")
         print("🔍 Includes comprehensive credential validation checkpoint")
 
+    async def refresh_tokens_before_workflow(self):
+        """Refresh Google Drive and YouTube tokens before workflow starts"""
+        print("\n🔄 Token Refresh Check")
+        print("-" * 60)
+        
+        # Refresh Google Drive token
+        print("📁 Checking Google Drive token...")
+        google_token_manager = GoogleDriveTokenManager()
+        google_status = google_token_manager.get_token_status()
+        
+        if google_status['needs_refresh'] or google_status['expired']:
+            print(f"   Status: {google_status['status']} - Refreshing...")
+            success, message = google_token_manager.refresh_token()
+            if success:
+                print(f"   ✅ Google Drive token refreshed: {message}")
+            else:
+                print(f"   ❌ Google Drive refresh failed: {message}")
+                print("   ⚠️ Google Drive uploads may fail during workflow")
+        else:
+            print(f"   ✅ Google Drive token valid for {google_status.get('minutes_until_expiry', 0):.0f} minutes")
+        
+        # Refresh YouTube token if manager exists
+        try:
+            print("\n📺 Checking YouTube token...")
+            youtube_manager = YouTubeAuthManager(self.config)
+            youtube_status = youtube_manager.get_token_status()
+            
+            if youtube_status['needs_refresh'] or youtube_status['expired']:
+                print(f"   Status: {youtube_status['status']} - Refreshing...")
+                success, message = youtube_manager.refresh_token()
+                if success:
+                    print(f"   ✅ YouTube token refreshed: {message}")
+                else:
+                    print(f"   ❌ YouTube refresh failed: {message}")
+                    print("   ⚠️ YouTube uploads may fail during workflow")
+            else:
+                print(f"   ✅ YouTube token valid for {youtube_status.get('minutes_until_expiry', 0):.0f} minutes")
+        except Exception as e:
+            print(f"   ⚠️ YouTube token check skipped: {e}")
+        
+        print("-" * 60)
+
     async def run_complete_workflow(self):
         """Run the complete production workflow with enhanced scraping variants"""
         print("\n🚀 Starting PRODUCTION WORKFLOW V2 (Enhanced Scraping)")
         print("=" * 60)
+        
+        # ALWAYS refresh tokens at the start since workflow runs 3x daily
+        await self.refresh_tokens_before_workflow()
         
         try:
             # Step 1: Comprehensive Credential Validation Checkpoint

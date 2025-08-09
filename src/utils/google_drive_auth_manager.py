@@ -84,14 +84,14 @@ class GoogleDriveAuthManager:
                 with open(self.token_path, 'r') as token:
                     token_data = json.load(token)
                     
-                # Create credentials from token data
+                # Create credentials from token data - use existing scopes from token
                 creds = Credentials(
                     token=token_data.get('token'),
                     refresh_token=token_data.get('refresh_token'),
                     token_uri=token_data.get('token_uri', 'https://oauth2.googleapis.com/token'),
                     client_id=token_data.get('client_id'),
                     client_secret=token_data.get('client_secret'),
-                    scopes=self.REQUIRED_SCOPES  # Use our required scopes
+                    scopes=token_data.get('scopes', self.REQUIRED_SCOPES)  # Use existing scopes from token
                 )
             except Exception as e:
                 self.logger.warning(f"Failed to load token file: {e}")
@@ -186,9 +186,11 @@ class GoogleDriveAuthManager:
             return False
             
         # Check if we have at least the minimum required scope
+        # drive.file is sufficient for creating and managing files we create
         return any(scope in creds.scopes for scope in [
             'https://www.googleapis.com/auth/drive',
-            'https://www.googleapis.com/auth/drive.file'
+            'https://www.googleapis.com/auth/drive.file',
+            'https://www.googleapis.com/auth/drive.metadata'
         ])
     
     def get_drive_service(self):

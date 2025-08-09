@@ -142,7 +142,9 @@ class ProductionAirtableMCPServer:
                         print(f"✅ Updated {field_names} for record {record_id}")
                         return True
                     else:
+                        error_text = await response.text()
                         print(f"❌ Failed to update fields: {response.status}")
+                        print(f"   Error details: {error_text}")
                         return False
         except Exception as e:
             print(f"❌ Error updating specific status: {e}")
@@ -203,7 +205,9 @@ class ProductionAirtableMCPServer:
                             'fields': result.get('fields', {})
                         }
                     else:
+                        error_text = await response.text()
                         print(f"❌ Failed to save products: {response.status}")
+                        print(f"   Error details: {error_text}")
                         return {'record_id': record_id, 'fields': {}}
         except Exception as e:
             print(f"❌ Error saving products: {e}")
@@ -254,7 +258,9 @@ class ProductionAirtableMCPServer:
                         print(f"✅ Saved generated content with status updates to Airtable")
                         return True
                     else:
+                        error_text = await response.text()
                         print(f"❌ Failed to save content: {response.status}")
+                        print(f"   Error details: {error_text}")
                         return False
         except Exception as e:
             print(f"❌ Error saving content: {e}")

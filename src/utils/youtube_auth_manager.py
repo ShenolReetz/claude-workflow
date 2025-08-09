@@ -190,6 +190,114 @@ class YouTubeAuthManager:
                         
         return self.youtube
     
+    def get_token_status(self) -> Dict[str, any]:
+        """Get comprehensive token status information (similar to Google Drive)"""
+        if not os.path.exists(self.token_path):
+            return {
+                'exists': False,
+                'valid': False,
+                'expired': True,
+                'minutes_until_expiry': 0,
+                'needs_refresh': True,
+                'can_refresh': False,
+                'status': 'TOKEN_MISSING'
+            }
+        
+        try:
+            with open(self.token_path, 'r') as f:
+                token_data = json.load(f)
+            
+            expiry_str = token_data.get('expiry')
+            if not expiry_str:
+                return {
+                    'exists': True,
+                    'valid': False,
+                    'expired': True,
+                    'minutes_until_expiry': 0,
+                    'needs_refresh': True,
+                    'can_refresh': bool(token_data.get('refresh_token')),
+                    'status': 'NO_EXPIRY_DATE'
+                }
+            
+            # Parse expiry date
+            expiry_date = datetime.fromisoformat(expiry_str.replace('Z', '+00:00'))
+            current_date = datetime.now(expiry_date.tzinfo)
+            
+            time_until_expiry = expiry_date - current_date
+            minutes_until_expiry = time_until_expiry.total_seconds() / 60
+            
+            is_expired = current_date > expiry_date
+            needs_refresh = minutes_until_expiry < 10  # Refresh when < 10 minutes
+            
+            if is_expired:
+                status = 'EXPIRED'
+            elif needs_refresh:
+                status = 'NEEDS_REFRESH'
+            else:
+                status = 'VALID'
+            
+            return {
+                'exists': True,
+                'valid': not is_expired,
+                'expired': is_expired,
+                'minutes_until_expiry': minutes_until_expiry,
+                'needs_refresh': needs_refresh,
+                'can_refresh': bool(token_data.get('refresh_token')),
+                'status': status
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error checking token status: {e}")
+            return {
+                'exists': True,
+                'valid': False,
+                'expired': True,
+                'minutes_until_expiry': 0,
+                'needs_refresh': True,
+                'can_refresh': False,
+                'status': 'ERROR_PARSING'
+            }
+    
+    def refresh_token(self) -> tuple[bool, str]:
+        """Refresh the YouTube token (similar to Google Drive)"""
+        try:
+            if not os.path.exists(self.token_path):
+                return False, "No token file found"
+            
+            with open(self.token_path, 'r') as f:
+                token_data = json.load(f)
+            
+            refresh_token = token_data.get('refresh_token')
+            if not refresh_token:
+                return False, "No refresh token available"
+            
+            # Create credentials and refresh
+            creds = Credentials(
+                token=token_data.get('token'),
+                refresh_token=refresh_token,
+                token_uri=token_data.get('token_uri', 'https://oauth2.googleapis.com/token'),
+                client_id=token_data.get('client_id'),
+                client_secret=token_data.get('client_secret'),
+                scopes=token_data.get('scopes', self.REQUIRED_SCOPES)
+            )
+            
+            creds.refresh(Request())
+            
+            # Update token data
+            token_data['token'] = creds.token
+            if creds.expiry:
+                token_data['expiry'] = creds.expiry.isoformat()
+            
+            # Save updated token
+            with open(self.token_path, 'w') as f:
+                json.dump(token_data, f, indent=2)
+            
+            return True, f"Token refreshed successfully, valid until {creds.expiry}"
+            
+        except Exception as e:
+            self.logger.error(f"Error refreshing token: {e}")
+            return False, f"Refresh failed: {str(e)}"
+    
     def test_authentication(self) -> bool:
         """Test if authentication is working"""
         try:

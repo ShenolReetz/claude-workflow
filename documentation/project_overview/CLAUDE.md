@@ -48,6 +48,20 @@ We have successfully:
 │   ├── Production_json2video_agent_mcp.py
 │   └── Production_enhanced_google_drive_agent_mcp.py
 └── 🧠 Expert Agent System (preserved) ✅
+
+## 📚 CRITICAL DOCUMENTATION - PRODUCTION FILES REFERENCE
+
+**⚠️ ALWAYS REFER TO THIS WHEN WORKING ON PRODUCTION:**
+See `/home/claude-workflow/PRODUCTION_FLOW_COMPONENTS.md` for complete list of:
+- All Production MCP servers (11 total)
+- All Production MCP agents (17 total)  
+- All utility files (7 total)
+- Complete workflow step-by-step component usage
+- Configuration files and paths
+
+**DO NOT** work on Test files when fixing Production issues!
+- ✅ Use: `Production_*.py` files
+- ❌ Avoid: `Test_*.py` files
 ```
 
 ### 🔄 Workflow Execution Steps (1-13)

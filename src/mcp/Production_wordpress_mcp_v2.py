@@ -144,6 +144,8 @@ class ProductionWordPressMCPV2:
         tag_ids = []
         
         for tag_name in tag_names:
+            # Clean up the tag name
+            tag_name = tag_name.strip() if isinstance(tag_name, str) else ''
             if not tag_name:
                 continue
                 
