@@ -10,7 +10,7 @@ from typing import Dict, Optional
 class ProductionProductCategoryExtractorMCPServer:
     def __init__(self, openai_api_key: str):
         self.client = openai.OpenAI(api_key=openai_api_key)
-        self.model = "gpt-4o"  # Use gpt-4o for category extraction, fallback to gpt-4o-mini
+        self.model = "gpt-5"  # Use gpt-5 for category extraction, fallback to gpt-5-mini
         
     async def extract_category(self, title: str) -> Dict:
         """Extract product category from title using OpenAI"""
@@ -32,6 +32,7 @@ class ProductionProductCategoryExtractorMCPServer:
                     {"role": "system", "content": "You are an expert at categorizing products. Return only valid JSON."},
                     {"role": "user", "content": prompt}
                 ],
+                temperature=0.3,
                 response_format={"type": "json_object"}
             )
             

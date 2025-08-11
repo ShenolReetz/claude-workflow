@@ -24,16 +24,9 @@
 - **Purpose**: Real-time web data and up-to-date documentation
 - **Use Cases**: Current trends, latest product information, real-time market data
 
-#### 3. **playwright** ✅
-- **Status**: Connected  
-- **Type**: stdio MCP server
-- **Command**: `npx @playwright/mcp@latest`
-- **Purpose**: Web automation and browser control
-- **Use Cases**: Web scraping, automated testing, dynamic content extraction
-
 ### ❌ **Failed to Connect:**
 
-#### 4. **airtable** ❌
+#### 3. **airtable** ❌
 - **Status**: Failed to connect
 - **Type**: stdio MCP server  
 - **Command**: `npx -y @domdomegg/airtable-mcp-server`
@@ -89,7 +82,7 @@ tools: Read, Write, WebSearch, WebFetch, Edit
 ### **Amazon Research Agent:**
 ```yaml
 tools: WebSearch, WebFetch, Read, Write, Grep, Bash
-# Uses: playwright, context7 (MCP tools)
+# Uses: context7 (MCP tools)
 ```
 
 ### **Video Creator Agent:**
@@ -101,7 +94,7 @@ tools: Read, Write, Edit, MultiEdit, Bash
 ### **Social Media Publisher Agent:**
 ```yaml
 tools: Read, WebFetch, WebSearch, Bash
-# Uses: playwright, context7 (MCP tools)
+# Uses: context7 (MCP tools)
 ```
 
 ### **Performance Monitor Agent:**
@@ -146,14 +139,13 @@ const response = await WebFetch({
 ### **Working MCP Tools (3/4):**
 - ✅ **sequential-thinking**: Enhanced planning and reasoning
 - ✅ **context7**: Real-time data and trends  
-- ✅ **playwright**: Advanced web automation
 - ❌ **airtable**: Fallback to REST API + WebFetch
 
 ### **Expected Capabilities:**
 - **Content Generation**: Improved with sequential-thinking + context7
-- **Amazon Research**: Enhanced with playwright + context7  
+- **Amazon Research**: Enhanced with context7  
 - **Video Creation**: Better planning with sequential-thinking
-- **Social Publishing**: Advanced automation with playwright
+- **Social Publishing**: Advanced automation with WebFetch
 - **Performance Monitoring**: Structured analysis with sequential-thinking
 
 ### **Limitations:**

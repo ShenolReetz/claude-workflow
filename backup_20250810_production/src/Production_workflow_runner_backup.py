@@ -22,15 +22,13 @@ import logging
 # Add the project root to Python path
 sys.path.append('/home/claude-workflow')
 
-# Import resilience manager and token managers
+# Import resilience manager
 from src.utils.api_resilience_manager import APIResilienceManager
-from src.utils.google_drive_token_manager import GoogleDriveTokenManager
-from src.utils.youtube_auth_manager import YouTubeAuthManager
 
 # Import Production MCP servers
 from mcp_servers.Production_airtable_server import ProductionAirtableMCPServer
 from mcp_servers.Production_content_generation_server import ProductionContentGenerationMCPServer
-from mcp_servers.Production_progressive_amazon_scraper_async import ProductionProgressiveAmazonScraper
+from mcp_servers.Production_progressive_amazon_scraper import ProductionProgressiveAmazonScraper
 from mcp_servers.Production_voice_generation_server import ProductionVoiceGenerationMCPServer
 from mcp_servers.Production_product_category_extractor_server import ProductionProductCategoryExtractorMCPServer
 from mcp_servers.Production_flow_control_server import ProductionFlowControlMCPServer
@@ -47,9 +45,9 @@ from src.mcp.Production_youtube_mcp import ProductionYouTubeMCP
 from src.mcp.Production_voice_timing_optimizer import ProductionVoiceTimingOptimizer
 from src.mcp.Production_intro_image_generator import production_generate_intro_image_for_workflow
 from src.mcp.Production_outro_image_generator import production_generate_outro_image_for_workflow
-from src.mcp.Production_platform_content_generator_async import production_generate_platform_content_for_workflow
+from src.mcp.Production_platform_content_generator import production_generate_platform_content_for_workflow
 from src.mcp.Production_text_length_validation_with_regeneration_agent_mcp import production_run_text_validation_with_regeneration
-from src.mcp.Production_amazon_images_workflow_v2_async import production_download_and_save_amazon_images_v2
+from src.mcp.Production_amazon_images_workflow_v2 import production_generate_enhanced_product_images
 
 # Use OpenAI Python client for DALL-E image generation
 import openai
@@ -122,55 +120,10 @@ class ProductionContentPipelineOrchestratorV2:
         print("📋 Enhanced with scraping variants and progressive testing")
         print("🔍 Includes comprehensive credential validation checkpoint")
 
-    async def refresh_tokens_before_workflow(self):
-        """Refresh Google Drive and YouTube tokens before workflow starts"""
-        print("\n🔄 Token Refresh Check")
-        print("-" * 60)
-        
-        # Refresh Google Drive token
-        print("📁 Checking Google Drive token...")
-        google_token_manager = GoogleDriveTokenManager()
-        google_status = google_token_manager.get_token_status()
-        
-        if google_status['needs_refresh'] or google_status['expired']:
-            print(f"   Status: {google_status['status']} - Refreshing...")
-            success, message = google_token_manager.refresh_token()
-            if success:
-                print(f"   ✅ Google Drive token refreshed: {message}")
-            else:
-                print(f"   ❌ Google Drive refresh failed: {message}")
-                print("   ⚠️ Google Drive uploads may fail during workflow")
-        else:
-            print(f"   ✅ Google Drive token valid for {google_status.get('minutes_until_expiry', 0):.0f} minutes")
-        
-        # Refresh YouTube token if manager exists
-        try:
-            print("\n📺 Checking YouTube token...")
-            youtube_manager = YouTubeAuthManager(self.config)
-            youtube_status = youtube_manager.get_token_status()
-            
-            if youtube_status['needs_refresh'] or youtube_status['expired']:
-                print(f"   Status: {youtube_status['status']} - Refreshing...")
-                success, message = youtube_manager.refresh_token()
-                if success:
-                    print(f"   ✅ YouTube token refreshed: {message}")
-                else:
-                    print(f"   ❌ YouTube refresh failed: {message}")
-                    print("   ⚠️ YouTube uploads may fail during workflow")
-            else:
-                print(f"   ✅ YouTube token valid for {youtube_status.get('minutes_until_expiry', 0):.0f} minutes")
-        except Exception as e:
-            print(f"   ⚠️ YouTube token check skipped: {e}")
-        
-        print("-" * 60)
-
     async def run_complete_workflow(self):
         """Run the complete production workflow with enhanced scraping variants"""
         print("\n🚀 Starting PRODUCTION WORKFLOW V2 (Enhanced Scraping)")
         print("=" * 60)
-        
-        # ALWAYS refresh tokens at the start since workflow runs 3x daily
-        await self.refresh_tokens_before_workflow()
         
         try:
             # Step 1: Comprehensive Credential Validation Checkpoint
@@ -373,7 +326,7 @@ class ProductionContentPipelineOrchestratorV2:
             print("   🏷️ Preserving logos, text, and specifications")
             print("   ✨ Optimizing for video content (9:16 ratio)")
             
-            image_result = await production_download_and_save_amazon_images_v2(updated_record, self.config)
+            image_result = await production_generate_enhanced_product_images(updated_record, self.config)
             
             if image_result.get('success', False):
                 updated_record = image_result['updated_record']

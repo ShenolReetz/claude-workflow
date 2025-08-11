@@ -638,24 +638,23 @@ class ProductionCredentialValidationServer:
                 )
                 return
             
-            # Test API call - use correct header format
-            headers = {'x-api-key': api_key}
+            # Test API call - get projects with explicit timeout
+            headers = {'X-API-KEY': api_key}
             
             # Add explicit timeout to prevent hanging
             timeout = aiohttp.ClientTimeout(total=15)  # 15 second timeout
             async with aiohttp.ClientSession(timeout=timeout) as session:
-                # Use /v2/movies endpoint which is the correct one
-                async with session.get('https://api.json2video.com/v2/movies', headers=headers) as response:
+                async with session.get('https://api.json2video.com/v2/projects', headers=headers) as response:
                     if response.status == 200:
-                        # Skip usage information as the account endpoint may not exist
-                        # usage_info = await self._get_json2video_usage_info(session, headers)
+                        # Get usage information
+                        usage_info = await self._get_json2video_usage_info(session, headers)
                         
                         self.results['json2video'] = CredentialResult(
                             name="JSON2Video API",
                             status=CredentialStatus.VALID,
                             message="JSON2Video API key valid and active",
                             health_score=100,
-                            usage_info={'type': 'video_credits', 'message': 'API key validated successfully'}
+                            usage_info=usage_info
                         )
                     elif response.status == 401:
                         self.results['json2video'] = CredentialResult(

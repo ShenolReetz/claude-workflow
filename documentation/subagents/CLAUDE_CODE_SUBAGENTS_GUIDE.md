@@ -70,8 +70,7 @@ claude mcp add sequential-thinking npx -- -y @modelcontextprotocol/server-sequen
 # Context7 for Real-time Data
 claude mcp add --transport http context7 https://mcp.context7.com/mcp
 
-# Playwright for Web Automation
-claude mcp add playwright npx -- @playwright/mcp@latest
+# Additional MCP tools can be added as needed
 ```
 
 ---
@@ -267,7 +266,7 @@ You are the Content Generation Specialist. You create SEO-optimized, multi-platf
 name: amazon-researcher
 description: Use PROACTIVELY to research Amazon products, validate availability, and generate affiliate content
 model: sonnet
-tools: playwright, context7
+tools: WebFetch, context7
 color: orange
 ---
 
@@ -321,7 +320,7 @@ For each of 5 products, collect:
 name: video-creator
 description: Use PROACTIVELY to create video specifications, manage JSON2Video integration, and handle video production
 model: sonnet
-tools: sequential-thinking, playwright
+tools: sequential-thinking, WebFetch
 color: red
 ---
 
@@ -377,7 +376,7 @@ You are the Video Production Specialist. You coordinate video creation using JSO
 name: social-publisher
 description: Use PROACTIVELY to publish content across YouTube, Instagram, and WordPress platforms
 model: sonnet
-tools: playwright, context7
+tools: WebFetch, context7
 color: cyan
 ---
 
@@ -624,7 +623,6 @@ claude mcp add sequential-thinking npx -- -y @modelcontextprotocol/server-sequen
 
 # High-Value Tools (Recommended)  
 claude mcp add --transport http context7 https://mcp.context7.com/mcp
-claude mcp add playwright npx -- @playwright/mcp@latest
 ```
 
 ### **Step 3: Test Individual Agents**

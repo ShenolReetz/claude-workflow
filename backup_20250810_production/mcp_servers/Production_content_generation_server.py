@@ -21,10 +21,10 @@ class ProductionContentGenerationMCPServer:
         self.api_key = openai_api_key
         openai.api_key = openai_api_key
         
-        # Use GPT-4 models for content generation
-        self.model = "gpt-4o"  # GPT-4o for content generation
-        self.fallback_model = "gpt-4o-mini"  # GPT-4o-mini as fallback
-        self.nano_model = "gpt-3.5-turbo"  # GPT-3.5-turbo for simple tasks
+        # Use latest GPT-5 models for optimal content generation
+        self.model = "gpt-5"  # Top GPT-5 for content generation
+        self.fallback_model = "gpt-5-mini"  # GPT-5-mini fallback
+        self.nano_model = "gpt-5-nano"  # GPT-5-nano for simple tasks
         
         self.client = openai.OpenAI(api_key=openai_api_key)
         
@@ -36,7 +36,7 @@ class ProductionContentGenerationMCPServer:
         logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger(__name__)
         
-        self.logger.info("🚀 Content Generation Server initialized with GPT-4o")
+        self.logger.info("🚀 Content Generation Server initialized with GPT-5-mini")
         
     async def generate_seo_keywords(self, title: str, category: str) -> List[str]:
         """Generate SEO keywords using OpenAI GPT-4"""
@@ -191,36 +191,36 @@ class ProductionContentGenerationMCPServer:
         return enhanced_products
     
     async def _call_openai(self, prompt: str, temperature: float = 0.7) -> str:
-        """Make API call to OpenAI with GPT-4o and automatic fallback"""
+        """Make API call to OpenAI with GPT-5 and automatic fallback"""
         try:
-            # Try GPT-4o first
+            # Try GPT-5 first
             try:
-                self.logger.info("Calling GPT-4o for content generation...")
+                self.logger.info("Calling GPT-5 for content generation...")
                 response = self.client.chat.completions.create(
-                    model=self.model,  # GPT-4o
+                    model=self.model,  # GPT-5
                     messages=[
                         {"role": "system", "content": "You are a professional content creator specializing in product reviews and SEO optimization. Use your advanced capabilities to create highly engaging and converting content."},
                         {"role": "user", "content": prompt}
                     ],
                     temperature=temperature,
-                    max_completion_tokens=500
+                    max_tokens=500
                 )
-                self.logger.info("✅ GPT-4o response received successfully")
+                self.logger.info("✅ GPT-5 response received successfully")
                 return response.choices[0].message.content
                 
             except openai.NotFoundError as e:
-                # GPT-4o not available, fallback to GPT-4o-mini
-                self.logger.warning(f"GPT-4o not available, falling back to GPT-4o-mini: {e}")
+                # GPT-5 not available, fallback to GPT-4
+                self.logger.warning(f"GPT-5 not available, falling back to GPT-4: {e}")
                 response = self.client.chat.completions.create(
-                    model=self.fallback_model,  # GPT-4o-mini
+                    model=self.fallback_model,  # GPT-4-turbo
                     messages=[
                         {"role": "system", "content": "You are a professional content creator specializing in product reviews and SEO optimization."},
                         {"role": "user", "content": prompt}
                     ],
                     temperature=temperature,
-                    max_completion_tokens=500
+                    max_tokens=500
                 )
-                self.logger.info("✅ GPT-4o-mini fallback response received")
+                self.logger.info("✅ GPT-4 fallback response received")
                 return response.choices[0].message.content
                 
         except Exception as e:

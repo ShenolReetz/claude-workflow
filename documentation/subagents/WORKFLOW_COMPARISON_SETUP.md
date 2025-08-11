@@ -27,7 +27,7 @@
 │   - Parallel        │    │   ✅ sequential-thinking │                   │
 │   - Multi-threaded  │    │   ❌ airtable (failed)  │                   │
 │   - AI Decision     │    │   ✅ context7            │                   │
-│   - Adaptive Logic  │    │   ✅ playwright          │                   │
+│   - Adaptive Logic  │    │   ✅ sequential-thinking │                   │
 └─────────────────────┘    └─────────────────────┘    └─────────────────────┘
 ```
 
@@ -37,8 +37,7 @@
 
 ### ✅ **Successfully Installed & Connected:**
 1. **sequential-thinking** - Structured reasoning and planning
-2. **context7** - Real-time web data and documentation  
-3. **playwright** - Web automation and scraping
+2. **context7** - Real-time web data and documentation
 
 ### ❌ **Failed to Connect:**
 1. **airtable** - Direct database operations (connection issue)

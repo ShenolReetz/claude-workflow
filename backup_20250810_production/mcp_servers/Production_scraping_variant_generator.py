@@ -56,25 +56,27 @@ class ProductionScrapingVariantGenerator:
         """
         
         try:
-            # Try GPT-4o first, fallback to GPT-4o-mini
+            # Try GPT-5 first, fallback to GPT-5-mini
             try:
                 response = self.client.chat.completions.create(
-                    model="gpt-4o",
+                    model="gpt-5",
                     messages=[
                         {"role": "system", "content": "You are an expert at creating Amazon search variations for product discovery."},
                         {"role": "user", "content": prompt}
                     ],
-                    max_completion_tokens=200
+                    temperature=0.7,
+                    max_tokens=200
                 )
             except Exception:
-                # Fallback to GPT-4o-mini
+                # Fallback to GPT-5-mini
                 response = self.client.chat.completions.create(
-                    model="gpt-4o-mini",
+                    model="gpt-5-mini",
                     messages=[
                         {"role": "system", "content": "You are an expert at creating Amazon search variations for product discovery."},
                         {"role": "user", "content": prompt}
                     ],
-                    max_completion_tokens=200
+                    temperature=0.7,
+                    max_tokens=200
                 )
             
             variants_text = response.choices[0].message.content.strip()

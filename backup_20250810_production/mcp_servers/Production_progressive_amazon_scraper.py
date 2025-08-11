@@ -166,14 +166,8 @@ class ProductionProgressiveAmazonScraper:
         
         qualified = []
         for product in products:
-            # Use the product dict directly with updated extraction
-            review_count = self._extract_review_count(product)
-            
-            # Extract rating properly from 'stars' field
-            try:
-                rating = float(product.get('stars', product.get('rating', 0)))
-            except:
-                rating = 0.0
+            review_count = self._extract_review_count(product.get('reviews', '0'))
+            rating = float(product.get('rating', 0))
             
             if review_count >= min_reviews and rating > 0:
                 product['review_count_int'] = review_count
@@ -326,35 +320,18 @@ class ProductionProgressiveAmazonScraper:
             print(f"🥇 No{i}: {title}")
             print(f"   ⭐ {rating}/5.0 stars | 📊 {reviews:,} reviews | 💰 {price} | Score: {score:.1f}")
     
-    def _extract_review_count(self, product: Dict) -> int:
-        """Extract numeric review count from product data"""
-        # First try the direct field if this is a product dict
-        if isinstance(product, dict):
-            reviews_text = product.get('total_reviews', product.get('reviews', ''))
-        else:
-            # Otherwise treat as a string (for backward compatibility)
-            reviews_text = product
-            
+    def _extract_review_count(self, reviews_text: str) -> int:
+        """Extract numeric review count from text like '(1,234 reviews)' or '1.2K'"""
         if not reviews_text:
-            return 0
-        
-        # Convert to string and clean
-        reviews_str = str(reviews_text).replace(',', '').strip()
-        
-        # Handle empty or None
-        if not reviews_str or reviews_str.lower() == 'none':
             return 0
             
         # Remove parentheses and extra text
-        clean_text = re.sub(r'[^\d,K\.]+', '', reviews_str)
+        clean_text = re.sub(r'[^\d,K\.]+', '', str(reviews_text))
         
         if 'K' in clean_text.upper():
             # Handle "1.2K" format
-            try:
-                number = float(re.sub(r'[^0-9.]', '', clean_text))
-                return int(number * 1000)
-            except:
-                return 0
+            number = float(re.sub(r'[^0-9.]', '', clean_text))
+            return int(number * 1000)
         else:
             # Handle "1,234" format
             number_str = re.sub(r'[^0-9]', '', clean_text)
