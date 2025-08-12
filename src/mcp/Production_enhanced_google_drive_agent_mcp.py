@@ -14,6 +14,7 @@ from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 import aiohttp
 import os
 import io
+import base64
 from typing import Dict, Optional, List
 import json
 from datetime import datetime
@@ -281,42 +282,87 @@ class ProductionEnhancedGoogleDriveAgent:
         return audio_files
     
     async def _download_and_upload_image(self, url: str, filename: str, folder_id: str) -> Dict:
-        """Helper to download and upload image"""
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                if response.status == 200:
-                    data = await response.read()
-                    temp_file = f"/tmp/{filename}"
+        """Helper to download and upload image - handles both URLs and base64 data"""
+        try:
+            # Check if it's a base64 data URL
+            if url.startswith('data:image/'):
+                # Extract base64 data (handle jpeg, png, etc.)
+                # Parse data URL: data:image/jpeg;base64,... or data:image/png;base64,...
+                if ';base64,' in url:
+                    header, base64_data = url.split(';base64,', 1)
+                    mime_type = header.replace('data:', '')
+                    image_data = base64.b64decode(base64_data)
                     
+                    temp_file = f"/tmp/{filename}"
                     with open(temp_file, 'wb') as f:
-                        f.write(data)
+                        f.write(image_data)
                     
                     result = await self._upload_file_to_drive(
-                        temp_file, filename, folder_id, 'image/jpeg'
+                        temp_file, filename, folder_id, mime_type
                     )
                     
                     os.remove(temp_file)
                     return result
+            else:
+                # Regular URL download
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(url) as response:
+                        if response.status == 200:
+                            data = await response.read()
+                            temp_file = f"/tmp/{filename}"
+                            
+                            with open(temp_file, 'wb') as f:
+                                f.write(data)
+                            
+                            result = await self._upload_file_to_drive(
+                                temp_file, filename, folder_id, 'image/jpeg'
+                            )
+                            
+                            os.remove(temp_file)
+                            return result
+        except Exception as e:
+            print(f"⚠️ Error handling image: {e}")
         
         return {'error': 'Failed to download'}
     
     async def _download_and_upload_audio(self, url: str, filename: str, folder_id: str) -> Dict:
-        """Helper to download and upload audio"""
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                if response.status == 200:
-                    data = await response.read()
-                    temp_file = f"/tmp/{filename}"
-                    
-                    with open(temp_file, 'wb') as f:
-                        f.write(data)
-                    
-                    result = await self._upload_file_to_drive(
-                        temp_file, filename, folder_id, 'audio/mpeg'
-                    )
-                    
-                    os.remove(temp_file)
-                    return result
+        """Helper to download and upload audio - handles both URLs and base64 data"""
+        try:
+            # Check if it's a base64 data URL
+            if url.startswith('data:audio/mpeg;base64,'):
+                # Extract base64 data
+                base64_data = url.replace('data:audio/mpeg;base64,', '')
+                audio_data = base64.b64decode(base64_data)
+                
+                temp_file = f"/tmp/{filename}"
+                with open(temp_file, 'wb') as f:
+                    f.write(audio_data)
+                
+                result = await self._upload_file_to_drive(
+                    temp_file, filename, folder_id, 'audio/mpeg'
+                )
+                
+                os.remove(temp_file)
+                return result
+            else:
+                # Regular URL download
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(url) as response:
+                        if response.status == 200:
+                            data = await response.read()
+                            temp_file = f"/tmp/{filename}"
+                            
+                            with open(temp_file, 'wb') as f:
+                                f.write(data)
+                            
+                            result = await self._upload_file_to_drive(
+                                temp_file, filename, folder_id, 'audio/mpeg'
+                            )
+                            
+                            os.remove(temp_file)
+                            return result
+        except Exception as e:
+            print(f"⚠️ Error handling audio: {e}")
         
         return {'error': 'Failed to download'}
     
@@ -380,41 +426,33 @@ class ProductionEnhancedGoogleDriveAgent:
         try:
             updates = {}
             
-            # Main folder link
-            if 'folder_structure' in uploaded_files:
-                updates['GoogleDriveFolderURL'] = uploaded_files['folder_structure']['main_folder_url']
-            
-            # Video links
+            # Video link - save to FinalVideo field (which exists in Airtable)
             if 'video' in uploaded_files and uploaded_files['video'].get('success'):
-                updates['GoogleDriveURL'] = uploaded_files['video']['view_url']
-                updates['GoogleDriveDownloadURL'] = uploaded_files['video']['download_url']
+                updates['FinalVideo'] = uploaded_files['video']['view_url']
             
-            # Product image links (1-5)
-            if 'product_images' in uploaded_files:
-                for img in uploaded_files['product_images']:
-                    if img.get('success'):
-                        product_num = img.get('product_number')
-                        updates[f'GoogleDriveProductNo{product_num}PhotoURL'] = img['view_url']
+            # Product image links (1-5) - ProductNo{i}Photo fields already exist
+            # Don't update these as they already contain the generated image URLs
+            # We could store Google Drive URLs separately if needed
             
-            # Generated image links
+            # Generated image links - save to existing IntroPhoto/OutroPhoto fields
             if 'generated_images' in uploaded_files:
                 gen_images = uploaded_files['generated_images']
                 if 'intro' in gen_images and gen_images['intro'].get('success'):
-                    updates['GoogleDriveIntroPhotoURL'] = gen_images['intro']['view_url']
+                    updates['IntroPhoto'] = gen_images['intro']['view_url']
                 if 'outro' in gen_images and gen_images['outro'].get('success'):
-                    updates['GoogleDriveOutroPhotoURL'] = gen_images['outro']['view_url']
+                    updates['OutroPhoto'] = gen_images['outro']['view_url']
             
-            # Audio file links
+            # Audio file links - save to existing Mp3 fields
             if 'audio_files' in uploaded_files:
                 audio_files = uploaded_files['audio_files']
                 audio_mappings = {
-                    'intro': 'GoogleDriveIntroMp3URL',
-                    'outro': 'GoogleDriveOutroMp3URL',
-                    'product1': 'GoogleDriveProduct1Mp3URL',
-                    'product2': 'GoogleDriveProduct2Mp3URL',
-                    'product3': 'GoogleDriveProduct3Mp3URL',
-                    'product4': 'GoogleDriveProduct4Mp3URL',
-                    'product5': 'GoogleDriveProduct5Mp3URL'
+                    'intro': 'IntroMp3',
+                    'outro': 'OutroMp3',
+                    'product1': 'Product1Mp3',
+                    'product2': 'Product2Mp3',
+                    'product3': 'Product3Mp3',
+                    'product4': 'Product4Mp3',
+                    'product5': 'Product5Mp3'
                 }
                 
                 for audio_type, field_name in audio_mappings.items():

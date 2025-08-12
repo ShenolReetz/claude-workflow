@@ -56,7 +56,7 @@ class ProductionAmazonProductValidator:
     def _validate_single_product(self, product: Dict) -> bool:
         """Validate a single product meets criteria"""
         # Check required fields
-        if not product.get('name'):
+        if not product.get('title'):
             return False
         
         # Check rating (minimum 3.5)

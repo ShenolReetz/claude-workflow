@@ -154,6 +154,19 @@ class ProductionAirtableMCPServer:
         """Update a single field in Airtable record"""
         return await self.update_specific_status(record_id, {field_name: value})
     
+    async def update_record_fields_batch(self, record_id: str, fields: Dict) -> bool:
+        """
+        Batch update multiple fields in a single API call
+        
+        Args:
+            record_id: The Airtable record ID
+            fields: Dictionary of field names and values to update
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        return await self.update_specific_status(record_id, fields)
+    
     async def save_amazon_products(self, record_id: str, products: List[Dict]) -> Dict:
         """Save Amazon products to Airtable record with proper field mapping"""
         try:
@@ -161,30 +174,42 @@ class ProductionAirtableMCPServer:
             # Map to the actual Airtable field names
             for i, product in enumerate(products[:5], 1):
                 # Use ProductNo{i} format as per Airtable schema
-                fields[f'ProductNo{i}Title'] = product.get('name', '')[:100]
+                fields[f'ProductNo{i}Title'] = product.get('title', '')[:100]  # Changed from 'name' to 'title'
                 fields[f'ProductNo{i}Description'] = product.get('description', '')[:500]  
-                fields[f'ProductNo{i}Photo'] = product.get('image_url', '')
+                fields[f'ProductNo{i}Photo'] = product.get('image', '')  # Changed from 'image_url' to 'image'
+                fields[f'ProductNo{i}AffiliateLink'] = product.get('link', '')  # Add affiliate link
                 
-                # Handle price conversion
-                price_str = product.get('price', '$0').replace('$', '').replace(',', '')
-                try:
-                    fields[f'ProductNo{i}Price'] = float(price_str)
-                except (ValueError, TypeError):
-                    fields[f'ProductNo{i}Price'] = 0.0
+                # Handle price conversion - price might already be a string or float
+                price_val = product.get('price', '$0')
+                if isinstance(price_val, (int, float)):
+                    fields[f'ProductNo{i}Price'] = float(price_val)
+                else:
+                    price_str = str(price_val).replace('$', '').replace(',', '')
+                    try:
+                        fields[f'ProductNo{i}Price'] = float(price_str)
+                    except (ValueError, TypeError):
+                        fields[f'ProductNo{i}Price'] = 0.0
                 
-                # Handle rating conversion
-                rating_str = product.get('rating', '0')
-                try:
-                    fields[f'ProductNo{i}Rating'] = float(rating_str)
-                except (ValueError, TypeError):
-                    fields[f'ProductNo{i}Rating'] = 0.0
+                # Handle rating - already a float from scraper
+                rating_val = product.get('rating', 0)
+                if isinstance(rating_val, (int, float)):
+                    fields[f'ProductNo{i}Rating'] = float(rating_val)
+                else:
+                    try:
+                        fields[f'ProductNo{i}Rating'] = float(str(rating_val))
+                    except (ValueError, TypeError):
+                        fields[f'ProductNo{i}Rating'] = 0.0
                 
-                # Handle reviews conversion
-                reviews_str = product.get('reviews', '0').replace(',', '').replace('+', '')
-                try:
-                    fields[f'ProductNo{i}Reviews'] = int(reviews_str)
-                except (ValueError, TypeError):
-                    fields[f'ProductNo{i}Reviews'] = 0
+                # Handle reviews - already an int from scraper
+                reviews_val = product.get('reviews', 0)
+                if isinstance(reviews_val, int):
+                    fields[f'ProductNo{i}Reviews'] = reviews_val
+                else:
+                    reviews_str = str(reviews_val).replace(',', '').replace('+', '')
+                    try:
+                        fields[f'ProductNo{i}Reviews'] = int(reviews_str)
+                    except (ValueError, TypeError):
+                        fields[f'ProductNo{i}Reviews'] = 0
                 
                 # Set all statuses to Ready since we have the data
                 fields[f'ProductNo{i}TitleStatus'] = 'Ready'

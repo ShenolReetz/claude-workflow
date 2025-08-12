@@ -70,7 +70,7 @@ async def production_run_text_control_with_regeneration(record: Dict, config: Di
         }
 
 async def _regenerate_text(text: str, max_words: int, context: str) -> str:
-    """Regenerate text to fit word limit using GPT-5"""
+    """Regenerate text to fit word limit using GPT-4o"""
     try:
         prompt = f"""Shorten this {context} text to exactly {max_words} words while keeping the key message:
         
@@ -78,30 +78,18 @@ async def _regenerate_text(text: str, max_words: int, context: str) -> str:
         
         Return only the shortened version."""
         
-        client = openai.OpenAI()
+        client = openai.OpenAI(api_key=openai.api_key)
         
-        # Try GPT-5 first, fallback to GPT-4 if not available
-        try:
-            response = client.chat.completions.create(
-                model="gpt-5-nano",  # Ultra-fast validation
-                messages=[
-                    {"role": "system", "content": "You are an expert at concise writing with advanced understanding of context preservation."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.7,
-                max_tokens=100
-            )
-        except openai.NotFoundError:
-            # Fallback to GPT-4 if GPT-5 not available
-            response = client.chat.completions.create(
-                model="gpt-5",
-                messages=[
-                    {"role": "system", "content": "You are an expert at concise writing."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.7,
-                max_tokens=100
-            )
+        # Use GPT-4o for text regeneration
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": "You are an expert at concise writing with advanced understanding of context preservation."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_completion_tokens=100
+        )
         
         return response.choices[0].message.content.strip()
     except:
@@ -128,32 +116,24 @@ def _validate_all_scripts(record: Dict) -> bool:
     return True
 
 async def _generate_missing_scripts(record: Dict, config: Dict):
-    """Generate scripts for intro, products, and outro if they don't exist using GPT-5"""
+    """Generate scripts for intro, products, and outro if they don't exist using GPT-4o"""
     fields = record.get('fields', {})
     openai.api_key = config.get('openai_api_key')
-    client = openai.OpenAI()
+    client = openai.OpenAI(api_key=config.get('openai_api_key'))
     
-    # Determine which model to use
-    model = "gpt-5-nano"  # Ultra-fast for validation
-    fallback_model = "gpt-4o"  # Reliable fallback
+    # Use GPT-4o for content generation
+    model = "gpt-4o"  # Production model
     
     # Generate intro script if missing
     if not fields.get('IntroScript'):
         video_title = fields.get('VideoTitle', 'Amazing Products')
         prompt = f"Write a 5-second intro script (max 12 words) for a video titled '{video_title}'. Be engaging and concise."
         
-        try:
-            response = client.chat.completions.create(
-                model=model,  # Try GPT-5
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=50
-            )
-        except openai.NotFoundError:
-            response = client.chat.completions.create(
-                model=fallback_model,  # Fallback to GPT-4
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=50
-            )
+        response = client.chat.completions.create(
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+            max_completion_tokens=50
+        )
         fields['IntroScript'] = response.choices[0].message.content.strip()
     
     # Generate product scripts if missing
@@ -173,36 +153,22 @@ Description: {product_desc[:100]}
 
 Make it compelling and highlight key features. Be concise."""
             
-            try:
-                response = client.chat.completions.create(
-                    model=model,  # Try GPT-5
-                    messages=[{"role": "user", "content": prompt}],
-                    max_tokens=60
-                )
-            except openai.NotFoundError:
-                response = client.chat.completions.create(
-                    model=fallback_model,  # Fallback to GPT-4
-                    messages=[{"role": "user", "content": prompt}],
-                    max_tokens=60
-                )
+            response = client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": prompt}],
+                max_completion_tokens=60
+            )
             fields[script_field] = response.choices[0].message.content.strip()
     
     # Generate outro script if missing
     if not fields.get('OutroScript'):
         prompt = "Write a 5-second outro script (max 12 words) for a product review video. Include a call to action."
         
-        try:
-            response = client.chat.completions.create(
-                model=model,  # Try GPT-5
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=50
-            )
-        except openai.NotFoundError:
-            response = client.chat.completions.create(
-                model=fallback_model,  # Fallback to GPT-4
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=50
-            )
+        response = client.chat.completions.create(
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+            max_completion_tokens=50
+        )
         fields['OutroScript'] = response.choices[0].message.content.strip()
     
     record['fields'] = fields

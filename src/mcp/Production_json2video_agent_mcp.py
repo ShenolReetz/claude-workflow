@@ -4,9 +4,58 @@ Production JSON2Video Agent MCP - Create Videos using JSON2Video API
 """
 
 import aiohttp
+import asyncio
 import json
+import random
 from typing import Dict, List, Optional
 from datetime import datetime
+
+async def post_with_retry(session: aiohttp.ClientSession, url: str, headers: Dict, 
+                          json_data: Dict, max_retries: int = 3) -> Dict:
+    """
+    POST request with exponential backoff retry for transient failures
+    
+    Args:
+        session: aiohttp client session
+        url: API endpoint URL
+        headers: Request headers
+        json_data: JSON payload
+        max_retries: Maximum number of retry attempts
+    
+    Returns:
+        Response data or raises exception on failure
+    """
+    for attempt in range(max_retries):
+        try:
+            async with session.post(url, headers=headers, json=json_data) as response:
+                if response.status in [200, 201]:
+                    return await response.json()
+                elif response.status >= 500 and attempt < max_retries - 1:
+                    # Server error - retry with exponential backoff
+                    wait_time = (2 ** attempt) + random.uniform(0, 1)  # Add jitter
+                    print(f"⚠️ Server error {response.status}, retrying in {wait_time:.1f}s (attempt {attempt + 1}/{max_retries})")
+                    await asyncio.sleep(wait_time)
+                    continue
+                elif response.status == 429 and attempt < max_retries - 1:
+                    # Rate limit - wait longer
+                    wait_time = (2 ** (attempt + 1)) + random.uniform(0, 2)
+                    print(f"⚠️ Rate limited, waiting {wait_time:.1f}s (attempt {attempt + 1}/{max_retries})")
+                    await asyncio.sleep(wait_time)
+                    continue
+                else:
+                    # Client error or final attempt - don't retry
+                    error_text = await response.text()
+                    raise Exception(f"API error {response.status}: {error_text}")
+                    
+        except aiohttp.ClientError as e:
+            if attempt < max_retries - 1:
+                wait_time = (2 ** attempt) + random.uniform(0, 1)
+                print(f"⚠️ Network error: {e}, retrying in {wait_time:.1f}s (attempt {attempt + 1}/{max_retries})")
+                await asyncio.sleep(wait_time)
+            else:
+                raise
+    
+    raise Exception(f"Failed after {max_retries} attempts")
 
 async def production_run_video_creation(record: Dict, config: Dict) -> Dict:
     """Create video using JSON2Video API with real data"""
@@ -31,7 +80,7 @@ async def production_run_video_creation(record: Dict, config: Dict) -> Dict:
         # Build JSON2Video schema from record data
         video_schema = await _build_video_schema(record, config)
         
-        # Call JSON2Video API
+        # Call JSON2Video API with retry logic
         async with aiohttp.ClientSession() as session:
             url = "https://api.json2video.com/v2/movies"
             headers = {
@@ -39,44 +88,44 @@ async def production_run_video_creation(record: Dict, config: Dict) -> Dict:
                 "Content-Type": "application/json"
             }
             
-            async with session.post(url, headers=headers, json=video_schema) as response:
-                if response.status in [200, 201]:
-                    data = await response.json()
-                    
-                    # According to docs, project ID is in 'project' field
-                    project_id = data.get('project', '')
-                    
-                    if not project_id:
-                        print(f"⚠️ No project ID in response. Full response: {json.dumps(data, indent=2)}")
-                    
-                    # Construct video URL from project ID  
-                    video_url = f"https://app.json2video.com/projects/{project_id}" if project_id else ''
-                    direct_video_url = f"https://d1oco4z2z1fhwp.cloudfront.net/projects/{project_id}/project.mp4" if project_id else ''
-                    
-                    print(f"✅ JSON2Video Response: Project ID = {project_id}")
-                    print(f"✅ Dashboard URL: {video_url}")
-                    print(f"✅ Direct Video URL: {direct_video_url}")
-                    
-                    # Update record with video data - use FinalVideo field for consistency
-                    record['fields']['JSON2VideoProjectID'] = project_id
-                    record['fields']['FinalVideo'] = direct_video_url  # Save to FinalVideo field (used by YouTube uploader)
-                    # Note: VideoURL and VideoDashboardURL fields don't exist in Airtable
-                    
-                    return {
-                        'success': True,
-                        'project_id': project_id,
-                        'video_url': direct_video_url,
-                        'dashboard_url': video_url,
-                        'updated_record': record
-                    }
-                else:
-                    error_text = await response.text()
-                    print(f"❌ JSON2Video API error: {response.status} - {error_text}")
-                    return {
-                        'success': False,
-                        'error': f'API error: {response.status}',
-                        'updated_record': record
-                    }
+            try:
+                # Use retry logic for resilient API calls
+                data = await post_with_retry(session, url, headers, video_schema, max_retries=3)
+                
+                # According to docs, project ID is in 'project' field
+                project_id = data.get('project', '')
+                
+                if not project_id:
+                    print(f"⚠️ No project ID in response. Full response: {json.dumps(data, indent=2)}")
+                
+                # Construct video URL from project ID  
+                video_url = f"https://app.json2video.com/projects/{project_id}" if project_id else ''
+                direct_video_url = f"https://d1oco4z2z1fhwp.cloudfront.net/projects/{project_id}/project.mp4" if project_id else ''
+                
+                print(f"✅ JSON2Video Response: Project ID = {project_id}")
+                print(f"✅ Dashboard URL: {video_url}")
+                print(f"✅ Direct Video URL: {direct_video_url}")
+                
+                # Update record with video data - use FinalVideo field for consistency
+                record['fields']['JSON2VideoProjectID'] = project_id
+                record['fields']['FinalVideo'] = direct_video_url  # Save to FinalVideo field (used by YouTube uploader)
+                # Note: VideoURL and VideoDashboardURL fields don't exist in Airtable
+                
+                return {
+                    'success': True,
+                    'project_id': project_id,
+                    'video_url': direct_video_url,
+                    'dashboard_url': video_url,
+                    'updated_record': record
+                }
+                
+            except Exception as e:
+                print(f"❌ JSON2Video API error after retries: {e}")
+                return {
+                    'success': False,
+                    'error': str(e),
+                    'updated_record': record
+                }
                     
     except Exception as e:
         print(f"❌ Error creating video: {e}")

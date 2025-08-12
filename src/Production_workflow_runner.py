@@ -419,13 +419,16 @@ class ProductionContentPipelineOrchestratorV2:
                 updated_record = image_result['updated_record']
                 print("✅ Enhanced product images generated with all details preserved")
                 
-                # Update Airtable with generated image URLs
+                # Batch update Airtable with generated image URLs (reduces API calls from 5 to 1)
+                image_updates = {}
                 for i in range(1, 6):
                     generated_url = updated_record['fields'].get(f'ProductNo{i}GeneratedPhoto')
                     if generated_url:
-                        await self.airtable_server.update_record_field(
-                            record_id, f'ProductNo{i}Photo', generated_url
-                        )
+                        image_updates[f'ProductNo{i}Photo'] = generated_url
+                
+                if image_updates:
+                    await self.airtable_server.update_record_fields_batch(record_id, image_updates)
+                    print(f"✅ Updated {len(image_updates)} product images in Airtable (batch update)")
             else:
                 print("⚠️ Using original scraped images (enhancement failed)")
             
@@ -470,10 +473,10 @@ class ProductionContentPipelineOrchestratorV2:
                 'VideoDescriptionStatus': 'Ready'
             }
             
-            for field, value in content_updates.items():
-                await self.airtable_server.update_record_field(record_id, field, value)
+            # Use batch update instead of individual calls (reduces API calls from 13 to 1)
+            await self.airtable_server.update_record_fields_batch(record_id, content_updates)
             
-            print("✅ Platform-optimized content saved to Airtable")
+            print(f"✅ Platform-optimized content saved to Airtable (batch update: {len(content_updates)} fields)")
             
             # Step 6.5: Generate scripts for intro, outro, and products
             print("\n✍️ Step 6.5: Generating scripts for narration...")
@@ -695,10 +698,11 @@ class ProductionContentPipelineOrchestratorV2:
             print("=" * 80)
             print("🏁 Finalizing workflow and updating Airtable status...")
             print("-" * 60)
-            await self.airtable_server.update_record_field(record_id, 'Status', 'Completed')
-            await self.airtable_server.update_record_field(
-                record_id, 'LastOptimizationDate', datetime.now().isoformat()
-            )
+            # Batch update final status (reduces API calls from 2 to 1)
+            await self.airtable_server.update_record_fields_batch(record_id, {
+                'Status': 'Completed',
+                'LastOptimizationDate': datetime.now().isoformat()
+            })
             
             # Calculate total workflow time
             if self.workflow_start_time:

@@ -147,13 +147,23 @@ class ProductionProgressiveAmazonScraperAsync:
                     qualified_products = []
                     for result in search_results:
                         product = self._normalize_product_data(result)
+                        # Only include products that pass normalization (have valid price) and meet review threshold
                         if product and product.get('reviews', 0) >= min_reviews:
                             qualified_products.append(product)
+                            # Stop early if we have enough products
+                            if len(qualified_products) >= count * 2:  # Get extra to ensure we have enough after sorting
+                                break
                     
                     # Sort by composite score (rating * log(reviews))
                     qualified_products.sort(key=lambda x: x.get('score', 0), reverse=True)
                     
-                    return qualified_products[:count]
+                    # Return top products
+                    final_products = qualified_products[:count]
+                    
+                    if len(final_products) < count:
+                        print(f"⚠️ Only found {len(final_products)} products with valid prices (needed {count})")
+                    
+                    return final_products
                     
         except Exception as e:
             print(f"❌ Error getting detailed products: {e}")
@@ -170,6 +180,10 @@ class ProductionProgressiveAmazonScraperAsync:
             
             # Extract price
             price = self._extract_price(raw_product)
+            
+            # Skip products without valid price (N/A or empty)
+            if price == 'N/A' or not price:
+                return None
             
             # Calculate composite score
             score = rating * math.log(reviews + 1) if reviews > 0 else 0

@@ -22,38 +22,52 @@ class ProductionVoiceGenerationMCPServer:
         }
         
     async def generate_voice_for_record(self, record: Dict) -> Dict:
-        """Generate voice for all scripts in a record"""
+        """Generate voice for all scripts in a record - ASYNC/PARALLEL"""
         try:
-            voice_urls = {}
+            print("🚀 Starting ASYNC voice generation for all scripts...")
+            voice_tasks = []
+            voice_keys = []
             
-            # Generate intro voice
+            # Prepare intro voice task
             if 'IntroScript' in record.get('fields', {}):
-                intro_voice = await self.generate_voice(
+                voice_tasks.append(self.generate_voice(
                     record['fields']['IntroScript'],
                     duration_target=5
-                )
-                if intro_voice:
-                    voice_urls['intro_voice'] = intro_voice
+                ))
+                voice_keys.append('intro_voice')
             
-            # Generate product voices
+            # Prepare product voice tasks
             for i in range(1, 6):
                 script_field = f'Product{i}Script'
                 if script_field in record.get('fields', {}):
-                    product_voice = await self.generate_voice(
+                    voice_tasks.append(self.generate_voice(
                         record['fields'][script_field],
                         duration_target=9
-                    )
-                    if product_voice:
-                        voice_urls[f'product{i}_voice'] = product_voice
+                    ))
+                    voice_keys.append(f'product{i}_voice')
             
-            # Generate outro voice
+            # Prepare outro voice task
             if 'OutroScript' in record.get('fields', {}):
-                outro_voice = await self.generate_voice(
+                voice_tasks.append(self.generate_voice(
                     record['fields']['OutroScript'],
                     duration_target=5
-                )
-                if outro_voice:
-                    voice_urls['outro_voice'] = outro_voice
+                ))
+                voice_keys.append('outro_voice')
+            
+            # Execute all voice generation tasks in PARALLEL
+            print(f"⚡ Generating {len(voice_tasks)} voices in parallel...")
+            voice_results = await asyncio.gather(*voice_tasks, return_exceptions=True)
+            
+            # Map results to voice_urls
+            voice_urls = {}
+            for key, result in zip(voice_keys, voice_results):
+                if isinstance(result, Exception):
+                    print(f"⚠️ Voice generation failed for {key}: {result}")
+                elif result:
+                    voice_urls[key] = result
+                    print(f"✅ Generated {key}")
+            
+            print(f"🎉 Async voice generation complete! Generated {len(voice_urls)}/{len(voice_tasks)} voices")
             
             # Update record with voice URLs
             if 'fields' not in record:
