@@ -31,7 +31,7 @@ from src.utils.youtube_auth_manager import YouTubeAuthManager
 from mcp_servers.Production_airtable_server import ProductionAirtableMCPServer
 from mcp_servers.Production_content_generation_server import ProductionContentGenerationMCPServer
 from mcp_servers.Production_progressive_amazon_scraper_async import ProductionProgressiveAmazonScraper
-from mcp_servers.Production_voice_generation_server import ProductionVoiceGenerationMCPServer
+from mcp_servers.Production_voice_generation_server_async_optimized import ProductionVoiceGenerationAsyncOptimized
 from mcp_servers.Production_product_category_extractor_server import ProductionProductCategoryExtractorMCPServer
 from mcp_servers.Production_flow_control_server import ProductionFlowControlMCPServer
 from mcp_servers.Production_amazon_product_validator import ProductionAmazonProductValidator
@@ -41,6 +41,7 @@ from mcp_servers.Production_credential_validation_server import ProductionCreden
 from src.mcp.Production_amazon_affiliate_agent_mcp import production_run_amazon_affiliate_generation
 from src.mcp.Production_text_generation_control_agent_mcp_v2 import production_run_text_control_with_regeneration
 from src.mcp.Production_json2video_agent_mcp import production_run_video_creation
+from src.mcp.Production_json2video_video_downloader import wait_for_video_and_download
 from src.mcp.Production_enhanced_google_drive_agent_mcp import production_upload_all_assets_to_google_drive
 from src.mcp.Production_wordpress_mcp_v2 import ProductionWordPressMCPV2 as ProductionWordPressMCP
 from src.mcp.Production_youtube_mcp import ProductionYouTubeMCP
@@ -56,6 +57,10 @@ import openai
 
 class ProductionContentPipelineOrchestratorV2:
     def __init__(self):
+        # Phase timing tracking
+        self.phase_start_time = None
+        self.workflow_start_time = None
+        
         # Setup logging
         logging.basicConfig(
             level=logging.INFO,
@@ -103,8 +108,9 @@ class ProductionContentPipelineOrchestratorV2:
             airtable_server=self.airtable_server
         )
         
-        self.voice_server = ProductionVoiceGenerationMCPServer(
-            elevenlabs_api_key=self.config['elevenlabs_api_key']
+        self.voice_server = ProductionVoiceGenerationAsyncOptimized(
+            elevenlabs_api_key=self.config['elevenlabs_api_key'],
+            max_concurrent_requests=5  # ElevenLabs Creator tier limit
         )
         
         self.amazon_validator = ProductionAmazonProductValidator(
@@ -119,6 +125,21 @@ class ProductionContentPipelineOrchestratorV2:
         self.credential_validator = ProductionCredentialValidationServer()
         
         print("🚀 PRODUCTION Content Pipeline Orchestrator V2 initialized successfully!")
+    
+    def start_phase(self, phase_name: str):
+        """Start timing a phase and print header"""
+        self.phase_start_time = datetime.now()
+        print("\n" + "=" * 80)
+        print(f"🚀 {phase_name}")
+        print(f"⏰ Started at: {self.phase_start_time.strftime('%H:%M:%S')}")
+        print("=" * 80)
+    
+    def end_phase(self, phase_name: str):
+        """End timing a phase and print summary"""
+        if self.phase_start_time:
+            elapsed = (datetime.now() - self.phase_start_time).total_seconds()
+            print(f"✅ {phase_name} completed in {elapsed:.1f} seconds")
+            print("-" * 80)
         print("📋 Enhanced with scraping variants and progressive testing")
         print("🔍 Includes comprehensive credential validation checkpoint")
 
@@ -166,15 +187,21 @@ class ProductionContentPipelineOrchestratorV2:
 
     async def run_complete_workflow(self):
         """Run the complete production workflow with enhanced scraping variants"""
-        print("\n🚀 Starting PRODUCTION WORKFLOW V2 (Enhanced Scraping)")
-        print("=" * 60)
+        self.workflow_start_time = datetime.now()
+        print("\n" + "=" * 100)
+        print("🚀 STARTING PRODUCTION WORKFLOW V2")
+        print(f"📅 Date/Time: {self.workflow_start_time.strftime('%Y-%m-%d %H:%M:%S')}")
+        print("=" * 100)
         
         # ALWAYS refresh tokens at the start since workflow runs 3x daily
         await self.refresh_tokens_before_workflow()
         
         try:
             # Step 1: Comprehensive Credential Validation Checkpoint
-            print("\n🔍 Step 1: Credential Validation Checkpoint...")
+            print("\n" + "=" * 80)
+            print("🔐 PHASE 1: CREDENTIAL VALIDATION & AUTHENTICATION")
+            print("=" * 80)
+            print("🔍 Validating all API credentials and OAuth tokens...")
             print("-" * 60)
             
             print("🔍 DEBUG: About to call validate_all_credentials()...")
@@ -287,8 +314,11 @@ class ProductionContentPipelineOrchestratorV2:
             print("✅ Credential validation passed - continuing with workflow")
             
             # Step 2: Get pending title from Airtable (REAL API)
+            print("\n" + "=" * 80)
+            print("📋 PHASE 2: FETCHING CONTENT FROM AIRTABLE")
+            print("=" * 80)
             self.logger.info("🔍 DEBUG: Starting Step 2 - Fetching pending title from Airtable...")
-            print("\n📋 Step 2: Fetching pending title from Airtable...")
+            print("📋 Getting next pending title from Airtable database...")
             print("🔍 DEBUG: About to call get_pending_title()...")
             self.logger.info("🔍 DEBUG: About to call get_pending_title()...")
             pending_title = await self.airtable_server.get_pending_title()
@@ -309,7 +339,10 @@ class ProductionContentPipelineOrchestratorV2:
             print("✅ Status updated to Processing")
             
             # Step 3: Generate scraping variants and test progressively
-            print(f"\n🔍 Step 3: Progressive Amazon scraping with variants...")
+            print("\n" + "=" * 80)
+            print("🛒 PHASE 3: AMAZON PRODUCT SCRAPING & VALIDATION")
+            print("=" * 80)
+            print(f"🔍 Progressive Amazon scraping with title variants...")
             print(f"📋 Original title: {title}")
             print("🔍 DEBUG: About to call progressive_scraper.search_with_variants()...")
             
@@ -324,7 +357,10 @@ class ProductionContentPipelineOrchestratorV2:
             if not amazon_products or len(amazon_products) < 5:
                 print(f"❌ Could not find 5 products with sufficient reviews")
                 await self.airtable_server.update_record_field(
-                    record_id, 'Status', 'Failed - Insufficient Products'
+                    record_id, 'Status', 'Skipped'
+                )
+                await self.airtable_server.update_record_field(
+                    record_id, 'TextControlStatus', 'Failed - Insufficient Products'
                 )
                 return
             
@@ -349,9 +385,13 @@ class ProductionContentPipelineOrchestratorV2:
             )
             
             if not validation_result.get('valid', False):
-                print(f"❌ Product validation failed: {validation_result.get('message', 'Unknown error')}")
+                error_msg = validation_result.get('reason', validation_result.get('message', 'Unknown error'))
+                print(f"❌ Product validation failed: {error_msg}")
                 await self.airtable_server.update_record_field(
-                    record_id, 'Status', 'Failed - Product Validation'
+                    record_id, 'Status', 'Skipped'
+                )
+                await self.airtable_server.update_record_field(
+                    record_id, 'TextControlStatus', f'Failed - Product Validation: {error_msg}'
                 )
                 return
             
@@ -390,7 +430,15 @@ class ProductionContentPipelineOrchestratorV2:
                 print("⚠️ Using original scraped images (enhancement failed)")
             
             # Step 7: THEN - Generate content based on scraped products
-            print("\n📝 Step 7: Generating content based on saved products...")
+            print("\n" + "=" * 80)
+            print("📝 PHASE 4: AI CONTENT GENERATION (GPT-4o)")
+            print("=" * 80)
+            print("📝 Generating all platform content with GPT-4o...")
+            print("   • YouTube title & description")
+            print("   • TikTok caption")
+            print("   • Instagram caption")
+            print("   • WordPress content")
+            print("-" * 60)
             
             # Prepare product context for content generation
             product_context = self._prepare_product_context(amazon_products, successful_variant)
@@ -459,15 +507,29 @@ class ProductionContentPipelineOrchestratorV2:
                 return
             
             # Step 8: Continue with rest of workflow (voice, images, video, publishing)
-            print("\n🎙️ Step 8: Generating voice narration...")
+            print("\n" + "=" * 80)
+            print("🎙️ PHASE 5: VOICE GENERATION (ElevenLabs)")
+            print("=" * 80)
+            print("🎙️ Generating voice narration for all 7 segments (parallel processing)...")
+            print("   • Intro voice")
+            print("   • Product 1-5 voices")
+            print("   • Outro voice")
+            print("-" * 60)
             # Ensure we have proper record structure
             if not isinstance(updated_record, dict) or 'fields' not in updated_record:
                 updated_record = {'record_id': record_id, 'fields': updated_record if isinstance(updated_record, dict) else {}}
-            voice_result = await self.voice_server.generate_voice_for_record(updated_record)
+            voice_result = await self.voice_server.generate_all_voices_parallel(updated_record)
             print("✅ Voice narration generated")
             
             # Step 9: Generate images
-            print("\n🖼️ Step 9: Generating intro/outro images...")
+            print("\n" + "=" * 80)
+            print("🖼️ PHASE 6: IMAGE GENERATION (DALL-E 3)")
+            print("=" * 80)
+            print("🖼️ Generating all images with DALL-E 3 (parallel processing)...")
+            print("   • 5 product images (async batch)")
+            print("   • Intro image")
+            print("   • Outro image")
+            print("-" * 60)
             intro_result = await production_generate_intro_image_for_workflow(
                 voice_result['updated_record'], self.config
             )
@@ -495,7 +557,15 @@ class ProductionContentPipelineOrchestratorV2:
                 )
             
             # Step 11: Video creation
-            print("\n🎬 Step 11: Creating video...")
+            print("\n" + "=" * 80)
+            print("🎬 PHASE 7: VIDEO CREATION (JSON2Video)")
+            print("=" * 80)
+            print("🎬 Rendering video with JSON2Video API...")
+            print("   • Combining audio tracks")
+            print("   • Adding images & transitions")
+            print("   • Rendering final video")
+            print("   • Polling for completion (up to 5 minutes)")
+            print("-" * 60)
             video_result = await production_run_video_creation(
                 validation_result.get('updated_record', outro_result['updated_record']), 
                 self.config
@@ -504,7 +574,28 @@ class ProductionContentPipelineOrchestratorV2:
             if video_result.get('success', False):
                 # ✅ FIXED: Save video URLs and project ID to Airtable
                 project_id = video_result.get('project_id', '')
-                video_url = video_result.get('video_url', '')
+                
+                # Step 11b: Wait for video rendering to complete (10 minutes timeout)
+                print("\n⏳ Step 11b: Waiting for video rendering...")
+                print("   🕐 Initial 5-minute wait before checking status...")
+                print("   📊 Then polling every 30 seconds (up to 10 minutes total)")
+                render_result = await wait_for_video_and_download(
+                    project_id,
+                    self.config,
+                    max_wait=600  # 10 minutes total (5 min initial wait + 5 min polling)
+                )
+                
+                if render_result.get('success', False):
+                    video_url = render_result.get('video_url', '')
+                    print(f"✅ Video rendered successfully: {video_url}")
+                    
+                    # Update record with final video URL
+                    video_result['updated_record']['fields']['FinalVideo'] = video_url
+                    video_result['video_url'] = video_url
+                else:
+                    print(f"⚠️ Video rendering failed or timed out: {render_result.get('error', 'Unknown error')}")
+                    video_url = video_result.get('video_url', '')  # Fallback to original URL
+                
                 dashboard_url = video_result.get('dashboard_url', '')
                 
                 # Update Airtable with video information
@@ -513,13 +604,12 @@ class ProductionContentPipelineOrchestratorV2:
                         record_id, 'JSON2VideoProjectID', project_id
                     )
                 if video_url:
+                    # Save to FinalVideo field (used by YouTube uploader)
                     await self.airtable_server.update_record_field(
-                        record_id, 'VideoURL', video_url
+                        record_id, 'FinalVideo', video_url
                     )
-                if dashboard_url:
-                    await self.airtable_server.update_record_field(
-                        record_id, 'VideoDashboardURL', dashboard_url
-                    )
+                    # Note: VideoURL and VideoDashboardURL fields don't exist in Airtable
+                    # Only FinalVideo and JSON2VideoProjectID exist
                     
                 await self.airtable_server.update_record_field(
                     record_id, 'VideoProductionRDY', 'Ready'
@@ -534,7 +624,14 @@ class ProductionContentPipelineOrchestratorV2:
                 return
             
             # Step 12: Enhanced Google Drive upload (ALL assets)
-            print("\n☁️ Step 12: Uploading ALL assets to Google Drive...")
+            print("\n" + "=" * 80)
+            print("☁️ PHASE 8: GOOGLE DRIVE UPLOAD")
+            print("=" * 80)
+            print("☁️ Uploading ALL assets to Google Drive...")
+            print("   • 7 audio files (MP3)")
+            print("   • 7 images (PNG)")
+            print("   • Final video (MP4)")
+            print("-" * 60)
             print("   📁 Creating organized folder structure")
             print("   🎬 Uploading final video")
             print("   🖼️ Uploading all product images")
@@ -552,12 +649,20 @@ class ProductionContentPipelineOrchestratorV2:
                 print(f"❌ Google Drive upload failed: {drive_result.get('error', 'Unknown error')}")
             
             # Step 13: Platform publishing
-            print("\n📤 Step 13: Publishing to platforms...")
+            print("\n" + "=" * 80)
+            print("📤 PHASE 9: MULTI-PLATFORM PUBLISHING")
+            print("=" * 80)
+            print("📤 Publishing content to all platforms...")
+            print("   • YouTube video upload")
+            print("   • WordPress post creation")
+            print("   • TikTok preparation")
+            print("   • Instagram preparation")
+            print("-" * 60)
             
             # YouTube upload
             fields = drive_result['updated_record'].get('fields', {})
             youtube_result = await self.youtube_service.upload_video(
-                video_url=fields.get('VideoURL', ''),
+                video_url=fields.get('FinalVideo', ''),  # Use FinalVideo field
                 title=fields.get('YouTubeTitle', 'Product Review'),
                 description=fields.get('YouTubeDescription', ''),
                 tags=fields.get('UniversalKeywords', '').split(',')[:10]
@@ -585,13 +690,29 @@ class ProductionContentPipelineOrchestratorV2:
             print("✅ Platform publishing completed")
             
             # Step 14: Final completion
-            print("\n🏁 Step 14: Workflow completion...")
+            print("\n" + "=" * 80)
+            print("🏁 PHASE 10: WORKFLOW COMPLETION & STATUS UPDATE")
+            print("=" * 80)
+            print("🏁 Finalizing workflow and updating Airtable status...")
+            print("-" * 60)
             await self.airtable_server.update_record_field(record_id, 'Status', 'Completed')
             await self.airtable_server.update_record_field(
                 record_id, 'LastOptimizationDate', datetime.now().isoformat()
             )
             
-            print("🎉 PRODUCTION WORKFLOW COMPLETED SUCCESSFULLY!")
+            # Calculate total workflow time
+            if self.workflow_start_time:
+                total_time = (datetime.now() - self.workflow_start_time).total_seconds()
+                minutes = int(total_time // 60)
+                seconds = int(total_time % 60)
+                
+                print("\n" + "=" * 100)
+                print("🎉 PRODUCTION WORKFLOW COMPLETED SUCCESSFULLY!")
+                print(f"⏱️ Total Time: {minutes} minutes {seconds} seconds")
+                print(f"📅 Completed at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+                print("=" * 100)
+            else:
+                print("🎉 PRODUCTION WORKFLOW COMPLETED SUCCESSFULLY!")
             print("=" * 60)
             
         except Exception as e:

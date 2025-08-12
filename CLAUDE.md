@@ -6,6 +6,33 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Automated content generation system that creates Amazon affiliate videos and publishes them to multiple platforms. The workflow processes titles from Airtable, scrapes Amazon products, generates videos with AI, and distributes content to YouTube, TikTok, Instagram, and WordPress.
 
+## Current Status (August 12, 2025)
+
+### ✅ Working Components
+- **Credential Validation**: All API keys verified (Health Score: 98/100)
+- **Amazon Scraping**: Successfully scraping products with ScrapingDog
+- **Content Generation**: GPT-4o generating all platform content
+- **Image Generation**: DALL-E 3 creating all images (async/parallel)
+- **Voice Generation**: ElevenLabs generating all audio (now async/parallel)
+- **Script Generation**: All scripts created and optimized for timing
+- **Google Drive**: Authentication working, uploads functional
+- **WordPress**: Posts creating successfully
+- **Airtable**: All audio (7/7) and images (7/7) URLs saved
+
+### 🔧 Recent Fixes Applied (August 12, 2025)
+- **Fixed**: Field mismatch between scraper ('title') and validator ('name')
+- **Fixed**: OpenAI API using `max_completion_tokens` instead of deprecated `max_tokens`
+- **Fixed**: Removed all GPT-5 references (doesn't exist) - using GPT-4o
+- **Fixed**: Google Drive agent now handles base64 data URLs for audio/images
+- **Fixed**: JSON2Video saves to `FinalVideo` field for YouTube uploader
+- **Added**: Video rendering polling with 5-minute timeout
+- **Added**: 30-second polling interval to avoid API spam
+- **Optimized**: Voice generation now async/parallel (5-7x faster)
+
+### ⚠️ Known Issues
+- **YouTube Upload**: 403 error when downloading video (fixed but needs testing)
+- **Video URLs**: Not being saved to Airtable (fixed but needs testing)
+
 ## High-Level Architecture
 
 ### Core Workflow Pipeline
@@ -28,6 +55,13 @@ The workflow implements automatic token refresh at startup via `refresh_tokens_b
 - Tokens are checked and refreshed before each workflow run (designed for 3x daily execution)
 
 ## Essential Commands
+
+### VERY IMPORTANT!!!
+**When running the Production workflow, always show the live terminal output with Bash timeout of 30 minutes:**
+```bash
+# Run with 30-minute timeout and live output
+python3 /home/claude-workflow/src/Production_workflow_runner.py
+```
 
 ### Running the Workflow
 ```bash
@@ -64,12 +98,13 @@ python3 /home/claude-workflow/test_openai_models.py
 
 ## Critical Architecture Details
 
-### OpenAI Model Configuration (August 11, 2025 Update)
-- **Primary Model**: `gpt-4o` (NOT gpt-5 which doesn't exist yet)
-- **Fallback Model**: `gpt-4o-mini`
+### OpenAI Model Configuration (August 12, 2025 Update)
+- **Primary Model**: `gpt-4o` (Latest production model)
+- **Fallback Model**: `gpt-4o-mini` (Faster, cheaper for simpler tasks)
 - **Simple Tasks**: `gpt-3.5-turbo`
 - **API Parameters**: Must use `max_completion_tokens` instead of deprecated `max_tokens`
 - **Temperature**: Some models don't support custom temperature values
+- **Note**: GPT-5 is NOT released as of August 2025 - any references to it should use gpt-4o instead
 
 ### Async Optimizations (December 2025 Update)
 The workflow now uses async/parallel processing for major bottlenecks:
@@ -91,6 +126,20 @@ The workflow now uses async/parallel processing for major bottlenecks:
   - Phase 1: Batch validate variants (3 concurrent) to find one with 5+ products
   - Phase 2: Scrape detailed data for validated variant only
 - **Improvement**: 60-90s → 15-20s
+
+#### 4. Voice Generation with ElevenLabs (NEW - 5-7x faster)
+- **File**: `/mcp_servers/Production_voice_generation_server_async_optimized.py`
+- **Improvement**: Sequential → Parallel (all 7 voices generated concurrently)
+- **Rate Limits by Tier**: Free: 2, Starter: 3, Creator: 5, Pro: 10, Scale: 15 concurrent
+- **Features**: Semaphore-based rate limiting, exponential backoff, retry logic
+- **Expected Time**: 7 sequential voices (~35s) → 5-7s parallel
+
+### Airtable MCP Integration (NEW)
+The workflow now has access to Airtable MCP tools for direct database operations:
+- **Tool**: `mcp__airtable__*` functions available for field inspection and validation
+- **Benefits**: Can check column names, types, and valid values before updates
+- **Usage**: Use `mcp__airtable__describe_table` to inspect schema and field configurations
+- **Field Validation**: Ensures only valid field values are written (e.g., Status must be "Ready", "Pending", or "Skipped")
 
 ### ScrapingDog API Response Format (Critical)
 The ScrapingDog API returns specific field names that must be extracted correctly:
@@ -176,6 +225,15 @@ When Google Drive token expires or is revoked:
 - **Checkpoint Tracking**: `/home/claude-workflow/workflow_checkpoints.json`
 - **API Status Cache**: `/home/claude-workflow/api_status.json`
 - **Debug Messages**: Look for "🔍 DEBUG:" prefixes in logs (normal operation indicators, not errors)
+
+## Airtable MCP Integration
+
+Claude has access to Airtable MCP tools to inspect and manage the database:
+- **Check table schema**: Use `mcp__airtable__describe_table` to see all column names and types
+- **List records**: Use `mcp__airtable__list_records` to view data
+- **Update records**: Use `mcp__airtable__update_records` for fixes
+- **Base ID**: `appTtNBJ8dAnjvkPP` 
+- **Table ID**: `tblhGDEW6eUbmaYZx` (Video Titles table)
 
 ## Development Guidelines
 

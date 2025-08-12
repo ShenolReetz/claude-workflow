@@ -43,8 +43,11 @@ async def production_run_video_creation(record: Dict, config: Dict) -> Dict:
                 if response.status in [200, 201]:
                     data = await response.json()
                     
-                    # ✅ FIXED: JSON2Video API returns project ID directly, not nested
-                    project_id = data.get('project', '')  # Direct string, not nested object
+                    # According to docs, project ID is in 'project' field
+                    project_id = data.get('project', '')
+                    
+                    if not project_id:
+                        print(f"⚠️ No project ID in response. Full response: {json.dumps(data, indent=2)}")
                     
                     # Construct video URL from project ID  
                     video_url = f"https://app.json2video.com/projects/{project_id}" if project_id else ''
@@ -54,11 +57,10 @@ async def production_run_video_creation(record: Dict, config: Dict) -> Dict:
                     print(f"✅ Dashboard URL: {video_url}")
                     print(f"✅ Direct Video URL: {direct_video_url}")
                     
-                    # Update record with video data
+                    # Update record with video data - use FinalVideo field for consistency
                     record['fields']['JSON2VideoProjectID'] = project_id
-                    record['fields']['VideoURL'] = direct_video_url  # Use direct video URL
-                    record['fields']['VideoDashboardURL'] = video_url  # Dashboard URL
-                    record['fields']['VideoCreatedAt'] = datetime.now().isoformat()
+                    record['fields']['FinalVideo'] = direct_video_url  # Save to FinalVideo field (used by YouTube uploader)
+                    # Note: VideoURL and VideoDashboardURL fields don't exist in Airtable
                     
                     return {
                         'success': True,
