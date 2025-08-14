@@ -6,7 +6,7 @@ import json
 import sys
 sys.path.append('/home/claude-workflow')
 
-from mcp_servers.Production_airtable_server import ProductionAirtableMCPServer
+from mcp_servers.production_airtable_server import ProductionAirtableMCPServer
 
 async def check_last_record():
     # Load config

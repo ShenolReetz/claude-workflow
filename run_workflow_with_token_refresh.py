@@ -10,7 +10,7 @@ import asyncio
 sys.path.append('/home/claude-workflow')
 
 from src.utils.google_drive_token_manager import GoogleDriveTokenManager
-from src.Production_workflow_runner import ProductionContentPipelineOrchestratorV2
+from src.production_workflow_runner import ProductionContentPipelineOrchestratorV2
 
 async def main():
     print("=" * 60)

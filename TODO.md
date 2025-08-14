@@ -1,107 +1,151 @@
 # 📋 TODO - Production Workflow V2
 
-## 🚨 IMMEDIATE ACTION REQUIRED (August 12, 2025)
+## 🚨 CRITICAL - GO LIVE TONIGHT (August 14, 2025)
 
-### 1. **TEST COMPLETE WORKFLOW WITH LIVE TERMINAL OUTPUT**
-- [ ] Run full Production workflow end-to-end
-- [ ] Monitor live terminal output for all 14 steps
-- [ ] Verify async voice generation performance (should be 5-7x faster)
-- [ ] Confirm video rendering polling works (5 min timeout, 30 sec intervals)
-- [ ] Check if YouTube upload succeeds with fixed FinalVideo field
-- [ ] Validate all URLs are saved to Airtable correctly
+### 🎯 PHASE 1: FIX REMAINING ERRORS
+- [ ] **Fix Airtable Update Error (422)**
+  - [ ] Debug why "Invalid request: parameter validation failed" occurs
+  - [ ] Check field data types being sent to Airtable
+  - [ ] Ensure all field values are properly formatted
+  - [ ] Test with mcp__airtable__update_records tool directly
 
-### 2. **PUSH CHANGES TO REPOSITORY**
-Once testing confirms all fixes work:
-- [ ] Commit all fixed files with clear message
-- [ ] Push to main branch
-- [ ] Document the fixes in commit message:
-  - Fixed field mismatches (title vs name)
-  - Fixed OpenAI API parameters
-  - Added video rendering polling
-  - Implemented async voice generation
-  - Fixed YouTube 403 error
+- [ ] **Fix WordPress Publishing Error (400)**
+  - [ ] Check WordPress authentication is valid
+  - [ ] Verify post data format matches API requirements
+  - [ ] Ensure content length is within limits
+  - [ ] Test tag IDs are being converted correctly
 
-## 🔧 TESTING CHECKLIST
+- [ ] **Verify YouTube Upload Completion**
+  - [ ] Confirm video URL is saved to Airtable
+  - [ ] Check if video is set to public/unlisted correctly
+  - [ ] Ensure thumbnail is uploaded if available
 
-### Pre-Test Verification:
-- [ ] Confirm all API keys are valid
-- [ ] Check Airtable has pending titles
-- [ ] Verify Google Drive token is refreshed
-- [ ] Ensure YouTube auth is current
+### 🚀 PHASE 2: FULL WORKFLOW VALIDATION
+- [ ] **Run Complete End-to-End Test**
+  - [ ] Start fresh with new pending title
+  - [ ] Monitor all 14 workflow steps
+  - [ ] Verify Remotion renders without JSON2Video
+  - [ ] Confirm all media assets upload to Google Drive
+  - [ ] Check all platform publishing works
 
-### During Test - Monitor These Steps:
-1. [ ] **Step 1**: Credential validation passes
-2. [ ] **Step 2**: Title fetched from Airtable
-3. [ ] **Step 3**: Amazon products scraped successfully
-4. [ ] **Step 4**: Category extraction works
-5. [ ] **Step 5**: Product validation passes
-6. [ ] **Step 6**: Products saved to Airtable
-7. [ ] **Step 7**: Content generation completes
-8. [ ] **Step 8**: Voice generation runs in PARALLEL (watch for timing)
-9. [ ] **Step 9**: Images generated in parallel
-10. [ ] **Step 10**: Content validation passes
-11. [ ] **Step 11**: Video creation starts
-12. [ ] **Step 11b**: Video polling waits for rendering (up to 5 min)
-13. [ ] **Step 12**: Google Drive upload succeeds
-14. [ ] **Step 13**: YouTube upload works (no 403 error)
-15. [ ] **Step 14**: WordPress publishes successfully
+- [ ] **Performance Validation**
+  - [ ] Total time under 5 minutes ✅ (Currently 4m 35s)
+  - [ ] Remotion renders in ~2 minutes ✅
+  - [ ] Voice generation under 50 seconds ✅
+  - [ ] All parallel phases execute correctly ✅
 
-### Post-Test Validation:
-- [ ] Check Airtable record has all URLs:
-  - [ ] FinalVideo URL exists
-  - [ ] YouTubeURL saved
-  - [ ] WordPressURL saved
-  - [ ] All audio URLs (IntroMp3, OutroMp3, Product1-5Mp3)
-  - [ ] All image URLs (IntroPhoto, OutroPhoto, ProductNo1-5Photo)
-- [ ] Verify video plays correctly from CloudFront URL
-- [ ] Confirm YouTube video is uploaded and public
-- [ ] Check WordPress post is published with correct content
+### 📱 PHASE 3: SOCIAL MEDIA INTEGRATION
 
-## 🐛 POTENTIAL ISSUES TO WATCH FOR
+#### ✅ Currently Working:
+- [x] **YouTube** - Videos uploading successfully
+- [x] **Google Drive** - All assets uploading with folder structure
+- [x] **Remotion** - Video generation working (primary renderer)
 
-### If Video Polling Fails:
-- Check JSON2Video API status
-- Verify project ID is correct
-- Ensure API key has proper permissions
-- Check if 5-minute timeout is sufficient
+#### 🔧 Need to Enable:
+- [ ] **WordPress**
+  - [ ] Fix 400 error on post creation
+  - [ ] Verify featured image attachment
+  - [ ] Test affiliate links in content
+  - [ ] Confirm SEO metadata is included
 
-### If YouTube Still Gets 403:
-- Verify FinalVideo field has correct CloudFront URL
-- Check if video is fully rendered before download attempt
-- Ensure video URL is publicly accessible
-- Test manual download of video URL
+- [ ] **Instagram** 
+  - [ ] Enable Instagram Reels upload via API
+  - [ ] Set up proper video format (9:16 vertical)
+  - [ ] Test caption and hashtag posting
+  - [ ] Verify account connection is active
 
-### If Airtable Updates Fail:
-- Check field names match exactly
-- Verify data types (strings vs numbers)
-- Ensure field values are within limits
-- Check for required field constraints
+#### ⏸️ On Hold:
+- [ ] **TikTok** (Waiting for app approval)
+  - [ ] Document API integration requirements
+  - [ ] Prepare test content for when approved
+  - [ ] Set up webhook for approval notification
 
-## 📊 EXPECTED PERFORMANCE IMPROVEMENTS
+### 🌙 PHASE 4: GO LIVE TONIGHT
 
-### After All Fixes:
-- **Voice Generation**: ~35s → ~5-7s (5-7x faster)
-- **Total Workflow**: Should complete in under 5 minutes
-- **Success Rate**: Should be 100% for all steps
-- **API Calls**: Reduced by 6x for video polling (10 calls vs 60)
+#### Pre-Launch Checklist:
+- [ ] **System Health**
+  - [ ] All API credentials valid and refreshed
+  - [ ] Redis cache operational
+  - [ ] Circuit breakers reset and monitoring
+  - [ ] Disk space sufficient for video rendering
 
-## 🚀 DEPLOYMENT READINESS
+- [ ] **Content Pipeline**
+  - [ ] At least 10 pending titles in Airtable
+  - [ ] All product categories mapped correctly
+  - [ ] Voice styles configured for variety
+  - [ ] Brand colors and themes set
 
-### Before Production Deployment:
-- [ ] All 14 steps complete successfully
-- [ ] No errors in terminal output
-- [ ] All URLs saved to Airtable
-- [ ] Video quality verified
-- [ ] Platform publishing confirmed
-- [ ] Performance metrics meet expectations
+- [ ] **Publishing Accounts**
+  - [ ] YouTube channel ready with playlists
+  - [ ] WordPress site live with proper theme
+  - [ ] Instagram account in creator/business mode
+  - [ ] Google Drive folder structure organized
 
-### Ready for Automated Runs:
-- [ ] Workflow can run unattended
-- [ ] Error handling prevents crashes
-- [ ] All async operations work correctly
-- [ ] Rate limits are respected
-- [ ] Tokens auto-refresh as needed
+#### Launch Configuration:
+- [ ] **Set up automated scheduling**
+  ```bash
+  # Add to crontab for 3x daily runs (6am, 2pm, 10pm)
+  0 6,14,22 * * * cd /home/claude-workflow && python3 run_ultra_optimized.py >> workflow_cron.log 2>&1
+  ```
+
+- [ ] **Enable monitoring**
+  - [ ] Set up log rotation for workflow_optimized.log
+  - [ ] Configure alerts for workflow failures
+  - [ ] Create daily summary report script
+  - [ ] Set up backup of successful videos
+
+- [ ] **Final Testing**
+  - [ ] Run 3 consecutive videos without intervention
+  - [ ] Verify all platforms receive content
+  - [ ] Check Airtable status updates correctly
+  - [ ] Confirm no memory leaks or resource issues
+
+### 📊 SUCCESS METRICS FOR TONIGHT
+
+#### Minimum Requirements:
+- [ ] 3 videos successfully created and published
+- [ ] YouTube uploads working (100% success)
+- [ ] WordPress posts created (after fix)
+- [ ] Instagram posts scheduled (if enabled)
+- [ ] Zero workflow crashes
+
+#### Target Goals:
+- [ ] 5+ videos processed
+- [ ] All platforms except TikTok active
+- [ ] Average processing time < 5 minutes
+- [ ] 95%+ success rate across all steps
+- [ ] Full automation without manual intervention
+
+### 🛠️ QUICK FIXES REFERENCE
+
+```bash
+# Test Airtable field update
+python3 -c "from mcp_servers.Production_airtable_server import *; import asyncio; server = ProductionAirtableMCPServer('KEY', 'BASE', 'TABLE'); asyncio.run(server.update_record_field('RECORD_ID', 'FinalVideo', 'URL'))"
+
+# Test WordPress connection
+python3 -c "from src.mcp.Production_wordpress_mcp_v2 import *; wp = ProductionWordPressMCP(config); wp.test_connection()"
+
+# Monitor workflow in real-time
+tail -f /home/claude-workflow/workflow_optimized.log | grep -E "✅|❌|ERROR|WARNING"
+
+# Check circuit breaker status
+python3 -c "from src.utils.circuit_breaker import get_circuit_breaker_manager; m = get_circuit_breaker_manager(); print(m.get_all_status())"
+
+# Clear Redis cache if needed
+redis-cli FLUSHDB
+```
+
+### 🎯 TONIGHT'S LAUNCH SEQUENCE
+
+1. **6:00 PM** - Fix Airtable and WordPress errors
+2. **7:00 PM** - Run full test workflow
+3. **8:00 PM** - Enable all working platforms
+4. **9:00 PM** - Set up cron jobs
+5. **10:00 PM** - GO LIVE with first automated run
+6. **10:30 PM** - Monitor and verify success
+7. **11:00 PM** - Confirm overnight schedule is active
 
 ---
-*Last Updated: August 12, 2025*  
-*Priority: TEST FULL WORKFLOW WITH LIVE OUTPUT → PUSH TO REPO*
+*Last Updated: August 14, 2025 @ 12:15 PM*  
+*Priority: FIX ERRORS → TEST → GO LIVE TONIGHT*  
+*Status: Remotion integration complete, 2 platform errors to fix*
