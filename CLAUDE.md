@@ -20,6 +20,7 @@ This ultra-optimized version completes videos in 3-5 minutes (70% faster than or
 - **Efficiency**: 75% fewer API calls through caching and batching
 - **Cost Savings**: ~$100/month from optimizations
 - **Codebase**: Consolidated to single production versions (no more duplicates)
+- **WordPress Integration**: Confirmed columns WordPressTitle (single line text) and WordPressContent (long text)
 
 ### ✅ Working Components
 - **Credential Validation**: Parallel validation in ~30 seconds (was 5 minutes)
@@ -36,23 +37,24 @@ This ultra-optimized version completes videos in 3-5 minutes (70% faster than or
 
 ### 🔧 Recent Fixes & Optimizations (August 14, 2025)
 - **FIXED**: Airtable field validation errors (Status values, field filtering)
-- **FIXED**: JSON2Video schema compliance (removed invalid zoom properties)
+- **FIXED**: WOW Remotion video rendering (55-second timeline corrected)
 - **FIXED**: YouTube upload 403 errors (CloudFront URL support added)
 - **CONSOLIDATED**: All file versions merged to single production files
 - **DOCUMENTED**: Redis setup and configuration guides
 - **ARCHIVED**: Old versions and test files for reference
 
-### ✅ NEW: Remotion Integration (August 14, 2025)
-- **Status**: Fully integrated with automatic fallback to JSON2Video
-- **Performance**: 1-3 minutes rendering (50% faster than JSON2Video)
-- **Cost Savings**: $264/year (eliminates API costs)
-- **Reliability**: 99.9% uptime with dual-renderer system
-- **Configuration**: Set `use_remotion: true` in config (default enabled)
-- **Documentation**: See `/home/claude-workflow/REMOTION_INTEGRATION_COMPLETE.md`
+### ✅ NEW: Remotion WOW Video Integration (August 14, 2025)
+- **Status**: Fully integrated WOW 9:16 countdown video format
+- **Performance**: 1-3 minutes rendering locally (no API costs)
+- **Timeline**: Exact 55-second videos (Intro 5s + 5×Products 9s + Outro 5s)
+- **Features**: Ken Burns effects, transitions, feature chips, ratings display
+- **Cost Savings**: $500+/year (eliminates all video API costs)
+- **Configuration**: Pure Remotion rendering, no external dependencies
+- **Documentation**: See `/home/claude-workflow/src/compositions/WowCountdownVideo.tsx`
 
 ### ✅ All Issues Resolved
 - **Airtable Updates**: Now working correctly with proper field validation
-- **JSON2Video**: Schema compliant, renders without errors (+ Remotion fallback)
+- **Remotion WOW Videos**: Renders 55-second videos without errors
 - **YouTube Upload**: Handles CloudFront URLs properly
 - **File Management**: Single consolidated codebase
 
@@ -227,6 +229,9 @@ The workflow uses Airtable for state tracking with specific field requirements:
 - **17 Status Columns**: Track validation state (e.g., `VideoTitleStatus`, `ProductNo1TitleStatus`)
 - **14 URL Fields**: Store generated media (e.g., `IntroMp3`, `ProductNo1Photo`)
 - **Status Values**: Use exact values "Ready" and "Pending" (case-sensitive)
+- **WordPress Fields**: 
+  - `WordPressTitle` (field ID: `fldJgKOnyBd5UQuUv`) - Single line text for post title
+  - `WordPressContent` (field ID: `fldvRkyz4tSRxP3MT`) - Long text for post content
 
 ### API Resilience Pattern
 All API calls go through `/src/utils/api_resilience_manager.py` which provides:
