@@ -21,18 +21,38 @@
   - [ ] Ensure thumbnail is uploaded if available
 
 ### 🚀 PHASE 2: FULL WORKFLOW VALIDATION
+
+#### 🖥️ IMPORTANT: Terminal Output Requirements
+- [ ] **ALWAYS run Production workflow with LIVE terminal output**
+  - [ ] NO Bash timeout or minimum 30-minute timeout (1800000ms)
+  - [ ] Use `run_in_background: true` for long-running workflows
+  - [ ] Monitor real-time progress without interruptions
+  - [ ] Capture all logs for debugging
+
+**Run Command Examples:**
+```bash
+# Direct run with live output (preferred)
+python3 run_ultra_optimized.py
+
+# With Claude Code - use 30min timeout
+# Bash timeout: 1800000 (30 minutes)
+# Or use run_in_background: true
+```
+
 - [ ] **Run Complete End-to-End Test**
   - [ ] Start fresh with new pending title
-  - [ ] Monitor all 14 workflow steps
+  - [ ] Monitor all 14 workflow steps WITH LIVE OUTPUT
   - [ ] Verify Remotion renders without JSON2Video
   - [ ] Confirm all media assets upload to Google Drive
   - [ ] Check all platform publishing works
+  - [ ] NO TIMEOUTS during execution
 
 - [ ] **Performance Validation**
   - [ ] Total time under 5 minutes ✅ (Currently 4m 35s)
   - [ ] Remotion renders in ~2 minutes ✅
   - [ ] Voice generation under 50 seconds ✅
   - [ ] All parallel phases execute correctly ✅
+  - [ ] Full terminal output captured
 
 ### 📱 PHASE 3: SOCIAL MEDIA INTEGRATION
 
@@ -119,11 +139,14 @@
 ### 🛠️ QUICK FIXES REFERENCE
 
 ```bash
+# RUN WORKFLOW WITH LIVE OUTPUT (NO TIMEOUT)
+python3 run_ultra_optimized.py
+
 # Test Airtable field update
-python3 -c "from mcp_servers.Production_airtable_server import *; import asyncio; server = ProductionAirtableMCPServer('KEY', 'BASE', 'TABLE'); asyncio.run(server.update_record_field('RECORD_ID', 'FinalVideo', 'URL'))"
+python3 -c "from mcp_servers.production_airtable_server import *; import asyncio; server = ProductionAirtableMCPServer('KEY', 'BASE', 'TABLE'); asyncio.run(server.update_record_field('RECORD_ID', 'FinalVideo', 'URL'))"
 
 # Test WordPress connection
-python3 -c "from src.mcp.Production_wordpress_mcp_v2 import *; wp = ProductionWordPressMCP(config); wp.test_connection()"
+python3 -c "from src.mcp.production_wordpress_mcp_v2 import *; wp = ProductionWordPressMCP(config); wp.test_connection()"
 
 # Monitor workflow in real-time
 tail -f /home/claude-workflow/workflow_optimized.log | grep -E "✅|❌|ERROR|WARNING"
@@ -133,6 +156,9 @@ python3 -c "from src.utils.circuit_breaker import get_circuit_breaker_manager; m
 
 # Clear Redis cache if needed
 redis-cli FLUSHDB
+
+# Run workflow in background with output monitoring
+nohup python3 run_ultra_optimized.py > workflow_live.log 2>&1 & tail -f workflow_live.log
 ```
 
 ### 🎯 TONIGHT'S LAUNCH SEQUENCE
@@ -146,6 +172,7 @@ redis-cli FLUSHDB
 7. **11:00 PM** - Confirm overnight schedule is active
 
 ---
-*Last Updated: August 14, 2025 @ 12:15 PM*  
-*Priority: FIX ERRORS → TEST → GO LIVE TONIGHT*  
-*Status: Remotion integration complete, 2 platform errors to fix*
+*Last Updated: August 14, 2025 @ 1:35 PM*  
+*Priority: FIX ERRORS → TEST WITH LIVE OUTPUT → GO LIVE TONIGHT*  
+*Status: Remotion integration complete, 2 platform errors to fix*  
+**⚠️ IMPORTANT: Always run workflow with LIVE terminal output (no timeout or 30min minimum)**
