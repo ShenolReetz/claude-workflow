@@ -221,6 +221,9 @@ class ProductionAirtableMCPServer:
                     error_text = await response.text()
                     logger.error(f"Failed to update fields: {response.status}")
                     logger.error(f"Error details: {error_text}")
+                    # Log the specific fields that failed for debugging
+                    logger.error(f"Failed fields: {list(fields.keys())}")
+                    logger.error(f"Field values sample: {str(fields)[:500]}")
                     return False
         except Exception as e:
             logger.error(f"Error updating specific status: {e}")

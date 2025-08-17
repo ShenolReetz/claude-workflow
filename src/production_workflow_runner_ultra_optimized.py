@@ -472,12 +472,24 @@ class UltraOptimizedWorkflowRunner:
             'WordPressContent': content.get('wordpress_description', ''),
         }
         
-        # Only include non-None values and convert to strings
+        # Field type limits for Airtable
+        field_limits = {
+            'WordPressTitle': 100,  # singleLineText has 100 char limit
+            'VideoTitle': 100000,   # multilineText
+            'YouTubeTitle': 100,    # Assuming singleLineText
+            'YouTubeDescription': 100000,  # Assuming multilineText
+            'InstagramCaption': 100000,    # Assuming multilineText
+            'TikTokCaption': 100000,        # Assuming multilineText
+            'WordPressContent': 100000,     # multilineText
+        }
+        
+        # Only include non-None values and convert to strings with proper limits
         for field, value in field_mapping.items():
             if value is not None:
-                # Ensure value is a string and not too long for Airtable
-                str_value = str(value)[:100000]  # Airtable has a 100k char limit for long text fields
-                updates[field] = str_value
+                # Ensure value is a string and apply field-specific limits
+                str_value = str(value)
+                max_length = field_limits.get(field, 100000)
+                updates[field] = str_value[:max_length]
         
         if updates:
             await self.services['airtable'].update_record_fields_batch(
