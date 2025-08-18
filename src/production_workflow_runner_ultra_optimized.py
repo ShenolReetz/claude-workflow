@@ -758,7 +758,7 @@ class UltraOptimizedWorkflowRunner:
                                 await self.services['airtable'].update_record_field(
                                     self.current_record['record_id'],
                                     'Status',
-                                    'Skipped'  # Use valid Airtable Status option
+                                    'Failed'  # Set to Failed when workflow encounters errors
                                 )
                             except:
                                 pass  # Ignore status update errors
@@ -792,7 +792,7 @@ class UltraOptimizedWorkflowRunner:
                 await self.services['airtable'].update_record_field(
                     self.current_record['record_id'],
                     'Status',
-                    'Skipped'  # Use valid Airtable Status option instead of custom error message
+                    'Failed'  # Set to Failed when workflow encounters errors
                 )
             
             return False
