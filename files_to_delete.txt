@@ -1,0 +1,58 @@
+# Files to Delete - Outdated/Unused in Current Production Flow
+
+## OLD WORKFLOW RUNNERS (replaced by local_storage version)
+/home/claude-workflow/src/production_workflow_runner_ultra_optimized.py
+/home/claude-workflow/src/production_workflow_runner.py
+/home/claude-workflow/src/production_workflow_runner_optimized.py
+/home/claude-workflow/run_ultra_optimized.py
+/home/claude-workflow/run_optimized_workflow.py
+
+## OLD IMAGE GENERATION (replaced by Imagen 4 Ultra)
+/home/claude-workflow/src/mcp/production_amazon_images_workflow_v2_async.py
+/home/claude-workflow/src/mcp/production_images_local_storage.py
+/home/claude-workflow/src/mcp/production_images_dual_storage.py
+/home/claude-workflow/src/mcp/production_intro_image_generator.py
+/home/claude-workflow/src/mcp/production_outro_image_generator.py
+
+## JSON2VIDEO (replaced by Remotion)
+/home/claude-workflow/src/mcp/production_json2video_agent_mcp.py
+/home/claude-workflow/src/mcp/production_json2video_video_downloader.py
+
+## OLD REMOTION VERSIONS (using strict version now)
+/home/claude-workflow/src/mcp/production_remotion_video_generator.py
+
+## GOOGLE DRIVE RELATED (not using Drive anymore)
+/home/claude-workflow/src/mcp/production_enhanced_google_drive_agent_mcp.py
+/home/claude-workflow/src/mcp/production_amazon_images_workflow_v2.py
+
+## OLD WORDPRESS VERSIONS
+/home/claude-workflow/src/mcp/production_wordpress_mcp.py
+/home/claude-workflow/src/mcp/production_wordpress_mcp_v2.py
+
+## OLD VOICE GENERATION (using local version)
+/home/claude-workflow/mcp_servers/production_voice_generation_server.py
+/home/claude-workflow/mcp_servers/production_voice_generation_server_async_optimized.py
+/home/claude-workflow/mcp_servers/production_voice_generation_server_async_optimized_fixed.py
+
+## TEST FILES (keep only essential ones)
+/home/claude-workflow/src/test_workflow_runner.py
+/home/claude-workflow/test_production_flow.py
+/home/claude-workflow/test_ultra_optimized_workflow.py
+
+## OLD DOCUMENTATION
+/home/claude-workflow/workflow_fixes_aug9.md
+/home/claude-workflow/workflow_complete_solution.md
+/home/claude-workflow/production_flow_components.md
+/home/claude-workflow/OPTIMIZATION_SUMMARY.md
+/home/claude-workflow/ULTRA_OPTIMIZATION_REPORT.md
+
+## UNUSED ALTERNATIVE IMPLEMENTATIONS
+/home/claude-workflow/src/mcp/production_google_imagen_reference.py
+/home/claude-workflow/src/mcp/production_stable_diffusion_reference.py
+
+## OLD AMAZON SCRAPER VERSIONS
+/home/claude-workflow/mcp_servers/production_progressive_amazon_scraper.py
+/home/claude-workflow/mcp_servers/production_amazon_search_validator.py
+
+## UNUSED MCP AGENTS
+/home/claude-workflow/src/mcp/production_text_generation_control_agent_mcp.py (v1, using v2)
