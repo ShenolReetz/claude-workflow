@@ -157,25 +157,58 @@ class ProductionAirtableMCPServer:
         """Update VideoTitle and set VideoTitleStatus to Ready"""
         return await self.update_specific_status(record_id, {
             'VideoTitle': title,
-            'VideoTitleStatus': 'Ready'
+            'VideoTitleStatus': 'selRBEaneWmq3Vgc6'  # Ready
         })
 
     async def update_video_description_status(self, record_id: str, description: str) -> bool:
         """Update VideoDescription and set VideoDescriptionStatus to Ready"""
         return await self.update_specific_status(record_id, {
             'VideoDescription': description,
-            'VideoDescriptionStatus': 'Ready'
+            'VideoDescriptionStatus': 'sel80SVEWni4DML3P'  # Ready
         })
+
+    def _get_product_title_status_id(self, product_num: int) -> str:
+        """Get the Ready status ID for product title based on product number"""
+        status_ids = {
+            1: 'sel3WlgbkoPQbRTPS',  # ProductNo1TitleStatus Ready
+            2: 'sel9LOChgWbVAjqZJ',  # ProductNo2TitleStatus Ready
+            3: 'selnhBBtJ26U1F8wU',  # ProductNo3TitleStatus Ready
+            4: 'sel7xti8XMDvAGP1m',  # ProductNo4TitleStatus Ready
+            5: 'selYDHAE6PRGlxwNd',  # ProductNo5TitleStatus Ready
+        }
+        return status_ids.get(product_num, 'selRBEaneWmq3Vgc6')  # Default to video title ready
+    
+    def _get_product_desc_status_id(self, product_num: int) -> str:
+        """Get the Ready status ID for product description based on product number"""
+        status_ids = {
+            1: 'selx8CNyXgvLWm1Ot',  # ProductNo1DescriptionStatus Ready
+            2: 'selBAJgCfmsPcRTlF',  # ProductNo2DescriptionStatus Ready
+            3: 'selKF14AnQo5Jy8aC',  # ProductNo3DescriptionStatus Ready
+            4: 'selTom1mnOFddAZDC',  # ProductNo4DescriptionStatus Ready
+            5: 'selFDibjh3gC2SPVk',  # ProductNo5DescriptionStatus Ready
+        }
+        return status_ids.get(product_num, 'sel80SVEWni4DML3P')  # Default to video desc ready
+    
+    def _get_product_photo_status_id(self, product_num: int) -> str:
+        """Get the Ready status ID for product photo based on product number"""
+        status_ids = {
+            1: 'selzm6J8mxeODp0SU',  # ProductNo1PhotoStatus Ready
+            2: 'selIlw59igaT7v9tM',  # ProductNo2PhotoStatus Ready
+            3: 'selVQhh7aOHfLoZfr',  # ProductNo3PhotoStatus Ready
+            4: 'sel5g5NtqOnNlZnnl',  # ProductNo4PhotoStatus Ready
+            5: 'selIm5XXqZCx91ijp',  # ProductNo5PhotoStatus Ready
+        }
+        return status_ids.get(product_num, 'selRBEaneWmq3Vgc6')  # Default to video title ready
 
     async def update_product_status(self, record_id: str, product_num: int, title: str, description: str, photo_url: str, affiliate_link: str, price: float, rating: float, reviews: int) -> bool:
         """Update product data and set all related statuses to Ready"""
         return await self.update_specific_status(record_id, {
             f'ProductNo{product_num}Title': title,
-            f'ProductNo{product_num}TitleStatus': 'Ready',
+            f'ProductNo{product_num}TitleStatus': self._get_product_title_status_id(product_num),
             f'ProductNo{product_num}Description': description,
-            f'ProductNo{product_num}DescriptionStatus': 'Ready',
+            f'ProductNo{product_num}DescriptionStatus': self._get_product_desc_status_id(product_num),
             f'ProductNo{product_num}Photo': photo_url,
-            f'ProductNo{product_num}PhotoStatus': 'Ready',
+            f'ProductNo{product_num}PhotoStatus': self._get_product_photo_status_id(product_num),
             f'ProductNo{product_num}AffiliateLink': affiliate_link,
             f'ProductNo{product_num}Price': price,
             f'ProductNo{product_num}Rating': rating,
@@ -184,22 +217,51 @@ class ProductionAirtableMCPServer:
 
     async def update_video_production_ready(self, record_id: str) -> bool:
         """Mark video as ready for production"""
+        # Use the Airtable choice ID for "Ready"
         return await self.update_specific_status(record_id, {
-            'VideoProductionRDY': 'Ready'
+            'VideoProductionRDY': 'selesiQtAJVvzFhu8'  # ID for "Ready"
         })
 
     async def update_content_validation_status(self, record_id: str, status: str, issues: str = "", regeneration_count: int = 0) -> bool:
         """Update content validation status"""
+        # Map status names to Airtable choice IDs
+        status_map = {
+            'Draft': 'selNCmeyLXPqO88Pv',
+            'Validated': 'selTf4jeKPV7GfIRc',
+            'Failed': 'sel54Ov677CxRFdXA',
+            'Regenerating': 'selLE8WHyEYr0YkSB'
+        }
+        
+        status_id = status_map.get(status, status)  # Use original if not found
+        
         return await self.update_specific_status(record_id, {
-            'ContentValidationStatus': status,
+            'ContentValidationStatus': status_id,
             'ValidationIssues': issues,
             'RegenerationCount': regeneration_count
         })
 
     async def update_platform_readiness(self, record_id: str, platforms: list) -> bool:
         """Update which platforms are ready for upload"""
+        # Map platform names to Airtable choice IDs
+        platform_map = {
+            'Youtube': 'selWTV7bZ87ZBQW4k',
+            'YouTube': 'selWTV7bZ87ZBQW4k',  # Handle both cases
+            'Instagram': 'selyW1PTV5R4uYggB',
+            'TikTok': 'selXCc98s7QJklVlY',
+            'Website': 'seliQNTlarAXpHtK4',
+            'WordPress': 'seliQNTlarAXpHtK4'  # Map WordPress to Website
+        }
+        
+        # Convert platform names to choice IDs
+        platform_ids = []
+        for platform in platforms:
+            if platform in platform_map:
+                platform_ids.append(platform_map[platform])
+            else:
+                logger.warning(f"Unknown platform: {platform}")
+        
         return await self.update_specific_status(record_id, {
-            'PlatformReadiness': platforms
+            'PlatformReadiness': platform_ids
         })
 
     @with_retry(max_attempts=3)
@@ -293,10 +355,10 @@ class ProductionAirtableMCPServer:
                     except (ValueError, TypeError):
                         fields[f'ProductNo{i}Reviews'] = 0
                 
-                # Set status fields to Ready
-                fields[f'ProductNo{i}TitleStatus'] = 'Ready'
-                fields[f'ProductNo{i}DescriptionStatus'] = 'Ready'
-                fields[f'ProductNo{i}PhotoStatus'] = 'Ready'
+                # Set status fields to Ready using proper choice IDs
+                fields[f'ProductNo{i}TitleStatus'] = self._get_product_title_status_id(i)
+                fields[f'ProductNo{i}DescriptionStatus'] = self._get_product_desc_status_id(i)
+                fields[f'ProductNo{i}PhotoStatus'] = self._get_product_photo_status_id(i)
             
             # Save to Airtable with retry logic
             success = await self.update_record_fields_batch(record_id, fields)

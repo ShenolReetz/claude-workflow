@@ -99,7 +99,8 @@ class ProductionWordPressMCPV2:
                             else:
                                 error_text = await response.text()
                                 self.logger.warning(f"WordPress API error (attempt {attempt + 1}): {response.status}")
-                                self.logger.debug(f"Error details: {error_text}")
+                                self.logger.error(f"Error details: {error_text}")  # Changed to error level for visibility
+                                self.logger.error(f"Post data sent: {json.dumps(post_data, indent=2)}")
                                 
                                 # Parse error to provide better feedback
                                 try:

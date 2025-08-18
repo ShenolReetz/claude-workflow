@@ -463,13 +463,13 @@ class UltraOptimizedWorkflowRunner:
         # Batch update Airtable - filter out None/empty values and ensure all values are strings
         updates = {}
         field_mapping = {
-            'VideoTitle': content.get('video_title', title),
-            'YouTubeTitle': content.get('youtube_title', ''),
-            'YouTubeDescription': content.get('youtube_description', ''),
-            'InstagramCaption': content.get('instagram_caption', ''),
-            'TikTokCaption': content.get('tiktok_caption', ''),
-            'WordPressTitle': content.get('wordpress_title', ''),
-            'WordPressContent': content.get('wordpress_description', ''),
+            'VideoTitle': content.get('VideoTitle', content.get('video_title', title)),
+            'YouTubeTitle': content.get('YouTubeTitle', content.get('youtube_title', '')),
+            'YouTubeDescription': content.get('YouTubeDescription', content.get('youtube_description', '')),
+            'InstagramCaption': content.get('InstagramCaption', content.get('instagram_caption', '')),
+            'TikTokCaption': content.get('TikTokCaption', content.get('tiktok_caption', '')),
+            'WordPressTitle': content.get('WordPressTitle', content.get('wordpress_title', '')),
+            'WordPressContent': content.get('WordPressContent', content.get('wordpress_description', '')),
         }
         
         # Field type limits for Airtable
@@ -495,6 +495,8 @@ class UltraOptimizedWorkflowRunner:
             await self.services['airtable'].update_record_fields_batch(
                 self.current_record['record_id'], updates
             )
+            # Also update the in-memory record for later phases
+            self.current_record['fields'].update(updates)
         
         return PhaseResult(
             phase=WorkflowPhase.GENERATE_CONTENT,
@@ -597,12 +599,9 @@ class UltraOptimizedWorkflowRunner:
             if renderer == 'remotion' or video_url.startswith('/') or video_url.startswith('file://'):
                 # Remotion returns local file immediately - no wait needed
                 self.logger.info(f"✅ Remotion video ready immediately: {video_url}")
-                # Update the record with the local path (will be uploaded to Drive later)
-                await self.services['airtable'].update_record_field(
-                    self.current_record['record_id'], 'FinalVideo', video_url
-                )
-                # Store the local path in the record for the upload phase
-                self.current_record['fields']['FinalVideo'] = video_url
+                # DON'T save local path to Airtable - wait for Google Drive upload
+                # Just store the local path in memory for the upload phase
+                self.current_record['fields']['local_video_path'] = video_url
             else:
                 # JSON2Video fallback - needs to wait for rendering
                 self.logger.info("⏳ JSON2Video fallback - waiting for rendering...")
@@ -649,8 +648,10 @@ class UltraOptimizedWorkflowRunner:
         fields = self.current_record.get('fields', {})
         
         # Run both publishers in parallel
+        # Use local_video_path for YouTube (it handles local files)
+        video_path = fields.get('local_video_path') or fields.get('FinalVideo', '')
         youtube_task = self.services['youtube'].upload_video(
-            video_url=fields.get('FinalVideo', ''),
+            video_url=video_path,
             title=fields.get('YouTubeTitle', ''),
             description=fields.get('YouTubeDescription', ''),
             tags=fields.get('UniversalKeywords', '').split(',')[:10]
