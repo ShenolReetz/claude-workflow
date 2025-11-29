@@ -40,4 +40,9 @@ logs/
 .DS_Store
 Thumbs.db
 .claude/mcp-servers.json
-remotion-video-generator/
+
+# Remotion - ignore node_modules and build outputs but track source code
+remotion-video-generator/node_modules/
+remotion-video-generator/out/
+remotion-video-generator/.remotion/
+remotion-video-generator/dist/
