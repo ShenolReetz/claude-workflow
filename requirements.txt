@@ -1,0 +1,39 @@
+# Python Dependencies for Claude Workflow Agent System
+# Install with: pip install -r requirements.txt
+
+# HTTP & Async
+aiohttp>=3.9.0
+asyncio-mqtt>=0.16.1
+requests>=2.31.0
+
+# AI & ML Services
+openai>=1.6.0
+anthropic>=0.8.0
+elevenlabs>=0.2.0
+huggingface-hub>=0.19.0
+
+# Data & Storage
+airtable-python-wrapper>=0.15.0
+redis>=5.0.0
+
+# Google APIs (YouTube)
+google-auth>=2.25.0
+google-auth-oauthlib>=1.2.0
+google-auth-httplib2>=0.2.0
+google-api-python-client>=2.110.0
+
+# WordPress
+wordpress-xmlrpc>=2.3
+
+# Instagram
+instagrapi>=2.1.0
+
+# Image Processing
+Pillow>=10.1.0
+
+# Configuration
+python-dotenv>=1.0.0
+
+# Utilities
+python-dateutil>=2.8.0
+pytz>=2023.3

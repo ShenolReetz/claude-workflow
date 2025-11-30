@@ -1,21 +1,43 @@
 {
-  "anthropic_api_key": "sk-ant-api03-YOUR-KEY-HERE",
-  "openai_api_key": "sk-proj-YOUR-KEY-HERE",
-  "airtable_api_key": "patYOUR-KEY-HERE",
-  "airtable_base_id": "appYOUR-BASE-ID",
+  "_comment": "Copy this file to api_keys.json and fill in your actual API keys",
+
+  "openai_api_key": "sk-proj-YOUR_OPENAI_KEY_HERE",
+
+  "huggingface": "hf_YOUR_HUGGINGFACE_TOKEN_HERE",
+  "hf_api_token": "hf_YOUR_HUGGINGFACE_TOKEN_HERE",
+  "hf_image_model": "black-forest-labs/FLUX.1-schnell",
+  "hf_text_model": "Qwen/Qwen2.5-72B-Instruct",
+  "hf_use_inference_api": true,
+  "hf_max_retries": 3,
+  "hf_timeout": 60,
+
+  "elevenlabs_api_key": "YOUR_ELEVENLABS_KEY_HERE",
+
+  "scrapingdog_api_key": "YOUR_SCRAPINGDOG_KEY_HERE",
+
+  "airtable_api_key": "YOUR_AIRTABLE_KEY_HERE",
+  "airtable_base_id": "appXXXXXXXXXXXXXX",
   "airtable_table_name": "Video Titles",
-  "elevenlabs_api_key": "sk_YOUR-KEY-HERE",
-  "json2video_api_key": "YOUR-KEY-HERE",
-  "amazon_associate_id": "your-associate-id-20",
-  "scrapingdog_api_key": "YOUR-KEY-HERE",
-  "google_drive_credentials": "/home/claude-workflow/config/google_drive_credentials.json",
-  "youtube_credentials": "/home/claude-workflow/config/youtube_credentials.json",
-  "youtube_token": "/home/claude-workflow/config/youtube_token.json",
-  "wordpress_url": "https://your-wordpress-site.com",
-  "wordpress_user": "automation_user",
-  "wordpress_password": "YOUR_APPLICATION_PASSWORD",
-  "wordpress_enabled": true,
-  "youtube_enabled": true,
-  "youtube_privacy": "private",
-  "youtube_category": "22"
+
+  "fal_key": "YOUR_FAL_AI_KEY_HERE",
+
+  "youtube_client_secrets_file": "config/youtube_client_secret.json",
+  "youtube_token_file": "config/youtube_token.json",
+
+  "wordpress_url": "https://yoursite.com",
+  "wordpress_user": "your_username",
+  "wordpress_password": "your_app_password",
+
+  "instagram_session_file": "config/instagram_session.json",
+
+  "_api_key_sources": {
+    "openai": "https://platform.openai.com/api-keys",
+    "huggingface": "https://huggingface.co/settings/tokens",
+    "elevenlabs": "https://elevenlabs.io/app/settings/api-keys",
+    "scrapingdog": "https://www.scrapingdog.com/dashboard",
+    "airtable": "https://airtable.com/create/tokens",
+    "fal_ai": "https://fal.ai/dashboard/keys",
+    "youtube": "https://console.cloud.google.com/apis/credentials",
+    "wordpress": "https://yoursite.com/wp-admin/profile.php (Application Passwords)"
+  }
 }
