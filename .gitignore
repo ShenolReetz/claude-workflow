@@ -2,6 +2,7 @@
 config/*.json
 !config/*.example.json
 config/.*
+config/token_backups/
 
 # Backup files
 *.backup
@@ -9,6 +10,8 @@ config/.*
 *.bak
 *.tmp
 *~
+backup_*/
+cleanup_reports/
 
 # Credentials and secrets
 *.key

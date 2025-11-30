@@ -1,22 +1,21 @@
 #!/usr/bin/env python3
 """
-Weekly Local Storage Cleanup Script
-====================================
-Cleans up media files older than 7 days from local storage.
-Can be run manually or via cron job.
+Weekly Complete Storage Cleanup Script
+=======================================
+Runs every Sunday at 07:00 and deletes ALL files in media storage.
+Complete cleanup - no age checking, removes everything.
 
 Usage:
-    python3 cleanup_local_storage.py                # Default: delete files older than 7 days
-    python3 cleanup_local_storage.py --days 14      # Custom retention period
-    python3 cleanup_local_storage.py --dry-run      # Preview what would be deleted
-    python3 cleanup_local_storage.py --backup       # Backup to Drive before deletion
+    python3 cleanup_all_storage.py           # Delete ALL files
+    python3 cleanup_all_storage.py --dry-run # Preview what would be deleted
+    python3 cleanup_all_storage.py --backup  # Backup to Drive before deletion
 """
 
 import os
 import shutil
 from pathlib import Path
-from datetime import datetime, timedelta
-from typing import Optional, List, Tuple
+from datetime import datetime
+from typing import List, Tuple
 import logging
 import argparse
 import json
@@ -38,15 +37,14 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-class LocalStorageCleanup:
-    """Manages cleanup of local media storage"""
+class CompleteStorageCleanup:
+    """Manages complete cleanup of ALL files in local media storage"""
     
-    def __init__(self, base_path: str = "/home/claude-workflow/media_storage", 
-                 days_to_keep: int = 7,
+    def __init__(self, 
+                 base_path: str = "/home/claude-workflow/media_storage",
                  dry_run: bool = False,
                  backup: bool = False):
         self.base_path = Path(base_path)
-        self.days_to_keep = days_to_keep
         self.dry_run = dry_run
         self.backup = backup
         
@@ -71,118 +69,113 @@ class LocalStorageCleanup:
             'errors': []
         }
     
-    async def cleanup(self):
-        """Main cleanup process"""
+    async def cleanup_all(self):
+        """Main cleanup process - removes ALL files"""
         logger.info(f"""
 ╔══════════════════════════════════════════════╗
-║   WEEKLY LOCAL STORAGE CLEANUP               ║
+║   WEEKLY COMPLETE STORAGE CLEANUP            ║
 ╠══════════════════════════════════════════════╣
+║   Schedule: Every Sunday at 07:00            ║
+║   Action: DELETE ALL FILES                   ║
 ║   Base Path: {str(self.base_path):<32} ║
-║   Keep Days: {self.days_to_keep:<32} ║
 ║   Dry Run: {str(self.dry_run):<34} ║
 ║   Backup to Drive: {str(self.backup):<26} ║
 ╚══════════════════════════════════════════════╝
 """)
         
+        logger.warning("⚠️  WARNING: This will delete ALL files in media storage!")
+        
         # Collect all items to remove
         items_to_remove = []
         
-        # Scan main storage
-        items_to_remove.extend(self._scan_directory(self.base_path))
+        # Scan main storage - get EVERYTHING
+        if self.base_path.exists():
+            items_to_remove.extend(self._scan_all_items(self.base_path))
         
-        # Scan temp directories
+        # Scan temp directories - get EVERYTHING
         for temp_path in self.temp_paths:
             if temp_path.exists():
-                items_to_remove.extend(self._scan_directory(temp_path, is_temp=True))
+                items_to_remove.extend(self._scan_all_items(temp_path))
         
         if not items_to_remove:
-            logger.info("✅ No old files found. Storage is clean!")
+            logger.info("✅ No files found. Storage is already clean!")
             return
         
-        # Sort by age (oldest first)
-        items_to_remove.sort(key=lambda x: x[1])
+        # Calculate total size
+        total_size_mb = sum(size for _, size in items_to_remove)
+        total_count = len(items_to_remove)
+        
+        logger.info(f"""
+📊 Found {total_count} items to delete:
+   • Total size: {total_size_mb:.2f} MB
+   • Action: DELETE ALL (no age checking)
+""")
         
         # Optional backup before deletion
         if self.backup and not self.dry_run:
             await self._backup_items(items_to_remove)
         
-        # Remove items
-        for item_path, item_date, size_mb in items_to_remove:
-            age_days = (datetime.now() - item_date).days
+        # Remove ALL items
+        for item_path, size_mb in items_to_remove:
             if item_path.is_dir():
-                self._remove_directory(item_path, age_days, size_mb)
+                self._remove_directory(item_path, size_mb)
             else:
-                self._remove_file(item_path, age_days, size_mb)
+                self._remove_file(item_path, size_mb)
         
         # Print summary
         self._print_summary()
     
-    def _scan_directory(self, base_path: Path, is_temp: bool = False):
-        """Scan directory for old items and return list of (path, date, size_mb)"""
+    def _scan_all_items(self, base_path: Path) -> List[Tuple[Path, float]]:
+        """Scan for ALL items in directory (no age checking)"""
         items = []
         
-        if not base_path.exists():
-            logger.warning(f"Path does not exist: {base_path}")
-            return items
+        logger.info(f"🔍 Scanning ALL items in {base_path}...")
         
-        cutoff_date = datetime.now() - timedelta(days=self.days_to_keep)
-        
-        # For temp directories, use shorter retention (1 day)
-        if is_temp:
-            cutoff_date = datetime.now() - timedelta(days=1)
-        
-        logger.info(f"🔍 Scanning {base_path}...")
-        
-        # Look for date-based directories (YYYY-MM-DD format)
-        for item in base_path.iterdir():
-            try:
-                if item.is_dir():
-                    # Check if it's a date directory
-                    if self._is_date_directory(item.name):
-                        dir_date = self._parse_date_directory(item.name)
-                        if dir_date and dir_date < cutoff_date:
-                            size_mb = self._get_directory_size(item) / (1024 * 1024)
-                            items.append((item, dir_date, size_mb))
-                    # For temp dirs, check modification time
-                    elif is_temp:
-                        mtime = datetime.fromtimestamp(item.stat().st_mtime)
-                        if mtime < cutoff_date:
-                            size_mb = self._get_directory_size(item) / (1024 * 1024)
-                            items.append((item, mtime, size_mb))
-                
-                # Check old files in root
-                elif item.is_file():
-                    mtime = datetime.fromtimestamp(item.stat().st_mtime)
-                    if mtime < cutoff_date:
+        try:
+            # Get everything in the base path
+            for item in base_path.iterdir():
+                try:
+                    if item.is_dir():
+                        # Calculate directory size
+                        size_mb = self._get_directory_size(item) / (1024 * 1024)
+                        items.append((item, size_mb))
+                    elif item.is_file():
+                        # Get file size
                         size_mb = item.stat().st_size / (1024 * 1024)
-                        items.append((item, mtime, size_mb))
+                        items.append((item, size_mb))
                         
-            except Exception as e:
-                logger.error(f"Error scanning {item}: {e}")
-                self.stats['errors'].append(str(e))
+                except Exception as e:
+                    logger.error(f"Error scanning {item}: {e}")
+                    self.stats['errors'].append(str(e))
+        
+        except Exception as e:
+            logger.error(f"Error scanning directory {base_path}: {e}")
+            self.stats['errors'].append(str(e))
         
         return items
     
     async def _backup_items(self, items):
         """Backup items to Google Drive before deletion"""
-        logger.info("☁️ Backing up files to Google Drive before deletion...")
+        logger.info("☁️ Backing up files to Google Drive before complete deletion...")
         
         try:
             from src.utils.dual_storage_manager import get_storage_manager
             storage_manager = get_storage_manager(self.config)
             
-            for item_path, _, size_mb in items:
+            backup_date = datetime.now().strftime('%Y%m%d_%H%M%S')
+            
+            for item_path, size_mb in items:
                 if item_path.is_file() and size_mb < 100:  # Only backup files < 100MB
                     try:
                         with open(item_path, 'rb') as f:
                             content = f.read()
                         
-                        # Upload to Drive
+                        # Upload to Drive with dated backup folder
                         result = await storage_manager.save_media(
                             content=content,
                             filename=item_path.name,
                             media_type="backup",
-                            record_id=f"cleanup_backup_{datetime.now().strftime('%Y%m%d')}",
+                            record_id=f"weekly_cleanup_{backup_date}",
                             upload_to_drive=True
                         )
                         
@@ -200,29 +193,14 @@ class LocalStorageCleanup:
             logger.error(f"Backup initialization failed: {e}")
             self.stats['errors'].append(f"Backup failed: {str(e)}")
     
-    def _is_date_directory(self, name: str) -> bool:
-        """Check if directory name is in YYYY-MM-DD format"""
-        try:
-            datetime.strptime(name, "%Y-%m-%d")
-            return True
-        except ValueError:
-            return False
-    
-    def _parse_date_directory(self, name: str) -> Optional[datetime]:
-        """Parse date from directory name"""
-        try:
-            return datetime.strptime(name, "%Y-%m-%d")
-        except ValueError:
-            return None
-    
-    def _remove_directory(self, path: Path, age_days: int, size_mb: float):
+    def _remove_directory(self, path: Path, size_mb: float):
         """Remove a directory and all contents"""
         try:
             if self.dry_run:
-                logger.info(f"[DRY RUN] Would remove directory: {path.name} (Age: {age_days} days, Size: {size_mb:.2f} MB)")
+                logger.info(f"[DRY RUN] Would remove directory: {path} ({size_mb:.2f} MB)")
             else:
                 shutil.rmtree(path)
-                logger.info(f"🗑️ Removed directory: {path.name} (Age: {age_days} days, Size: {size_mb:.2f} MB)")
+                logger.info(f"🗑️ Removed directory: {path} ({size_mb:.2f} MB)")
             
             self.stats['directories_removed'] += 1
             self.stats['space_freed_mb'] += size_mb
@@ -231,14 +209,14 @@ class LocalStorageCleanup:
             logger.error(f"Failed to remove directory {path}: {e}")
             self.stats['errors'].append(str(e))
     
-    def _remove_file(self, path: Path, age_days: int, size_mb: float):
+    def _remove_file(self, path: Path, size_mb: float):
         """Remove a single file"""
         try:
             if self.dry_run:
-                logger.info(f"[DRY RUN] Would remove file: {path.name} (Age: {age_days} days, Size: {size_mb:.2f} MB)")
+                logger.info(f"[DRY RUN] Would remove file: {path.name} ({size_mb:.2f} MB)")
             else:
                 path.unlink()
-                logger.info(f"🗑️ Removed file: {path.name} (Age: {age_days} days, Size: {size_mb:.2f} MB)")
+                logger.info(f"🗑️ Removed file: {path.name} ({size_mb:.2f} MB)")
             
             self.stats['files_removed'] += 1
             self.stats['space_freed_mb'] += size_mb
@@ -261,7 +239,7 @@ class LocalStorageCleanup:
     def _print_summary(self):
         """Print cleanup summary"""
         
-        # Calculate current storage usage
+        # Calculate current storage usage (should be 0 after cleanup)
         current_size = 0
         current_files = 0
         if self.base_path.exists():
@@ -273,7 +251,7 @@ class LocalStorageCleanup:
         
         logger.info(f"""
 ╔══════════════════════════════════════════════╗
-║   CLEANUP SUMMARY                            ║
+║   COMPLETE CLEANUP SUMMARY                   ║
 ╠══════════════════════════════════════════════╣
 ║   Directories Removed: {self.stats['directories_removed']:<22} ║
 ║   Files Removed: {self.stats['files_removed']:<28} ║
@@ -290,15 +268,17 @@ class LocalStorageCleanup:
         
         if self.dry_run:
             logger.info("ℹ️ This was a DRY RUN - no files were actually deleted")
+        else:
+            logger.info("✅ Complete cleanup executed - ALL files removed")
         
         # Save detailed report
         report_dir = Path("/home/claude-workflow/cleanup_reports")
         report_dir.mkdir(exist_ok=True)
         
-        report_file = report_dir / f"cleanup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        report_file = report_dir / f"complete_cleanup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         self.stats['timestamp'] = datetime.now().isoformat()
         self.stats['dry_run'] = self.dry_run
-        self.stats['retention_days'] = self.days_to_keep
+        self.stats['cleanup_type'] = 'COMPLETE'
         self.stats['current_files'] = current_files
         self.stats['current_size_mb'] = current_size_mb
         
@@ -310,11 +290,9 @@ class LocalStorageCleanup:
 
 async def main():
     """Main entry point"""
-    parser = argparse.ArgumentParser(description='Clean up old local media files')
-    parser.add_argument('--days', type=int, default=7, 
-                       help='Number of days to keep files (default: 7)')
+    parser = argparse.ArgumentParser(description='Complete cleanup of ALL media storage files')
     parser.add_argument('--dry-run', action='store_true',
-                       help='Show what would be deleted without actually deleting')
+                       help='Preview what would be deleted without actually deleting')
     parser.add_argument('--backup', action='store_true',
                        help='Backup files to Google Drive before deletion')
     parser.add_argument('--path', type=str, default='/home/claude-workflow/media_storage',
@@ -322,15 +300,14 @@ async def main():
     
     args = parser.parse_args()
     
-    # Run cleanup
-    cleaner = LocalStorageCleanup(
+    # Run complete cleanup
+    cleaner = CompleteStorageCleanup(
         base_path=args.path,
-        days_to_keep=args.days,
         dry_run=args.dry_run,
         backup=args.backup
     )
     
-    await cleaner.cleanup()
+    await cleaner.cleanup_all()
 
 
 if __name__ == "__main__":

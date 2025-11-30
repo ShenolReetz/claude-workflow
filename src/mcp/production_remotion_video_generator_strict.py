@@ -71,10 +71,28 @@ class StrictRemotionVideoGenerator:
             
             self.logger.info("✅ All media files validated successfully")
             
-            # Step 4: Build video props with LOCAL paths only
-            video_props = await self._build_video_props_local(record, required_files)
+            # Step 4: Copy images to Remotion public folder
+            public_dir = self.remotion_dir / "public"
+            public_dir.mkdir(exist_ok=True, parents=True)
+            self.logger.info("📁 Copying images to Remotion public folder...")
             
-            # Step 5: Check Remotion project exists
+            # Copy all images to public folder
+            for file_info in required_files:
+                if file_info['media_type'] == 'image':
+                    source_path = self.storage_manager.get_local_path(
+                        record_id,
+                        file_info['media_type'],
+                        file_info['filename']
+                    )
+                    if source_path and Path(source_path).exists():
+                        dest_path = public_dir / file_info['filename']
+                        shutil.copy2(source_path, dest_path)
+                        self.logger.info(f"  ✅ Copied {file_info['filename']}")
+            
+            # Step 5: Build video props with relative paths for images
+            video_props = await self._build_video_props_local(record, required_files, use_public_paths=True)
+            
+            # Step 6: Check Remotion project exists
             if not self.remotion_dir.exists():
                 raise Exception(f"Remotion project not found at {self.remotion_dir}")
             
@@ -185,7 +203,7 @@ class StrictRemotionVideoGenerator:
         
         return required
     
-    async def _build_video_props_local(self, record: Dict, required_files: List[Dict]) -> Dict:
+    async def _build_video_props_local(self, record: Dict, required_files: List[Dict], use_public_paths: bool = False) -> Dict:
         """
         Build video props using LOCAL file paths only
         """
@@ -216,7 +234,7 @@ class StrictRemotionVideoGenerator:
                 'price': price,
                 'rating': rating,
                 'reviews': reviews,
-                'image': self.storage_manager.get_local_path(
+                'image': f"/product{i}.jpg" if use_public_paths else self.storage_manager.get_local_path(
                     record_id, 'image', f'product{i}.jpg'
                 ),
                 'affiliateLink': fields.get(f'ProductNo{i}AffiliateLink', ''),
@@ -228,13 +246,18 @@ class StrictRemotionVideoGenerator:
         # Get all local paths
         local_paths = {}
         for file_info in required_files:
-            local_path = self.storage_manager.get_local_path(
-                record_id,
-                file_info['media_type'],
-                file_info['filename']
-            )
-            if local_path:
-                local_paths[file_info['filename']] = local_path
+            if use_public_paths and file_info['media_type'] == 'image':
+                # Use relative path for images in public folder
+                local_paths[file_info['filename']] = f"/{file_info['filename']}"
+            else:
+                # Use full path for audio files
+                local_path = self.storage_manager.get_local_path(
+                    record_id,
+                    file_info['media_type'],
+                    file_info['filename']
+                )
+                if local_path:
+                    local_paths[file_info['filename']] = local_path
         
         # Build final props
         return {
@@ -377,6 +400,11 @@ class StrictRemotionVideoGenerator:
             with open(props_file, 'w') as f:
                 json.dump(props, f, indent=2)
             
+            # Debug: Log props structure
+            self.logger.info(f"Props file created at: {props_file}")
+            self.logger.info(f"Image URLs in props: intro={props.get('data', {}).get('introPhoto', 'MISSING')[:50]}...")
+            self.logger.info(f"Product1 photo: {props.get('data', {}).get('product1', {}).get('photo', 'MISSING')[:50]}...")
+            
             self.logger.info(f"Rendering video with Remotion CLI...")
             
             # Remotion render command
@@ -404,9 +432,10 @@ class StrictRemotionVideoGenerator:
             
             render_time = time.time() - start_time
             
-            # Clean up props file
-            if props_file.exists():
-                props_file.unlink()
+            # Debug: Keep props file for inspection
+            # if props_file.exists():
+            #     props_file.unlink()
+            self.logger.info(f"Props file kept at: {props_file} for debugging")
             
             if result.returncode != 0:
                 raise Exception(f"Render failed: {result.stderr}")

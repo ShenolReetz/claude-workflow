@@ -1,0 +1,446 @@
+2025-08-18 18:55:47,100 - INFO - 
+╔══════════════════════════════════════════════╗
+║   WEEKLY LOCAL STORAGE CLEANUP               ║
+╠══════════════════════════════════════════════╣
+║   Base Path: /home/claude-workflow/media_storage ║
+║   Keep Days: 1                                ║
+║   Dry Run: True                               ║
+║   Backup to Drive: False                      ║
+╚══════════════════════════════════════════════╝
+
+2025-08-18 18:55:47,100 - WARNING - Path does not exist: /home/claude-workflow/media_storage
+2025-08-18 18:55:47,100 - INFO - 🔍 Scanning /tmp/remotion-renders...
+2025-08-18 18:55:47,103 - INFO - [DRY RUN] Would remove file: test_props_1755166897.json (Age: 4 days, Size: 0.00 MB)
+2025-08-18 18:55:47,104 - INFO - [DRY RUN] Would remove file: test_video_1755166897.mp4 (Age: 4 days, Size: 0.35 MB)
+2025-08-18 18:55:47,104 - INFO - [DRY RUN] Would remove file: video__20250814_115030.mp4 (Age: 4 days, Size: 4.85 MB)
+2025-08-18 18:55:47,104 - INFO - [DRY RUN] Would remove file: props_20250814_204316.json (Age: 3 days, Size: 0.00 MB)
+2025-08-18 18:55:47,104 - INFO - [DRY RUN] Would remove file: props_20250814_204531.json (Age: 3 days, Size: 0.00 MB)
+2025-08-18 18:55:47,104 - INFO - [DRY RUN] Would remove file: props_20250814_204826.json (Age: 3 days, Size: 0.98 MB)
+2025-08-18 18:55:47,104 - INFO - [DRY RUN] Would remove file: wow_props_20250814_211101.json (Age: 3 days, Size: 0.01 MB)
+2025-08-18 18:55:47,104 - INFO - [DRY RUN] Would remove file: wow_props_20250814_213319.json (Age: 3 days, Size: 0.01 MB)
+2025-08-18 18:55:47,104 - INFO - [DRY RUN] Would remove file: wow_props_20250814_214952.json (Age: 3 days, Size: 0.01 MB)
+2025-08-18 18:55:47,104 - INFO - [DRY RUN] Would remove file: wow_props_20250814_215618.json (Age: 3 days, Size: 0.01 MB)
+2025-08-18 18:55:47,104 - INFO - [DRY RUN] Would remove file: wow_props_20250814_220113.json (Age: 3 days, Size: 0.01 MB)
+2025-08-18 18:55:47,104 - INFO - [DRY RUN] Would remove file: wow_props_20250815_092938.json (Age: 3 days, Size: 0.01 MB)
+2025-08-18 18:55:47,104 - INFO - [DRY RUN] Would remove file: wow_props_20250815_093144.json (Age: 3 days, Size: 0.01 MB)
+2025-08-18 18:55:47,104 - INFO - [DRY RUN] Would remove file: wow_props_20250815_094303.json (Age: 3 days, Size: 0.01 MB)
+2025-08-18 18:55:47,104 - INFO - [DRY RUN] Would remove file: props__1755370041.json (Age: 2 days, Size: 0.00 MB)
+2025-08-18 18:55:47,104 - INFO - [DRY RUN] Would remove file: video_unknown_20250816_190310.mp4 (Age: 1 days, Size: 4.85 MB)
+2025-08-18 18:55:47,104 - INFO - [DRY RUN] Would remove file: props_unknown_1755371334.json (Age: 1 days, Size: 0.00 MB)
+2025-08-18 18:55:47,104 - INFO - [DRY RUN] Would remove file: props_unknown_1755434238.json (Age: 1 days, Size: 0.00 MB)
+2025-08-18 18:55:47,104 - INFO - 
+╔══════════════════════════════════════════════╗
+║   CLEANUP SUMMARY                            ║
+╠══════════════════════════════════════════════╣
+║   Directories Removed: 0                      ║
+║   Files Removed: 18                           ║
+║   Space Freed: 11.08 MB                  ║
+║   Files Backed Up: 0                         ║
+║   Backup Size: 0.00 MB                   ║
+║   Errors: 0                                   ║
+╠══════════════════════════════════════════════╣
+║   CURRENT STORAGE STATUS                     ║
+║   Total Files: 0                              ║
+║   Total Size: 0.00 MB                    ║
+╚══════════════════════════════════════════════╝
+
+2025-08-18 18:55:47,105 - INFO - ℹ️ This was a DRY RUN - no files were actually deleted
+2025-08-18 18:55:47,105 - INFO - 📊 Report saved to /home/claude-workflow/cleanup_reports/cleanup_20250818_185547.json
+2025-08-18 19:24:12,295 - INFO - 
+╔══════════════════════════════════════════════╗
+║   WEEKLY LOCAL STORAGE CLEANUP               ║
+╠══════════════════════════════════════════════╣
+║   Base Path: /home/claude-workflow/media_storage ║
+║   Keep Days: 7                                ║
+║   Dry Run: True                               ║
+║   Backup to Drive: False                      ║
+╚══════════════════════════════════════════════╝
+
+2025-08-18 19:24:12,295 - INFO - 🔍 Scanning /home/claude-workflow/media_storage...
+2025-08-18 19:24:12,297 - INFO - 🔍 Scanning /tmp/remotion-renders...
+2025-08-18 19:24:12,298 - INFO - [DRY RUN] Would remove file: test_props_1755166897.json (Age: 4 days, Size: 0.00 MB)
+2025-08-18 19:24:12,298 - INFO - [DRY RUN] Would remove file: test_video_1755166897.mp4 (Age: 4 days, Size: 0.35 MB)
+2025-08-18 19:24:12,298 - INFO - [DRY RUN] Would remove file: video__20250814_115030.mp4 (Age: 4 days, Size: 4.85 MB)
+2025-08-18 19:24:12,298 - INFO - [DRY RUN] Would remove file: props_20250814_204316.json (Age: 3 days, Size: 0.00 MB)
+2025-08-18 19:24:12,298 - INFO - [DRY RUN] Would remove file: props_20250814_204531.json (Age: 3 days, Size: 0.00 MB)
+2025-08-18 19:24:12,298 - INFO - [DRY RUN] Would remove file: props_20250814_204826.json (Age: 3 days, Size: 0.98 MB)
+2025-08-18 19:24:12,298 - INFO - [DRY RUN] Would remove file: wow_props_20250814_211101.json (Age: 3 days, Size: 0.01 MB)
+2025-08-18 19:24:12,298 - INFO - [DRY RUN] Would remove file: wow_props_20250814_213319.json (Age: 3 days, Size: 0.01 MB)
+2025-08-18 19:24:12,298 - INFO - [DRY RUN] Would remove file: wow_props_20250814_214952.json (Age: 3 days, Size: 0.01 MB)
+2025-08-18 19:24:12,298 - INFO - [DRY RUN] Would remove file: wow_props_20250814_215618.json (Age: 3 days, Size: 0.01 MB)
+2025-08-18 19:24:12,299 - INFO - [DRY RUN] Would remove file: wow_props_20250814_220113.json (Age: 3 days, Size: 0.01 MB)
+2025-08-18 19:24:12,299 - INFO - [DRY RUN] Would remove file: wow_props_20250815_092938.json (Age: 3 days, Size: 0.01 MB)
+2025-08-18 19:24:12,299 - INFO - [DRY RUN] Would remove file: wow_props_20250815_093144.json (Age: 3 days, Size: 0.01 MB)
+2025-08-18 19:24:12,299 - INFO - [DRY RUN] Would remove file: wow_props_20250815_094303.json (Age: 3 days, Size: 0.01 MB)
+2025-08-18 19:24:12,299 - INFO - [DRY RUN] Would remove file: props__1755370041.json (Age: 2 days, Size: 0.00 MB)
+2025-08-18 19:24:12,299 - INFO - [DRY RUN] Would remove file: video_unknown_20250816_190310.mp4 (Age: 2 days, Size: 4.85 MB)
+2025-08-18 19:24:12,299 - INFO - [DRY RUN] Would remove file: props_unknown_1755371334.json (Age: 2 days, Size: 0.00 MB)
+2025-08-18 19:24:12,299 - INFO - [DRY RUN] Would remove file: props_unknown_1755434238.json (Age: 1 days, Size: 0.00 MB)
+2025-08-18 19:24:12,299 - INFO - 
+╔══════════════════════════════════════════════╗
+║   CLEANUP SUMMARY                            ║
+╠══════════════════════════════════════════════╣
+║   Directories Removed: 0                      ║
+║   Files Removed: 18                           ║
+║   Space Freed: 11.08 MB                  ║
+║   Files Backed Up: 0                         ║
+║   Backup Size: 0.00 MB                   ║
+║   Errors: 0                                   ║
+╠══════════════════════════════════════════════╣
+║   CURRENT STORAGE STATUS                     ║
+║   Total Files: 0                              ║
+║   Total Size: 0.00 MB                    ║
+╚══════════════════════════════════════════════╝
+
+2025-08-18 19:24:12,300 - INFO - ℹ️ This was a DRY RUN - no files were actually deleted
+2025-08-18 19:24:12,300 - INFO - 📊 Report saved to /home/claude-workflow/cleanup_reports/cleanup_20250818_192412.json
+2025-08-18 19:33:03,452 - INFO - 
+╔══════════════════════════════════════════════╗
+║   WEEKLY COMPLETE STORAGE CLEANUP            ║
+╠══════════════════════════════════════════════╣
+║   Schedule: Every Sunday at 07:00            ║
+║   Action: DELETE ALL FILES                   ║
+║   Base Path: /home/claude-workflow/media_storage ║
+║   Dry Run: True                               ║
+║   Backup to Drive: False                      ║
+╚══════════════════════════════════════════════╝
+
+2025-08-18 19:33:03,452 - WARNING - ⚠️  WARNING: This will delete ALL files in media storage!
+2025-08-18 19:33:03,453 - INFO - 🔍 Scanning ALL items in /home/claude-workflow/media_storage...
+2025-08-18 19:33:03,453 - INFO - 🔍 Scanning ALL items in /tmp/remotion-renders...
+2025-08-18 19:33:03,453 - INFO - 
+📊 Found 20 items to delete:
+   • Total size: 18.79 MB
+   • Action: DELETE ALL (no age checking)
+
+2025-08-18 19:33:03,453 - INFO - [DRY RUN] Would remove directory: /home/claude-workflow/media_storage/2025-08-18 (0.00 MB)
+2025-08-18 19:33:03,454 - INFO - [DRY RUN] Would remove directory: /tmp/remotion-renders/bundle (7.71 MB)
+2025-08-18 19:33:03,454 - INFO - [DRY RUN] Would remove file: props_unknown_1755371334.json (0.00 MB)
+2025-08-18 19:33:03,454 - INFO - [DRY RUN] Would remove file: props_20250814_204316.json (0.00 MB)
+2025-08-18 19:33:03,454 - INFO - [DRY RUN] Would remove file: wow_props_20250814_213319.json (0.01 MB)
+2025-08-18 19:33:03,454 - INFO - [DRY RUN] Would remove file: video__20250814_115030.mp4 (4.85 MB)
+2025-08-18 19:33:03,454 - INFO - [DRY RUN] Would remove file: wow_props_20250815_093144.json (0.01 MB)
+2025-08-18 19:33:03,454 - INFO - [DRY RUN] Would remove file: video_unknown_20250816_190310.mp4 (4.85 MB)
+2025-08-18 19:33:03,454 - INFO - [DRY RUN] Would remove file: test_props_1755166897.json (0.00 MB)
+2025-08-18 19:33:03,454 - INFO - [DRY RUN] Would remove file: wow_props_20250814_214952.json (0.01 MB)
+2025-08-18 19:33:03,454 - INFO - [DRY RUN] Would remove file: props_20250814_204531.json (0.00 MB)
+2025-08-18 19:33:03,454 - INFO - [DRY RUN] Would remove file: props_unknown_1755434238.json (0.00 MB)
+2025-08-18 19:33:03,454 - INFO - [DRY RUN] Would remove file: props__1755370041.json (0.00 MB)
+2025-08-18 19:33:03,454 - INFO - [DRY RUN] Would remove file: wow_props_20250815_092938.json (0.01 MB)
+2025-08-18 19:33:03,454 - INFO - [DRY RUN] Would remove file: wow_props_20250814_215618.json (0.01 MB)
+2025-08-18 19:33:03,454 - INFO - [DRY RUN] Would remove file: wow_props_20250815_094303.json (0.01 MB)
+2025-08-18 19:33:03,454 - INFO - [DRY RUN] Would remove file: props_20250814_204826.json (0.98 MB)
+2025-08-18 19:33:03,454 - INFO - [DRY RUN] Would remove file: wow_props_20250814_211101.json (0.01 MB)
+2025-08-18 19:33:03,454 - INFO - [DRY RUN] Would remove file: wow_props_20250814_220113.json (0.01 MB)
+2025-08-18 19:33:03,454 - INFO - [DRY RUN] Would remove file: test_video_1755166897.mp4 (0.35 MB)
+2025-08-18 19:33:03,454 - INFO - 
+╔══════════════════════════════════════════════╗
+║   COMPLETE CLEANUP SUMMARY                   ║
+╠══════════════════════════════════════════════╣
+║   Directories Removed: 2                      ║
+║   Files Removed: 18                           ║
+║   Space Freed: 18.79 MB                  ║
+║   Files Backed Up: 0                         ║
+║   Backup Size: 0.00 MB                   ║
+║   Errors: 0                                   ║
+╠══════════════════════════════════════════════╣
+║   CURRENT STORAGE STATUS                     ║
+║   Total Files: 0                              ║
+║   Total Size: 0.00 MB                    ║
+╚══════════════════════════════════════════════╝
+
+2025-08-18 19:33:03,454 - INFO - ℹ️ This was a DRY RUN - no files were actually deleted
+2025-08-18 19:33:03,455 - INFO - 📊 Report saved to /home/claude-workflow/cleanup_reports/complete_cleanup_20250818_193303.json
+2025-08-24 07:00:01,226 - INFO - 
+╔══════════════════════════════════════════════╗
+║   WEEKLY COMPLETE STORAGE CLEANUP            ║
+╠══════════════════════════════════════════════╣
+║   Schedule: Every Sunday at 07:00            ║
+║   Action: DELETE ALL FILES                   ║
+║   Base Path: /home/claude-workflow/media_storage ║
+║   Dry Run: False                              ║
+║   Backup to Drive: False                      ║
+╚══════════════════════════════════════════════╝
+
+2025-08-24 07:00:01,226 - WARNING - ⚠️  WARNING: This will delete ALL files in media storage!
+2025-08-24 07:00:01,226 - INFO - 🔍 Scanning ALL items in /home/claude-workflow/media_storage...
+2025-08-24 07:00:01,227 - INFO - 🔍 Scanning ALL items in /tmp/remotion-renders...
+2025-08-24 07:00:01,227 - INFO - 
+📊 Found 21 items to delete:
+   • Total size: 19.78 MB
+   • Action: DELETE ALL (no age checking)
+
+2025-08-24 07:00:01,228 - INFO - 🗑️ Removed directory: /home/claude-workflow/media_storage/videos (0.00 MB)
+2025-08-24 07:00:01,229 - INFO - 🗑️ Removed directory: /home/claude-workflow/media_storage/2025-08-18 (0.99 MB)
+2025-08-24 07:00:01,230 - INFO - 🗑️ Removed directory: /tmp/remotion-renders/bundle (7.71 MB)
+2025-08-24 07:00:01,230 - INFO - 🗑️ Removed file: props_unknown_1755371334.json (0.00 MB)
+2025-08-24 07:00:01,230 - INFO - 🗑️ Removed file: props_20250814_204316.json (0.00 MB)
+2025-08-24 07:00:01,230 - INFO - 🗑️ Removed file: wow_props_20250814_213319.json (0.01 MB)
+2025-08-24 07:00:01,231 - INFO - 🗑️ Removed file: video__20250814_115030.mp4 (4.85 MB)
+2025-08-24 07:00:01,231 - INFO - 🗑️ Removed file: wow_props_20250815_093144.json (0.01 MB)
+2025-08-24 07:00:01,232 - INFO - 🗑️ Removed file: video_unknown_20250816_190310.mp4 (4.85 MB)
+2025-08-24 07:00:01,233 - INFO - 🗑️ Removed file: test_props_1755166897.json (0.00 MB)
+2025-08-24 07:00:01,233 - INFO - 🗑️ Removed file: wow_props_20250814_214952.json (0.01 MB)
+2025-08-24 07:00:01,233 - INFO - 🗑️ Removed file: props_20250814_204531.json (0.00 MB)
+2025-08-24 07:00:01,233 - INFO - 🗑️ Removed file: props_unknown_1755434238.json (0.00 MB)
+2025-08-24 07:00:01,233 - INFO - 🗑️ Removed file: props__1755370041.json (0.00 MB)
+2025-08-24 07:00:01,233 - INFO - 🗑️ Removed file: wow_props_20250815_092938.json (0.01 MB)
+2025-08-24 07:00:01,233 - INFO - 🗑️ Removed file: wow_props_20250814_215618.json (0.01 MB)
+2025-08-24 07:00:01,233 - INFO - 🗑️ Removed file: wow_props_20250815_094303.json (0.01 MB)
+2025-08-24 07:00:01,234 - INFO - 🗑️ Removed file: props_20250814_204826.json (0.98 MB)
+2025-08-24 07:00:01,234 - INFO - 🗑️ Removed file: wow_props_20250814_211101.json (0.01 MB)
+2025-08-24 07:00:01,234 - INFO - 🗑️ Removed file: wow_props_20250814_220113.json (0.01 MB)
+2025-08-24 07:00:01,235 - INFO - 🗑️ Removed file: test_video_1755166897.mp4 (0.35 MB)
+2025-08-24 07:00:01,235 - INFO - 
+╔══════════════════════════════════════════════╗
+║   COMPLETE CLEANUP SUMMARY                   ║
+╠══════════════════════════════════════════════╣
+║   Directories Removed: 3                      ║
+║   Files Removed: 18                           ║
+║   Space Freed: 19.78 MB                  ║
+║   Files Backed Up: 0                         ║
+║   Backup Size: 0.00 MB                   ║
+║   Errors: 0                                   ║
+╠══════════════════════════════════════════════╣
+║   CURRENT STORAGE STATUS                     ║
+║   Total Files: 0                              ║
+║   Total Size: 0.00 MB                    ║
+╚══════════════════════════════════════════════╝
+
+2025-08-24 07:00:01,235 - INFO - ✅ Complete cleanup executed - ALL files removed
+2025-08-24 07:00:01,235 - INFO - 📊 Report saved to /home/claude-workflow/cleanup_reports/complete_cleanup_20250824_070001.json
+2025-08-31 07:00:01,953 - INFO - 
+╔══════════════════════════════════════════════╗
+║   WEEKLY COMPLETE STORAGE CLEANUP            ║
+╠══════════════════════════════════════════════╣
+║   Schedule: Every Sunday at 07:00            ║
+║   Action: DELETE ALL FILES                   ║
+║   Base Path: /home/claude-workflow/media_storage ║
+║   Dry Run: False                              ║
+║   Backup to Drive: False                      ║
+╚══════════════════════════════════════════════╝
+
+2025-08-31 07:00:01,953 - WARNING - ⚠️  WARNING: This will delete ALL files in media storage!
+2025-08-31 07:00:01,953 - INFO - 🔍 Scanning ALL items in /home/claude-workflow/media_storage...
+2025-08-31 07:00:01,960 - INFO - 🔍 Scanning ALL items in /tmp/remotion-renders...
+2025-08-31 07:00:01,960 - INFO - 
+📊 Found 2 items to delete:
+   • Total size: 13.98 MB
+   • Action: DELETE ALL (no age checking)
+
+2025-08-31 07:00:01,963 - INFO - 🗑️ Removed directory: /home/claude-workflow/media_storage/videos (7.89 MB)
+2025-08-31 07:00:01,968 - INFO - 🗑️ Removed directory: /home/claude-workflow/media_storage/2025-08-26 (6.09 MB)
+2025-08-31 07:00:01,968 - INFO - 
+╔══════════════════════════════════════════════╗
+║   COMPLETE CLEANUP SUMMARY                   ║
+╠══════════════════════════════════════════════╣
+║   Directories Removed: 2                      ║
+║   Files Removed: 0                            ║
+║   Space Freed: 13.98 MB                  ║
+║   Files Backed Up: 0                         ║
+║   Backup Size: 0.00 MB                   ║
+║   Errors: 0                                   ║
+╠══════════════════════════════════════════════╣
+║   CURRENT STORAGE STATUS                     ║
+║   Total Files: 0                              ║
+║   Total Size: 0.00 MB                    ║
+╚══════════════════════════════════════════════╝
+
+2025-08-31 07:00:01,968 - INFO - ✅ Complete cleanup executed - ALL files removed
+2025-08-31 07:00:01,969 - INFO - 📊 Report saved to /home/claude-workflow/cleanup_reports/complete_cleanup_20250831_070001.json
+2025-09-07 07:00:02,102 - INFO - 
+╔══════════════════════════════════════════════╗
+║   WEEKLY COMPLETE STORAGE CLEANUP            ║
+╠══════════════════════════════════════════════╣
+║   Schedule: Every Sunday at 07:00            ║
+║   Action: DELETE ALL FILES                   ║
+║   Base Path: /home/claude-workflow/media_storage ║
+║   Dry Run: False                              ║
+║   Backup to Drive: False                      ║
+╚══════════════════════════════════════════════╝
+
+2025-09-07 07:00:02,102 - WARNING - ⚠️  WARNING: This will delete ALL files in media storage!
+2025-09-07 07:00:02,103 - INFO - 🔍 Scanning ALL items in /home/claude-workflow/media_storage...
+2025-09-07 07:00:02,103 - INFO - ✅ No files found. Storage is already clean!
+2025-09-14 07:00:01,912 - INFO - 
+╔══════════════════════════════════════════════╗
+║   WEEKLY COMPLETE STORAGE CLEANUP            ║
+╠══════════════════════════════════════════════╣
+║   Schedule: Every Sunday at 07:00            ║
+║   Action: DELETE ALL FILES                   ║
+║   Base Path: /home/claude-workflow/media_storage ║
+║   Dry Run: False                              ║
+║   Backup to Drive: False                      ║
+╚══════════════════════════════════════════════╝
+
+2025-09-14 07:00:01,912 - WARNING - ⚠️  WARNING: This will delete ALL files in media storage!
+2025-09-14 07:00:01,912 - INFO - 🔍 Scanning ALL items in /home/claude-workflow/media_storage...
+2025-09-14 07:00:01,912 - INFO - ✅ No files found. Storage is already clean!
+2025-09-21 07:00:01,584 - INFO - 
+╔══════════════════════════════════════════════╗
+║   WEEKLY COMPLETE STORAGE CLEANUP            ║
+╠══════════════════════════════════════════════╣
+║   Schedule: Every Sunday at 07:00            ║
+║   Action: DELETE ALL FILES                   ║
+║   Base Path: /home/claude-workflow/media_storage ║
+║   Dry Run: False                              ║
+║   Backup to Drive: False                      ║
+╚══════════════════════════════════════════════╝
+
+2025-09-21 07:00:01,584 - WARNING - ⚠️  WARNING: This will delete ALL files in media storage!
+2025-09-21 07:00:01,584 - INFO - 🔍 Scanning ALL items in /home/claude-workflow/media_storage...
+2025-09-21 07:00:01,585 - INFO - ✅ No files found. Storage is already clean!
+2025-09-28 07:00:01,732 - INFO - 
+╔══════════════════════════════════════════════╗
+║   WEEKLY COMPLETE STORAGE CLEANUP            ║
+╠══════════════════════════════════════════════╣
+║   Schedule: Every Sunday at 07:00            ║
+║   Action: DELETE ALL FILES                   ║
+║   Base Path: /home/claude-workflow/media_storage ║
+║   Dry Run: False                              ║
+║   Backup to Drive: False                      ║
+╚══════════════════════════════════════════════╝
+
+2025-09-28 07:00:01,732 - WARNING - ⚠️  WARNING: This will delete ALL files in media storage!
+2025-09-28 07:00:01,733 - INFO - 🔍 Scanning ALL items in /home/claude-workflow/media_storage...
+2025-09-28 07:00:01,734 - INFO - ✅ No files found. Storage is already clean!
+2025-10-05 07:00:01,090 - INFO - 
+╔══════════════════════════════════════════════╗
+║   WEEKLY COMPLETE STORAGE CLEANUP            ║
+╠══════════════════════════════════════════════╣
+║   Schedule: Every Sunday at 07:00            ║
+║   Action: DELETE ALL FILES                   ║
+║   Base Path: /home/claude-workflow/media_storage ║
+║   Dry Run: False                              ║
+║   Backup to Drive: False                      ║
+╚══════════════════════════════════════════════╝
+
+2025-10-05 07:00:01,090 - WARNING - ⚠️  WARNING: This will delete ALL files in media storage!
+2025-10-05 07:00:01,090 - INFO - 🔍 Scanning ALL items in /home/claude-workflow/media_storage...
+2025-10-05 07:00:01,091 - INFO - ✅ No files found. Storage is already clean!
+2025-10-12 07:00:01,575 - INFO - 
+╔══════════════════════════════════════════════╗
+║   WEEKLY COMPLETE STORAGE CLEANUP            ║
+╠══════════════════════════════════════════════╣
+║   Schedule: Every Sunday at 07:00            ║
+║   Action: DELETE ALL FILES                   ║
+║   Base Path: /home/claude-workflow/media_storage ║
+║   Dry Run: False                              ║
+║   Backup to Drive: False                      ║
+╚══════════════════════════════════════════════╝
+
+2025-10-12 07:00:01,575 - WARNING - ⚠️  WARNING: This will delete ALL files in media storage!
+2025-10-12 07:00:01,575 - INFO - 🔍 Scanning ALL items in /home/claude-workflow/media_storage...
+2025-10-12 07:00:01,575 - INFO - ✅ No files found. Storage is already clean!
+2025-10-19 07:00:01,746 - INFO - 
+╔══════════════════════════════════════════════╗
+║   WEEKLY COMPLETE STORAGE CLEANUP            ║
+╠══════════════════════════════════════════════╣
+║   Schedule: Every Sunday at 07:00            ║
+║   Action: DELETE ALL FILES                   ║
+║   Base Path: /home/claude-workflow/media_storage ║
+║   Dry Run: False                              ║
+║   Backup to Drive: False                      ║
+╚══════════════════════════════════════════════╝
+
+2025-10-19 07:00:01,746 - WARNING - ⚠️  WARNING: This will delete ALL files in media storage!
+2025-10-19 07:00:01,746 - INFO - 🔍 Scanning ALL items in /home/claude-workflow/media_storage...
+2025-10-19 07:00:01,746 - INFO - ✅ No files found. Storage is already clean!
+2025-10-26 07:00:01,305 - INFO - 
+╔══════════════════════════════════════════════╗
+║   WEEKLY COMPLETE STORAGE CLEANUP            ║
+╠══════════════════════════════════════════════╣
+║   Schedule: Every Sunday at 07:00            ║
+║   Action: DELETE ALL FILES                   ║
+║   Base Path: /home/claude-workflow/media_storage ║
+║   Dry Run: False                              ║
+║   Backup to Drive: False                      ║
+╚══════════════════════════════════════════════╝
+
+2025-10-26 07:00:01,305 - WARNING - ⚠️  WARNING: This will delete ALL files in media storage!
+2025-10-26 07:00:01,305 - INFO - 🔍 Scanning ALL items in /home/claude-workflow/media_storage...
+2025-10-26 07:00:01,306 - INFO - ✅ No files found. Storage is already clean!
+2025-11-02 07:00:01,995 - INFO - 
+╔══════════════════════════════════════════════╗
+║   WEEKLY COMPLETE STORAGE CLEANUP            ║
+╠══════════════════════════════════════════════╣
+║   Schedule: Every Sunday at 07:00            ║
+║   Action: DELETE ALL FILES                   ║
+║   Base Path: /home/claude-workflow/media_storage ║
+║   Dry Run: False                              ║
+║   Backup to Drive: False                      ║
+╚══════════════════════════════════════════════╝
+
+2025-11-02 07:00:01,995 - WARNING - ⚠️  WARNING: This will delete ALL files in media storage!
+2025-11-02 07:00:01,995 - INFO - 🔍 Scanning ALL items in /home/claude-workflow/media_storage...
+2025-11-02 07:00:01,995 - INFO - ✅ No files found. Storage is already clean!
+2025-11-09 07:00:01,857 - INFO - 
+╔══════════════════════════════════════════════╗
+║   WEEKLY COMPLETE STORAGE CLEANUP            ║
+╠══════════════════════════════════════════════╣
+║   Schedule: Every Sunday at 07:00            ║
+║   Action: DELETE ALL FILES                   ║
+║   Base Path: /home/claude-workflow/media_storage ║
+║   Dry Run: False                              ║
+║   Backup to Drive: False                      ║
+╚══════════════════════════════════════════════╝
+
+2025-11-09 07:00:01,857 - WARNING - ⚠️  WARNING: This will delete ALL files in media storage!
+2025-11-09 07:00:01,857 - INFO - 🔍 Scanning ALL items in /home/claude-workflow/media_storage...
+2025-11-09 07:00:01,858 - INFO - ✅ No files found. Storage is already clean!
+2025-11-16 07:00:01,588 - INFO - 
+╔══════════════════════════════════════════════╗
+║   WEEKLY COMPLETE STORAGE CLEANUP            ║
+╠══════════════════════════════════════════════╣
+║   Schedule: Every Sunday at 07:00            ║
+║   Action: DELETE ALL FILES                   ║
+║   Base Path: /home/claude-workflow/media_storage ║
+║   Dry Run: False                              ║
+║   Backup to Drive: False                      ║
+╚══════════════════════════════════════════════╝
+
+2025-11-16 07:00:01,588 - WARNING - ⚠️  WARNING: This will delete ALL files in media storage!
+2025-11-16 07:00:01,588 - INFO - 🔍 Scanning ALL items in /home/claude-workflow/media_storage...
+2025-11-16 07:00:01,588 - INFO - ✅ No files found. Storage is already clean!
+2025-11-23 07:00:01,212 - INFO - 
+╔══════════════════════════════════════════════╗
+║   WEEKLY COMPLETE STORAGE CLEANUP            ║
+╠══════════════════════════════════════════════╣
+║   Schedule: Every Sunday at 07:00            ║
+║   Action: DELETE ALL FILES                   ║
+║   Base Path: /home/claude-workflow/media_storage ║
+║   Dry Run: False                              ║
+║   Backup to Drive: False                      ║
+╚══════════════════════════════════════════════╝
+
+2025-11-23 07:00:01,212 - WARNING - ⚠️  WARNING: This will delete ALL files in media storage!
+2025-11-23 07:00:01,212 - INFO - 🔍 Scanning ALL items in /home/claude-workflow/media_storage...
+2025-11-23 07:00:01,212 - INFO - ✅ No files found. Storage is already clean!
+2025-11-29 19:37:04,535 - INFO - 
+╔══════════════════════════════════════════════╗
+║   WEEKLY COMPLETE STORAGE CLEANUP            ║
+╠══════════════════════════════════════════════╣
+║   Schedule: Every Sunday at 07:00            ║
+║   Action: DELETE ALL FILES                   ║
+║   Base Path: /home/claude-workflow/media_storage ║
+║   Dry Run: True                               ║
+║   Backup to Drive: False                      ║
+╚══════════════════════════════════════════════╝
+
+2025-11-29 19:37:04,535 - WARNING - ⚠️  WARNING: This will delete ALL files in media storage!
+2025-11-29 19:37:04,535 - INFO - 🔍 Scanning ALL items in /home/claude-workflow/media_storage...
+2025-11-29 19:37:04,536 - INFO - ✅ No files found. Storage is already clean!
+2025-11-30 07:00:01,686 - INFO - 
+╔══════════════════════════════════════════════╗
+║   WEEKLY COMPLETE STORAGE CLEANUP            ║
+╠══════════════════════════════════════════════╣
+║   Schedule: Every Sunday at 07:00            ║
+║   Action: DELETE ALL FILES                   ║
+║   Base Path: /home/claude-workflow/media_storage ║
+║   Dry Run: False                              ║
+║   Backup to Drive: False                      ║
+╚══════════════════════════════════════════════╝
+
+2025-11-30 07:00:01,686 - WARNING - ⚠️  WARNING: This will delete ALL files in media storage!
+2025-11-30 07:00:01,686 - INFO - 🔍 Scanning ALL items in /home/claude-workflow/media_storage...
+2025-11-30 07:00:01,686 - INFO - ✅ No files found. Storage is already clean!

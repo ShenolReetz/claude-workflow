@@ -1,4 +1,4 @@
-#!/bin/bash
+Hi #!/bin/bash
 # Local Redis Start Script (No sudo required)
 # ============================================
 
