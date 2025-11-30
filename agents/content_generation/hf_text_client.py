@@ -242,3 +242,7 @@ Keep caption under 150 words."""
         import re
         hashtags = re.findall(r'#\w+', text)
         return hashtags[:30]  # Limit to 30 hashtags
+
+
+# Alias for backward compatibility
+HFTextClient = HuggingFaceTextClient

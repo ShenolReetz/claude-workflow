@@ -11,7 +11,6 @@ from typing import Dict, Any, List
 sys.path.append('/home/claude-workflow')
 
 from agents.base_subagent import BaseSubAgent
-from mcp_servers.production_amazon_product_validator import ProductionAmazonProductValidator
 
 
 class ProductValidatorSubAgent(BaseSubAgent):
@@ -21,13 +20,13 @@ class ProductValidatorSubAgent(BaseSubAgent):
     - Validates URLs and images
     - Ensures price and rating format
     - Filters low-quality products
+
+    Note: All validation logic is self-contained in this subagent.
+    No external MCP server needed.
     """
 
     def __init__(self, name: str, config: Dict[str, Any], parent_agent_id: str = None):
         super().__init__(name, config, parent_agent_id)
-
-        # Initialize product validator
-        self.validator = ProductionAmazonProductValidator(config)
 
         # Validation thresholds
         self.min_rating = config.get('min_product_rating', 3.5)

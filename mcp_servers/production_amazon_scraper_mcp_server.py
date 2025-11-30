@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 """
 Production Amazon Scraper MCP Server

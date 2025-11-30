@@ -173,3 +173,7 @@ sharp focus, commercial quality."""
             }
         else:
             return result
+
+
+# Alias for backward compatibility
+HFImageClient = HuggingFaceImageClient
