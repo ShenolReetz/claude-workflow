@@ -11,6 +11,7 @@ from typing import Dict, Any
 sys.path.append('/home/claude-workflow')
 
 from agents.base_subagent import BaseSubAgent
+from agents.utils.airtable_client import AirtableClient
 
 
 class AirtableFetchSubAgent(BaseSubAgent):
@@ -28,8 +29,12 @@ class AirtableFetchSubAgent(BaseSubAgent):
 
         # Store Airtable configuration
         self.api_key = config.get('airtable_api_key')
-        self.base_id = config.get('airtable_base_id')
+        self.base_id = config.get('airtable_base_id', 'appTtNBJ8dAnjvkPP')
+        self.table_id = config.get('airtable_table_id', 'tblhGDEW6eUbmaYZx')
         self.table_name = config.get('airtable_table_name', 'Video Titles')
+
+        # Initialize Airtable client
+        self.airtable = AirtableClient(self.api_key, self.base_id, self.table_id)
 
     async def execute_task(self, task: Dict[str, Any]) -> Any:
         """
@@ -55,23 +60,48 @@ class AirtableFetchSubAgent(BaseSubAgent):
 
     async def _fetch_pending_title(self) -> Dict[str, Any]:
         """Fetch one pending title from Airtable"""
-        self.logger.info("📥 Fetching pending title...")
+        self.logger.info("📥 Fetching pending title from Airtable...")
 
         try:
-            # TODO: Implement actual Airtable MCP call using mcp__airtable__search_records
-            # For now, return mock data for testing
-            self.logger.warning("⚠️  Using mock data - Airtable MCP integration pending")
+            # Fetch pending records sorted by ID (oldest first)
+            records = self.airtable.list_records(
+                formula="Status = 'Pending'",
+                max_records=1,
+                sort=['ID']  # Ascending by default
+            )
+
+            if not records or len(records) == 0:
+                self.logger.warning("⚠️  No pending titles found")
+                return None
+
+            record = records[0]
+            record_id = record['id']
+            fields = record['fields']
+
+            self.logger.info(f"✅ Fetched record: {record_id} - {fields.get('Title', 'Untitled')}")
+
+            # Update status to 'Processing' immediately
+            self._update_status(record_id, 'Processing')
 
             return {
-                'record_id': 'test_record_123',
-                'title': 'Top 5 Wireless Headphones 2024',
-                'notes': '',
-                'created_time': '2024-01-01T00:00:00.000Z'
+                'record_id': record_id,
+                'title': fields.get('Title', ''),
+                'notes': fields.get('VideoDescription', ''),
+                'created_time': fields.get('ID', 0)
             }
 
         except Exception as e:
             self.logger.error(f"❌ Airtable fetch failed: {e}")
             raise
+
+    def _update_status(self, record_id: str, status: str):
+        """Update record status in Airtable"""
+        try:
+            self.airtable.update_record(record_id, {'Status': status})
+            self.logger.info(f"✅ Updated status to '{status}' for record {record_id}")
+
+        except Exception as e:
+            self.logger.warning(f"⚠️  Failed to update status: {e}")
 
     async def _save_products(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Save product data to Airtable"""
@@ -84,13 +114,35 @@ class AirtableFetchSubAgent(BaseSubAgent):
         self.logger.info(f"💾 Saving {len(products)} products to Airtable...")
 
         try:
-            # TODO: Implement actual Airtable MCP call using mcp__airtable__update_records
-            # For now, just log and return success
-            self.logger.warning("⚠️  Using mock save - Airtable MCP integration pending")
+            # Build fields dictionary for all 5 products
+            fields = {}
+
+            for i, product in enumerate(products[:5], 1):
+                # Product fields (8 fields per product = 40 total)
+                prefix = f"ProductNo{i}"
+
+                fields[f"{prefix}Title"] = product.get('title', '')
+                fields[f"{prefix}Description"] = product.get('description', '')
+                fields[f"{prefix}Photo"] = product.get('image_url', '')
+                fields[f"{prefix}Price"] = float(product.get('price', 0))
+                fields[f"{prefix}Rating"] = float(product.get('rating', 0))
+                fields[f"{prefix}Reviews"] = int(product.get('review_count', 0))
+                fields[f"{prefix}AffiliateLink"] = product.get('product_url', '')
+
+                # Status fields - set to "Ready" after saving
+                fields[f"{prefix}TitleStatus"] = "Ready"
+                fields[f"{prefix}DescriptionStatus"] = "Ready"
+                fields[f"{prefix}PhotoStatus"] = "Ready"
+
+            # Update Airtable record with all product data
+            self.airtable.update_record(record_id, fields)
+
+            self.logger.info(f"✅ Saved {len(products)} products to Airtable ({len(fields)} fields updated)")
 
             return {
                 'record_id': record_id,
-                'products_saved': len(products)
+                'products_saved': len(products),
+                'fields_updated': len(fields)
             }
 
         except Exception as e:
