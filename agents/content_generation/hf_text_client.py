@@ -20,10 +20,10 @@ class HuggingFaceTextClient:
     def __init__(self, config: Dict[str, Any]):
         self.config = config
         self.api_token = config.get('hf_api_token')
-        self.model_id = config.get('hf_text_model', 'Qwen/Qwen2.5-72B-Instruct')
+        self.model_id = config.get('hf_text_model', 'meta-llama/Llama-3.1-8B-Instruct')
 
-        # Use router endpoint as per HF API (api-inference is deprecated)
-        self.base_url = f"https://router.huggingface.co/models/{self.model_id}"
+        # Use Inference API endpoint
+        self.base_url = f"https://api-inference.huggingface.co/models/{self.model_id}"
 
         self.logger = logging.getLogger(__name__)
         self.logger.info(f"📝 HF Text Client initialized: {self.model_id}")

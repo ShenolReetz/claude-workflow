@@ -24,8 +24,8 @@ class HuggingFaceImageClient:
         self.api_token = config.get('hf_api_token')
         self.model_id = config.get('hf_image_model', 'black-forest-labs/FLUX.1-schnell')
 
-        # Use router endpoint as per HF API (api-inference is deprecated)
-        self.base_url = f"https://router.huggingface.co/models/{self.model_id}"
+        # Use Inference API endpoint
+        self.base_url = f"https://api-inference.huggingface.co/models/{self.model_id}"
 
         # Generation parameters
         self.num_inference_steps = 4  # schnell uses 4 steps
