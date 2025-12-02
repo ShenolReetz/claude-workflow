@@ -60,7 +60,7 @@ class ImageGeneratorSubAgent(BaseSubAgent):
         Generate product image using HuggingFace FLUX
 
         Args:
-            task: Task with 'product' data, 'product_index', and 'record_id'
+            task: Task with 'product' data, 'product_index', 'record_id', and 'project_title'
 
         Returns:
             Dict with image_path, drive_url, method, and cost
@@ -68,6 +68,7 @@ class ImageGeneratorSubAgent(BaseSubAgent):
         product = task.get('product')
         product_index = task.get('product_index', 1)
         record_id = task.get('record_id', 'unknown')
+        project_title = task.get('project_title')  # Get project title for folder organization
 
         if not product:
             raise ValueError("No product data provided")
@@ -109,7 +110,7 @@ class ImageGeneratorSubAgent(BaseSubAgent):
                     raise ValueError("HF result missing image_bytes")
 
                 # Save image locally + Google Drive
-                save_result = await self._save_image(image_bytes, product_index, record_id)
+                save_result = await self._save_image(image_bytes, product_index, record_id, project_title)
 
                 self.logger.info(f"✅ Image {product_index} generated with HuggingFace (FREE): {save_result['local_path']}")
                 if save_result.get('drive_url'):
@@ -154,7 +155,7 @@ Commercial photography style.
 
         return prompt
 
-    async def _save_image(self, image_data: bytes, product_index: int, record_id: str) -> Dict:
+    async def _save_image(self, image_data: bytes, product_index: int, record_id: str, project_title: str = None) -> Dict:
         """Save generated image to local storage + Google Drive"""
         filename = f"product{product_index}.jpg"
 
@@ -164,7 +165,8 @@ Commercial photography style.
             filename=filename,
             media_type='image',
             record_id=record_id,
-            upload_to_drive=True  # Enable Google Drive upload
+            upload_to_drive=True,  # Enable Google Drive upload
+            project_title=project_title  # Pass project title for folder organization
         )
 
         if result.get('success'):

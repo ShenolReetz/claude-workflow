@@ -49,22 +49,24 @@ class DualStorageManager:
         # Track all saved files for current session
         self.session_files = {}
         
-    async def save_media(self, 
-                        content: bytes, 
+    async def save_media(self,
+                        content: bytes,
                         filename: str,
                         media_type: str,
                         record_id: str,
-                        upload_to_drive: bool = True) -> Dict:
+                        upload_to_drive: bool = True,
+                        project_title: Optional[str] = None) -> Dict:
         """
         Save media file locally and optionally to Google Drive
-        
+
         Args:
             content: File content in bytes
             filename: Name of the file (e.g., "intro.mp3")
             media_type: Type of media ("audio", "image", "video")
             record_id: Airtable record ID for organization
             upload_to_drive: Whether to also upload to Google Drive
-            
+            project_title: Project title for Google Drive folder organization (optional)
+
         Returns:
             Dict with local_path and drive_url (if uploaded)
         """
@@ -107,10 +109,11 @@ class DualStorageManager:
             if upload_to_drive:
                 try:
                     drive_url = await self._upload_to_drive_async(
-                        local_file_path, 
-                        filename, 
+                        local_file_path,
+                        filename,
                         media_type,
-                        record_id
+                        record_id,
+                        project_title  # Pass project_title to Google Drive
                     )
                     result['drive_url'] = drive_url
                     logger.info(f"☁️ Uploaded to Drive: {filename}")
@@ -130,11 +133,12 @@ class DualStorageManager:
                 'drive_url': None
             }
     
-    async def _upload_to_drive_async(self, 
-                                     local_path: Path, 
+    async def _upload_to_drive_async(self,
+                                     local_path: Path,
                                      filename: str,
                                      media_type: str,
-                                     record_id: str) -> Optional[str]:
+                                     record_id: str,
+                                     project_title: Optional[str] = None) -> Optional[str]:
         """
         Upload file to Google Drive asynchronously
         Returns the shareable URL
@@ -142,23 +146,24 @@ class DualStorageManager:
         try:
             # Import the Google Drive agent
             from src.mcp.production_enhanced_google_drive_agent_mcp import production_upload_to_google_drive
-            
+
             # Prepare file info for upload
             file_info = {
                 'local_path': str(local_path),
                 'filename': filename,
                 'media_type': media_type,
-                'record_id': record_id
+                'record_id': record_id,
+                'project_title': project_title  # Add project_title
             }
-            
+
             # Call the upload function
             result = await production_upload_to_google_drive(file_info, self.config)
-            
+
             if result.get('success'):
                 return result.get('url')
             else:
                 raise Exception(result.get('error', 'Unknown upload error'))
-                
+
         except Exception as e:
             logger.error(f"Drive upload error: {e}")
             raise

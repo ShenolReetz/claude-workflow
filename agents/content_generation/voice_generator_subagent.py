@@ -139,7 +139,7 @@ class VoiceGeneratorSubAgent(BaseSubAgent):
             self.logger.error(f"❌ Voice generation failed: {e}")
             raise
 
-    async def _generate_voice_file(self, text: str, record_id: str, filename: str, voice_type: str) -> Dict:
+    async def _generate_voice_file(self, text: str, record_id: str, filename: str, voice_type: str, project_title: str = None) -> Dict:
         """Generate a single voice file using ElevenLabs API and upload to Google Drive"""
         self.logger.info(f"🎤 Generating {filename} with ElevenLabs...")
 
@@ -179,7 +179,8 @@ class VoiceGeneratorSubAgent(BaseSubAgent):
                 filename=filename,
                 media_type='audio',
                 record_id=record_id,
-                upload_to_drive=True  # Enable Google Drive upload
+                upload_to_drive=True,  # Enable Google Drive upload
+                project_title=project_title  # Pass project title for folder organization
             )
 
             if result.get('success'):

@@ -16,6 +16,7 @@ Features:
 import sys
 import os
 import asyncio
+import re
 from pathlib import Path
 from typing import Dict, Optional
 import logging
@@ -26,6 +27,32 @@ sys.path.append('/home/claude-workflow')
 from src.utils.google_drive_auth_manager import GoogleDriveAuthManager
 
 logger = logging.getLogger(__name__)
+
+
+def sanitize_folder_name(title: str) -> str:
+    """
+    Sanitize project title for use as Google Drive folder name
+
+    Args:
+        title: Project title (e.g., "Top 5 best gaming headphones 2025!")
+
+    Returns:
+        Sanitized folder name (e.g., "Top 5 best gaming headphones 2025")
+    """
+    # Remove invalid characters for folder names
+    sanitized = re.sub(r'[<>:"/\\|?*]', '', title)
+
+    # Replace multiple spaces with single space
+    sanitized = re.sub(r'\s+', ' ', sanitized)
+
+    # Trim leading/trailing spaces
+    sanitized = sanitized.strip()
+
+    # Limit length to 100 characters
+    if len(sanitized) > 100:
+        sanitized = sanitized[:97] + "..."
+
+    return sanitized
 
 
 class GoogleDriveUploader:
@@ -98,17 +125,38 @@ class GoogleDriveUploader:
             logger.error(f"❌ Folder creation failed: {error}")
             raise
 
-    def _setup_folder_structure(self, media_type: str, record_id: str) -> str:
-        """Setup folder structure: Base / MediaType / RecordID"""
+    def _setup_folder_structure(self, media_type: str, record_id: str, project_title: Optional[str] = None) -> str:
+        """
+        Setup folder structure: Base / Project / MediaType / RecordID
+
+        Args:
+            media_type: Type of media (image, audio, video)
+            record_id: Airtable record ID
+            project_title: Project title for folder organization (optional)
+
+        Returns:
+            Folder ID for the final record folder
+        """
 
         # Get or create base folder
         if not self.base_folder_id:
             self.base_folder_id = self._get_or_create_folder(self.base_folder_name)
 
-        # Get or create media type folder (images, audio, videos)
+        # Get or create project folder if title provided
+        parent_folder_id = self.base_folder_id
+        if project_title:
+            sanitized_title = sanitize_folder_name(project_title)
+            project_folder_id = self._get_or_create_folder(
+                sanitized_title,
+                parent_id=self.base_folder_id
+            )
+            parent_folder_id = project_folder_id
+            logger.info(f"📂 Project folder: {sanitized_title}")
+
+        # Get or create media type folder (Images, Audio, Videos)
         media_folder_id = self._get_or_create_folder(
             media_type.capitalize(),
-            parent_id=self.base_folder_id
+            parent_id=parent_folder_id
         )
 
         # Get or create record-specific folder
@@ -119,7 +167,7 @@ class GoogleDriveUploader:
 
         return record_folder_id
 
-    def upload_file(self, local_path: str, filename: str, media_type: str, record_id: str) -> Dict:
+    def upload_file(self, local_path: str, filename: str, media_type: str, record_id: str, project_title: Optional[str] = None) -> Dict:
         """
         Upload file to Google Drive
 
@@ -128,6 +176,7 @@ class GoogleDriveUploader:
             filename: Name for the file in Drive
             media_type: Type of media (audio, image, video)
             record_id: Airtable record ID for organization
+            project_title: Project title for folder organization (optional)
 
         Returns:
             Dict with success status, file_id, and shareable URL
@@ -135,8 +184,8 @@ class GoogleDriveUploader:
         try:
             service = self._get_or_create_service()
 
-            # Setup folder structure
-            parent_folder_id = self._setup_folder_structure(media_type, record_id)
+            # Setup folder structure (with optional project folder)
+            parent_folder_id = self._setup_folder_structure(media_type, record_id, project_title)
 
             # Determine MIME type
             mime_types = {
@@ -223,7 +272,7 @@ async def production_upload_to_google_drive(file_info: Dict, config: Dict) -> Di
     Async wrapper for Google Drive upload
 
     Args:
-        file_info: Dict with local_path, filename, media_type, record_id
+        file_info: Dict with local_path, filename, media_type, record_id, project_title (optional)
         config: Configuration dict with Google Drive credentials
 
     Returns:
@@ -231,6 +280,9 @@ async def production_upload_to_google_drive(file_info: Dict, config: Dict) -> Di
     """
     try:
         uploader = GoogleDriveUploader(config)
+
+        # Extract project_title if provided
+        project_title = file_info.get('project_title')
 
         # Run synchronous upload in executor
         loop = asyncio.get_event_loop()
@@ -240,7 +292,8 @@ async def production_upload_to_google_drive(file_info: Dict, config: Dict) -> Di
             file_info['local_path'],
             file_info['filename'],
             file_info['media_type'],
-            file_info['record_id']
+            file_info['record_id'],
+            project_title  # Pass project_title
         )
 
         return result
