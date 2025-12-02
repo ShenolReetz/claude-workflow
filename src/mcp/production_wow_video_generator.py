@@ -15,6 +15,7 @@ import json
 import os
 import subprocess
 import time
+import shutil
 from pathlib import Path
 from typing import Dict, Optional, List
 import logging
@@ -27,13 +28,47 @@ class WowVideoGenerator:
     """
     Generates WOW videos with advanced Remotion compositions
     """
-    
+
     def __init__(self, config: Dict):
         self.config = config
         self.remotion_dir = Path("/home/claude-workflow/remotion-video-generator")
+        self.remotion_public = self.remotion_dir / "public"
         self.output_dir = Path("/home/claude-workflow/media_storage/videos")
         self.output_dir.mkdir(exist_ok=True, parents=True)
-        
+
+    def _copy_images_to_remotion_public(self, images: List[str]) -> List[str]:
+        """
+        Copy images from media_storage to Remotion's public folder
+
+        Args:
+            images: List of absolute image paths
+
+        Returns:
+            List of relative filenames (e.g., ['product1.jpg', 'product2.jpg'])
+        """
+        relative_filenames = []
+
+        for i, image_path in enumerate(images, 1):
+            if not image_path or not os.path.exists(image_path):
+                logger.warning(f"⚠️  Image {i} not found: {image_path}")
+                continue
+
+            # Determine output filename
+            ext = Path(image_path).suffix or '.jpg'
+            output_filename = f"product{i}{ext}"
+            output_path = self.remotion_public / output_filename
+
+            # Copy file
+            try:
+                shutil.copy2(image_path, output_path)
+                logger.info(f"✅ Copied image {i}: {output_filename} ({os.path.getsize(output_path)} bytes)")
+                relative_filenames.append(output_filename)
+            except Exception as e:
+                logger.error(f"❌ Failed to copy image {i}: {e}")
+                continue
+
+        return relative_filenames
+
     async def generate_wow_video(self, record: Dict) -> Dict:
         """
         Generate a WOW video with all effects
@@ -140,7 +175,8 @@ class WowVideoGenerator:
         from src.utils.dual_storage_manager import get_storage_manager
         storage_manager = get_storage_manager(self.config)
 
-        products = []
+        # Collect all absolute image paths
+        absolute_image_paths = []
         for i in range(1, 6):
             # Get image path from agent if available, otherwise construct it
             image_path = None
@@ -149,9 +185,9 @@ class WowVideoGenerator:
                 # Validate it's a real path or URL
                 if isinstance(candidate, str):
                     if candidate.startswith('http'):
-                        # Remote URL (Amazon image)
+                        # Remote URL (Amazon image) - skip for now, we'll handle separately
+                        logger.info(f"🖼️  Product {i} - Remote URL: {candidate[:60]}...")
                         image_path = candidate
-                        logger.info(f"🖼️  Product {i} - Using remote URL: {candidate[:60]}...")
                     elif os.path.exists(candidate):
                         # Local file path
                         image_path = candidate
@@ -168,6 +204,18 @@ class WowVideoGenerator:
                 ) or fields.get(f'ProductNo{i}Photo', '')
                 logger.info(f"🖼️  Product {i} - Fallback to: {image_path}")
 
+            absolute_image_paths.append(image_path if image_path else '')
+
+        # Copy images to Remotion public folder and get relative filenames
+        logger.info("📋 Copying images to Remotion public folder...")
+        relative_filenames = self._copy_images_to_remotion_public(absolute_image_paths)
+        logger.info(f"✅ Copied {len(relative_filenames)} images: {relative_filenames}")
+
+        products = []
+        for i in range(1, 6):
+            # Use relative filename if available, otherwise empty string
+            image_filename = relative_filenames[i-1] if i <= len(relative_filenames) else ''
+
             # Parse product data
             product = {
                 'rank': 6 - i,  # Countdown from 5 to 1
@@ -178,7 +226,7 @@ class WowVideoGenerator:
                 'currency': '$',
                 'rating': self._parse_rating(fields.get(f'ProductNo{i}Rating', '0')),
                 'reviewCount': self._parse_reviews(fields.get(f'ProductNo{i}Reviews', '0')),
-                'imageUrl': image_path,
+                'imageUrl': image_filename,  # Use relative filename for Remotion
                 'features': self._extract_features(fields.get(f'ProductNo{i}Description', '')),
                 'badge': self._determine_badge(i, fields),
                 'affiliateLink': fields.get(f'ProductNo{i}AffiliateLink', ''),
