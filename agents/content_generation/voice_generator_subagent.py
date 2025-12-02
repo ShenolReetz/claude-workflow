@@ -74,13 +74,14 @@ class VoiceGeneratorSubAgent(BaseSubAgent):
         Generate voice files for all scripts
 
         Args:
-            task: Task with 'scripts' dict and 'record_id'
+            task: Task with 'scripts' dict, 'record_id', and 'project_title'
 
         Returns:
             Paths to generated voice files
         """
         scripts = task.get('scripts', {})
         record_id = task.get('record_id')
+        project_title = task.get('project_title')  # Get project title for folder organization
 
         if not scripts or not record_id:
             raise ValueError("Missing scripts or record_id")
@@ -96,7 +97,8 @@ class VoiceGeneratorSubAgent(BaseSubAgent):
                     text=scripts['IntroScript'],
                     record_id=record_id,
                     filename='intro_voice.mp3',
-                    voice_type='intro'
+                    voice_type='intro',
+                    project_title=project_title
                 )
                 voice_paths['intro'] = {
                     'local_path': intro_result['local_path'],
@@ -111,7 +113,8 @@ class VoiceGeneratorSubAgent(BaseSubAgent):
                         text=scripts[script_key],
                         record_id=record_id,
                         filename=f'product{i}_voice.mp3',
-                        voice_type='product'
+                        voice_type='product',
+                        project_title=project_title
                     )
                     voice_paths[f'product{i}'] = {
                         'local_path': voice_result['local_path'],
@@ -124,7 +127,8 @@ class VoiceGeneratorSubAgent(BaseSubAgent):
                     text=scripts['OutroScript'],
                     record_id=record_id,
                     filename='outro_voice.mp3',
-                    voice_type='outro'
+                    voice_type='outro',
+                    project_title=project_title
                 )
                 voice_paths['outro'] = {
                     'local_path': outro_result['local_path'],

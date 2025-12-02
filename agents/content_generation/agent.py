@@ -85,8 +85,9 @@ class ContentGenerationAgent(BaseAgent):
         if not products:
             raise ValueError("No products provided for image generation")
 
-        # Get record_id from task
+        # Get record_id and project_title from task
         record_id = task.get('record_id', task.get('params', {}).get('record_id', 'unknown'))
+        project_title = task.get('project_title', task.get('params', {}).get('fetch_title', {}).get('title'))
 
         # Generate images for each product (max 5)
         image_tasks = []
@@ -95,7 +96,8 @@ class ContentGenerationAgent(BaseAgent):
                 **task,
                 'product': product,
                 'product_index': i,
-                'record_id': record_id
+                'record_id': record_id,
+                'project_title': project_title
             }
             image_tasks.append(self.delegate_to_subagent('ImageGeneratorSubAgent', img_task))
 
@@ -206,11 +208,13 @@ class ContentGenerationAgent(BaseAgent):
 
         scripts_data = task.get('params', {}).get('generate_scripts', {})
         record_id = task.get('params', {}).get('fetch_title', {}).get('record_id')
+        project_title = task.get('params', {}).get('fetch_title', {}).get('title')
 
         # Generate voices for all scripts
         voice_task = {
             **task,
             'record_id': record_id,
+            'project_title': project_title,
             'scripts': {
                 'IntroScript': scripts_data.get('intro_script', ''),
                 'Product1Script': scripts_data.get('product1_script', ''),

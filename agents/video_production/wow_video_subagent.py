@@ -75,8 +75,9 @@ class WowVideoSubAgent(BaseSubAgent):
                     with open(video_path, 'rb') as f:
                         video_data_bytes = f.read()
 
-                    # Get record_id from task
+                    # Get record_id and project_title from task
                     record_id = task.get('record_id', params.get('record_id', 'unknown'))
+                    project_title = task.get('project_title', params.get('project_title'))
 
                     # Upload to Google Drive
                     upload_result = await self.storage_manager.save_media(
@@ -84,7 +85,8 @@ class WowVideoSubAgent(BaseSubAgent):
                         filename='final_video.mp4',
                         media_type='video',
                         record_id=record_id,
-                        upload_to_drive=True
+                        upload_to_drive=True,
+                        project_title=project_title
                     )
 
                     if upload_result.get('success') and upload_result.get('drive_url'):
