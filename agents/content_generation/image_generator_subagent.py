@@ -18,6 +18,7 @@ sys.path.append('/home/claude-workflow')
 
 from agents.base_subagent import BaseSubAgent
 from agents.content_generation.hf_image_client import HFImageClient
+from src.utils.dual_storage_manager import get_storage_manager
 
 
 class ImageGeneratorSubAgent(BaseSubAgent):
@@ -44,9 +45,8 @@ class ImageGeneratorSubAgent(BaseSubAgent):
         # Fallback to fal.ai if configured
         self.use_fallback = config.get('image_generation_fallback', True)
 
-        # Local storage path
-        self.storage_path = Path('/home/claude-workflow/media_storage/images')
-        self.storage_path.mkdir(parents=True, exist_ok=True)
+        # Initialize DualStorageManager for local + Google Drive storage
+        self.storage_manager = get_storage_manager(config)
 
         if self.use_hf:
             self.logger.info("✅ ImageGeneratorSubAgent initialized with HuggingFace FLUX.1-schnell")
@@ -60,13 +60,14 @@ class ImageGeneratorSubAgent(BaseSubAgent):
         Generate product image using HuggingFace FLUX
 
         Args:
-            task: Task with 'product' data
+            task: Task with 'product' data, 'product_index', and 'record_id'
 
         Returns:
-            Path to generated image
+            Dict with image_path, drive_url, method, and cost
         """
         product = task.get('product')
         product_index = task.get('product_index', 1)
+        record_id = task.get('record_id', 'unknown')
 
         if not product:
             raise ValueError("No product data provided")
@@ -107,13 +108,16 @@ class ImageGeneratorSubAgent(BaseSubAgent):
                 if not image_bytes:
                     raise ValueError("HF result missing image_bytes")
 
-                # Save image locally
-                image_path = await self._save_image(image_bytes, product_index)
+                # Save image locally + Google Drive
+                save_result = await self._save_image(image_bytes, product_index, record_id)
 
-                self.logger.info(f"✅ Image {product_index} generated with HuggingFace (FREE): {image_path}")
+                self.logger.info(f"✅ Image {product_index} generated with HuggingFace (FREE): {save_result['local_path']}")
+                if save_result.get('drive_url'):
+                    self.logger.info(f"☁️ Uploaded to Google Drive: {save_result['drive_url']}")
 
                 return {
-                    'image_path': str(image_path),
+                    'image_path': save_result['local_path'],
+                    'drive_url': save_result.get('drive_url'),
                     'method': 'huggingface_flux',
                     'cost': 0.00
                 }
@@ -150,18 +154,27 @@ Commercial photography style.
 
         return prompt
 
-    async def _save_image(self, image_data: bytes, product_index: int) -> Path:
-        """Save generated image to local storage"""
-        filename = f"product_{product_index}.png"
-        filepath = self.storage_path / filename
+    async def _save_image(self, image_data: bytes, product_index: int, record_id: str) -> Dict:
+        """Save generated image to local storage + Google Drive"""
+        filename = f"product{product_index}.jpg"
 
-        # Save image data
-        with open(filepath, 'wb') as f:
-            f.write(image_data)
+        # Use DualStorageManager to save locally + Google Drive
+        result = await self.storage_manager.save_media(
+            content=image_data,
+            filename=filename,
+            media_type='image',
+            record_id=record_id,
+            upload_to_drive=True  # Enable Google Drive upload
+        )
 
-        self.logger.debug(f"💾 Saved image to: {filepath}")
+        if result.get('success'):
+            self.logger.debug(f"💾 Saved image to: {result['local_path']}")
+            if result.get('drive_url'):
+                self.logger.debug(f"☁️ Google Drive: {result['drive_url']}")
+        else:
+            raise RuntimeError(f"Failed to save image: {result.get('error')}")
 
-        return filepath
+        return result
 
     async def _fallback_fal_ai(self, product: Dict[str, Any], product_index: int, prompt: str) -> Dict[str, Any]:
         """Fallback to fal.ai if HuggingFace fails"""
@@ -195,6 +208,7 @@ Commercial photography style.
 
                 return {
                     'image_path': result['local_path'],
+                    'drive_url': result.get('drive_url'),  # Include Google Drive URL if available
                     'method': 'fal_ai_fallback',
                     'cost': 0.03
                 }

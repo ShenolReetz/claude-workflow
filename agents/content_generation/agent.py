@@ -85,13 +85,17 @@ class ContentGenerationAgent(BaseAgent):
         if not products:
             raise ValueError("No products provided for image generation")
 
+        # Get record_id from task
+        record_id = task.get('record_id', task.get('params', {}).get('record_id', 'unknown'))
+
         # Generate images for each product (max 5)
         image_tasks = []
         for i, product in enumerate(products[:5], 1):
             img_task = {
                 **task,
                 'product': product,
-                'product_index': i
+                'product_index': i,
+                'record_id': record_id
             }
             image_tasks.append(self.delegate_to_subagent('ImageGeneratorSubAgent', img_task))
 
@@ -113,10 +117,18 @@ class ContentGenerationAgent(BaseAgent):
                 image_paths.append(None)
             else:
                 # Success case
-                image_path = result['result'].get('image_path')
+                result_data = result.get('result', {})
+                image_path = result_data.get('image_path')
+                drive_url = result_data.get('drive_url')
                 if image_path:
                     self.logger.info(f"✅ Image {i} path collected: {image_path}")
-                    image_paths.append(image_path)
+                    if drive_url:
+                        self.logger.info(f"☁️ Image {i} Google Drive: {drive_url}")
+                    # Store both local path and drive URL
+                    image_paths.append({
+                        'local_path': image_path,
+                        'drive_url': drive_url
+                    })
                 else:
                     self.logger.error(f"❌ Image {i}: success=True but no image_path in result")
                     image_paths.append(None)

@@ -16,6 +16,7 @@ from pathlib import Path
 sys.path.append('/home/claude-workflow')
 
 from agents.base_subagent import BaseSubAgent
+from src.utils.dual_storage_manager import get_storage_manager
 
 # Import ElevenLabs SDK
 try:
@@ -62,6 +63,9 @@ class VoiceGeneratorSubAgent(BaseSubAgent):
             'outro': 'JBFqnCBsd6RMkjVDRZzb'       # George - professional male
         }
 
+        # Initialize DualStorageManager for local + Google Drive storage
+        self.storage_manager = get_storage_manager(config)
+
         self.logger.info("✅ VoiceGeneratorSubAgent initialized with ElevenLabs")
         self.logger.info("💰 Cost: $0.10/video (kept for quality)")
 
@@ -88,35 +92,44 @@ class VoiceGeneratorSubAgent(BaseSubAgent):
 
             # Generate intro voice
             if scripts.get('IntroScript'):
-                intro_path = await self._generate_voice_file(
+                intro_result = await self._generate_voice_file(
                     text=scripts['IntroScript'],
                     record_id=record_id,
                     filename='intro_voice.mp3',
                     voice_type='intro'
                 )
-                voice_paths['intro'] = intro_path
+                voice_paths['intro'] = {
+                    'local_path': intro_result['local_path'],
+                    'drive_url': intro_result.get('drive_url')
+                }
 
             # Generate product voices (1-5)
             for i in range(1, 6):
                 script_key = f'Product{i}Script'
                 if scripts.get(script_key):
-                    voice_path = await self._generate_voice_file(
+                    voice_result = await self._generate_voice_file(
                         text=scripts[script_key],
                         record_id=record_id,
                         filename=f'product{i}_voice.mp3',
                         voice_type='product'
                     )
-                    voice_paths[f'product{i}'] = voice_path
+                    voice_paths[f'product{i}'] = {
+                        'local_path': voice_result['local_path'],
+                        'drive_url': voice_result.get('drive_url')
+                    }
 
             # Generate outro voice
             if scripts.get('OutroScript'):
-                outro_path = await self._generate_voice_file(
+                outro_result = await self._generate_voice_file(
                     text=scripts['OutroScript'],
                     record_id=record_id,
                     filename='outro_voice.mp3',
                     voice_type='outro'
                 )
-                voice_paths['outro'] = outro_path
+                voice_paths['outro'] = {
+                    'local_path': outro_result['local_path'],
+                    'drive_url': outro_result.get('drive_url')
+                }
 
             self.logger.info(f"✅ Generated {len(voice_paths)} voice files")
 
@@ -126,51 +139,57 @@ class VoiceGeneratorSubAgent(BaseSubAgent):
             self.logger.error(f"❌ Voice generation failed: {e}")
             raise
 
-    async def _generate_voice_file(self, text: str, record_id: str, filename: str, voice_type: str) -> str:
-        """Generate a single voice file using ElevenLabs API"""
+    async def _generate_voice_file(self, text: str, record_id: str, filename: str, voice_type: str) -> Dict:
+        """Generate a single voice file using ElevenLabs API and upload to Google Drive"""
         self.logger.info(f"🎤 Generating {filename} with ElevenLabs...")
 
         try:
-            # Setup output directory
-            voice_dir = Path(f"/home/claude-workflow/local_storage/{record_id}/voice")
-            voice_dir.mkdir(parents=True, exist_ok=True)
-            voice_path = str(voice_dir / filename)
-
             # Check if ElevenLabs client is available
             if not self.elevenlabs_client:
                 self.logger.error("❌ ElevenLabs client not initialized")
-                # Create mock file as fallback
-                Path(voice_path).write_bytes(b'MOCK_AUDIO_DATA')
-                return voice_path
+                # Create mock data as fallback
+                audio_data = b'MOCK_AUDIO_DATA'
+            else:
+                # Get voice ID for this type
+                voice_id = self.voice_ids.get(voice_type, self.voice_ids['product'])
 
-            # Get voice ID for this type
-            voice_id = self.voice_ids.get(voice_type, self.voice_ids['product'])
+                # Clean the text (remove quotes if present)
+                clean_text = text.strip('"').strip("'")
 
-            # Clean the text (remove quotes if present)
-            clean_text = text.strip('"').strip("'")
+                self.logger.info(f"   Text: {clean_text[:60]}...")
+                self.logger.info(f"   Voice: {voice_type} (ID: {voice_id})")
 
-            self.logger.info(f"   Text: {clean_text[:60]}...")
-            self.logger.info(f"   Voice: {voice_type} (ID: {voice_id})")
+                # Call ElevenLabs API to generate audio
+                audio_bytes = self.elevenlabs_client.text_to_speech.convert(
+                    text=clean_text,
+                    voice_id=voice_id,
+                    model_id="eleven_multilingual_v2",
+                    output_format="mp3_44100_128"
+                )
 
-            # Call ElevenLabs API to generate audio
-            # Using text_to_speech.convert as shown in the user's example
-            audio_bytes = self.elevenlabs_client.text_to_speech.convert(
-                text=clean_text,
-                voice_id=voice_id,
-                model_id="eleven_multilingual_v2",
-                output_format="mp3_44100_128"
+                # Convert generator to bytes
+                audio_data = b"".join(audio_bytes)
+
+                file_size = len(audio_data)
+                self.logger.info(f"✅ Voice generated: {filename} ({file_size:,} bytes)")
+
+            # Use DualStorageManager to save locally + Google Drive
+            result = await self.storage_manager.save_media(
+                content=audio_data,
+                filename=filename,
+                media_type='audio',
+                record_id=record_id,
+                upload_to_drive=True  # Enable Google Drive upload
             )
 
-            # Convert generator to bytes
-            audio_data = b"".join(audio_bytes)
+            if result.get('success'):
+                self.logger.debug(f"💾 Saved voice to: {result['local_path']}")
+                if result.get('drive_url'):
+                    self.logger.info(f"☁️ Uploaded to Google Drive: {result['drive_url']}")
+            else:
+                raise RuntimeError(f"Failed to save voice: {result.get('error')}")
 
-            # Save audio file
-            Path(voice_path).write_bytes(audio_data)
-
-            file_size = len(audio_data)
-            self.logger.info(f"✅ Voice generated: {filename} ({file_size:,} bytes)")
-
-            return voice_path
+            return result
 
         except Exception as e:
             self.logger.error(f"❌ Voice file generation failed for {filename}: {e}")
@@ -178,10 +197,16 @@ class VoiceGeneratorSubAgent(BaseSubAgent):
 
             # Create mock file as fallback
             self.logger.warning("⚠️  Creating mock file as fallback")
-            Path(voice_path).write_bytes(b'MOCK_AUDIO_DATA')
+            result = await self.storage_manager.save_media(
+                content=b'MOCK_AUDIO_DATA',
+                filename=filename,
+                media_type='audio',
+                record_id=record_id,
+                upload_to_drive=False  # Don't upload mock data
+            )
 
             # Don't raise - return mock file to allow workflow to continue
-            return voice_path
+            return result
 
     async def validate_input(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Validate input parameters"""
@@ -225,8 +250,13 @@ class VoiceGeneratorSubAgent(BaseSubAgent):
 
         # Validate all voice files exist
         import os
-        for key, path in voice_paths.items():
-            if not os.path.exists(path):
+        for key, voice_data in voice_paths.items():
+            if isinstance(voice_data, dict):
+                path = voice_data.get('local_path')
+            else:
+                path = voice_data  # Backward compatibility
+
+            if not path or not os.path.exists(path):
                 return {'valid': False, 'error': f'Voice file not found: {path}'}
 
         return {'valid': True}
