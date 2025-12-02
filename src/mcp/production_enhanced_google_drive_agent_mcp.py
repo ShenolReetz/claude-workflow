@@ -279,6 +279,22 @@ async def production_upload_to_google_drive(file_info: Dict, config: Dict) -> Di
         Dict with upload result
     """
     try:
+        # Check for None config
+        if config is None:
+            logger.error("❌ Config is None - cannot upload to Google Drive")
+            return {
+                'success': False,
+                'error': 'Config is None'
+            }
+
+        # Check for None file_info
+        if file_info is None:
+            logger.error("❌ file_info is None - cannot upload to Google Drive")
+            return {
+                'success': False,
+                'error': 'file_info is None'
+            }
+
         uploader = GoogleDriveUploader(config)
 
         # Extract project_title if provided
