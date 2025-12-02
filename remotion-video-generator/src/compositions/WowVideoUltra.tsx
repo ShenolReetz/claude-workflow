@@ -271,7 +271,7 @@ const ProductShowcase: React.FC<{
         }}
       >
         <Img
-          src={product.imageUrl}
+          src={staticFile(product.imageUrl)}
           style={{
             width: '100%',
             height: '100%',
@@ -345,7 +345,7 @@ const ProductShowcase: React.FC<{
           }}
         >
           <Img
-            src={product.imageUrl}
+            src={staticFile(product.imageUrl)}
             style={{
               width: '100%',
               height: 400,

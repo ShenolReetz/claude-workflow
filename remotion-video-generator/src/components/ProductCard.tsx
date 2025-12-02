@@ -6,6 +6,7 @@ import {
   spring,
   useCurrentFrame,
   useVideoConfig,
+  staticFile,
 } from 'remotion';
 import { STYLES, LAYOUTS, ANIMATIONS } from '../schemas/CountdownVideoSchema';
 import { StarRating } from './StarRating';
@@ -143,7 +144,7 @@ export const ProductCard: React.FC<ProductProps> = ({
           }}
         >
           <Img
-            src={product.photo}
+            src={staticFile(product.photo)}
             style={{
               width: '100%',
               height: '100%',
