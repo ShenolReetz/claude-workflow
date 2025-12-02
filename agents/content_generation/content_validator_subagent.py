@@ -105,7 +105,7 @@ class ContentValidatorSubAgent(BaseSubAgent):
             self.logger.error(f"❌ Content validation failed: {e}")
             raise
 
-    async def _validate_images(self, images: List[str]) -> List[str]:
+    async def _validate_images(self, images: List) -> List[str]:
         """Validate image files"""
         issues = []
 
@@ -113,7 +113,16 @@ class ContentValidatorSubAgent(BaseSubAgent):
             issues.append("No images provided")
             return issues
 
-        for i, image_path in enumerate(images, 1):
+        for i, image_data in enumerate(images, 1):
+            # Extract path from dict or use string directly
+            if isinstance(image_data, dict):
+                image_path = image_data.get('local_path') or image_data.get('image_path') or image_data.get('path')
+            elif isinstance(image_data, str):
+                image_path = image_data
+            else:
+                issues.append(f"Image {i}: Invalid data type (expected str or dict)")
+                continue
+
             if not image_path:
                 issues.append(f"Image {i}: Missing path")
                 continue
@@ -161,7 +170,7 @@ class ContentValidatorSubAgent(BaseSubAgent):
 
         return issues
 
-    async def _validate_voices(self, voices: List[str]) -> List[str]:
+    async def _validate_voices(self, voices) -> List[str]:
         """Validate voice files"""
         issues = []
 
@@ -169,11 +178,20 @@ class ContentValidatorSubAgent(BaseSubAgent):
             issues.append("No voice files provided")
             return issues
 
-        # voices is a dict in the actual implementation
+        # voices might be a dict, convert to list
         if isinstance(voices, dict):
             voices = list(voices.values())
 
-        for i, voice_path in enumerate(voices, 1):
+        for i, voice_data in enumerate(voices, 1):
+            # Extract path from dict or use string directly
+            if isinstance(voice_data, dict):
+                voice_path = voice_data.get('local_path') or voice_data.get('voice_path') or voice_data.get('path')
+            elif isinstance(voice_data, str):
+                voice_path = voice_data
+            else:
+                issues.append(f"Voice {i}: Invalid data type (expected str or dict)")
+                continue
+
             if not voice_path:
                 issues.append(f"Voice {i}: Missing path")
                 continue
