@@ -32,14 +32,23 @@ class TextGeneratorSubAgent(BaseSubAgent):
     def __init__(self, name: str, config: Dict[str, Any], parent_agent_id: str = None):
         super().__init__(name, config, parent_agent_id)
 
-        # Initialize HuggingFace text client
-        self.hf_client = HFTextClient(config)
+        # Check if HF is enabled
+        self.use_hf = config.get('hf_use_inference_api', True)
 
-        # Fallback to OpenAI if configured
-        self.use_fallback = config.get('text_fallback_enabled', True)
+        # Initialize HuggingFace text client only if enabled
+        if self.use_hf:
+            self.hf_client = HFTextClient(config)
 
-        self.logger.info("✅ TextGeneratorSubAgent initialized with HuggingFace Llama-3.1-8B")
-        self.logger.info("💰 Cost savings: $0.10 → $0.00 per video!")
+        # Store OpenAI key for fallback
+        self.openai_api_key = config.get('openai_api_key')
+        self.use_fallback = True  # Always allow fallback
+
+        if self.use_hf:
+            self.logger.info("✅ TextGeneratorSubAgent initialized with HuggingFace Llama-3.1-8B")
+            self.logger.info("💰 Cost savings: $0.10 → $0.00 per video!")
+        else:
+            self.logger.info("✅ TextGeneratorSubAgent initialized with OpenAI GPT-4o-mini")
+            self.logger.info("💰 Cost: $0.10 per video")
 
     async def execute_task(self, task: Dict[str, Any]) -> Any:
         """
@@ -123,13 +132,13 @@ The intro should:
 
 Generate ONLY the script, no other text."""
 
-        script = await self.hf_client.generate_text(
+        result = await self._generate_text_with_fallback(
             prompt=prompt,
-            max_length=100,
+            max_tokens=100,
             temperature=0.7
         )
 
-        return script.strip()
+        return result['text'].strip()
 
     async def _generate_product_script(self, product: Dict[str, Any], index: int) -> str:
         """Generate script for a single product"""
@@ -153,13 +162,13 @@ The script should:
 
 Generate ONLY the script, no other text."""
 
-        script = await self.hf_client.generate_text(
+        result = await self._generate_text_with_fallback(
             prompt=prompt,
-            max_length=150,
+            max_tokens=150,
             temperature=0.7
         )
 
-        return script.strip()
+        return result['text'].strip()
 
     async def _generate_outro_script(self, products: List[Dict[str, Any]]) -> str:
         """Generate outro script"""
@@ -173,13 +182,13 @@ The outro should:
 
 Generate ONLY the script, no other text."""
 
-        script = await self.hf_client.generate_text(
+        result = await self._generate_text_with_fallback(
             prompt=prompt,
-            max_length=80,
+            max_tokens=80,
             temperature=0.7
         )
 
-        return script.strip()
+        return result['text'].strip()
 
     async def _generate_platform_content(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Generate platform-specific content (YouTube, WordPress, Instagram)"""
@@ -236,11 +245,12 @@ The title should:
 
 Generate ONLY the title, no other text."""
 
-        title = await self.hf_client.generate_text(
+        title_result = await self._generate_text_with_fallback(
             prompt=title_prompt,
-            max_length=50,
+            max_tokens=50,
             temperature=0.8
         )
+        title = title_result['text']
 
         # Description
         desc_prompt = f"""Generate a YouTube video description (200-300 words) for a product review of {category}.
@@ -253,11 +263,12 @@ Include:
 
 Generate ONLY the description, no other text."""
 
-        description = await self.hf_client.generate_text(
+        desc_result = await self._generate_text_with_fallback(
             prompt=desc_prompt,
-            max_length=400,
+            max_tokens=400,
             temperature=0.7
         )
+        description = desc_result['text']
 
         # Tags (simple extraction from category)
         tags = [category, "review", "2025", "best", "top 5", "amazon"]
@@ -356,3 +367,40 @@ Which one would you choose? Comment below! 👇"""
                 return {'valid': False, 'error': f'Missing or empty {field}'}
 
         return {'valid': True}
+
+    async def _generate_text_with_fallback(self, prompt: str, max_tokens: int = 300, temperature: float = 0.7) -> Dict[str, Any]:
+        """Generate text using HF or OpenAI"""
+        # Use OpenAI if HF is disabled
+        if not self.use_hf:
+            import openai
+            client = openai.AsyncOpenAI(api_key=self.openai_api_key)
+
+            response = await client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=max_tokens,
+                temperature=temperature
+            )
+
+            text = response.choices[0].message.content
+            return {'success': True, 'text': text}
+
+        # Try HF first if enabled
+        try:
+            return await self.hf_client.generate_text(prompt, max_tokens=max_tokens, temperature=temperature)
+        except Exception as e:
+            self.logger.warning(f"⚠️  HF failed, falling back to OpenAI: {e}")
+
+            # Fallback to OpenAI
+            import openai
+            client = openai.AsyncOpenAI(api_key=self.openai_api_key)
+
+            response = await client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=max_tokens,
+                temperature=temperature
+            )
+
+            text = response.choices[0].message.content
+            return {'success': True, 'text': text}

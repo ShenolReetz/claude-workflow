@@ -51,8 +51,13 @@ class WowVideoSubAgent(BaseSubAgent):
             # Prepare video data
             video_data = self._prepare_video_data(params)
 
+            # DEBUG: Log what data is being passed to video generator
+            self.logger.info(f"🔍 DEBUG: video_data keys = {list(video_data.keys())}")
+            self.logger.info(f"🔍 DEBUG: video_data['images'] = {video_data.get('images', [])}")
+            self.logger.info(f"🔍 DEBUG: video_data type = {type(video_data)}")
+
             # Render video using existing WOW video function
-            result = await production_generate_wow_video(video_data)
+            result = await production_generate_wow_video(video_data, self.config)
 
             self.logger.info(f"✅ WOW video rendered: {result.get('video_path')}")
 
@@ -75,9 +80,31 @@ class WowVideoSubAgent(BaseSubAgent):
         products = params.get('validate_products', {}).get('valid_products', [])
         record_id = params.get('fetch_title', {}).get('record_id')
 
+        # Validate images exist
+        import os
+        valid_images = []
+        for i, img_path in enumerate(images, 1):
+            if img_path and os.path.exists(img_path):
+                self.logger.info(f"✅ Image {i} validated: {img_path}")
+                valid_images.append(img_path)
+            else:
+                self.logger.warning(f"⚠️  Image {i} missing or None: {img_path}")
+                # Fallback to Amazon product image if available
+                if i <= len(products):
+                    amazon_img = products[i-1].get('image_url', '')
+                    if amazon_img and ('amazon' in amazon_img.lower() or 'media-amazon' in amazon_img.lower()):
+                        self.logger.info(f"   Fallback to Amazon image: {amazon_img[:50]}...")
+                        valid_images.append(amazon_img)
+                    else:
+                        valid_images.append(None)
+                else:
+                    valid_images.append(None)
+
+        self.logger.info(f"📊 Video data prepared: {len(valid_images)} images, {len(voices)} voices, {len(products)} products")
+
         return {
             'record_id': record_id,
-            'images': images,
+            'images': valid_images,
             'voices': voices,
             'products': products,
             'effects_enabled': True

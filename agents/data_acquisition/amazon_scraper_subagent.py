@@ -48,30 +48,54 @@ class AmazonScraperSubAgent(BaseSubAgent):
         self.logger.info(f"🔍 Scraping Amazon for: {title} (top {num_products})")
 
         try:
-            # TODO: Implement actual Amazon MCP call using production_amazon_scraper_mcp_server
-            # For now, return mock data for testing
-            self.logger.warning("⚠️  Using mock data - Amazon scraper MCP integration pending")
+            # Use real Amazon scraper
+            from mcp_servers.production_progressive_amazon_scraper_async import ProductionProgressiveAmazonScraperAsync
 
-            products = [
-                {
-                    'title': f'Product {i+1} - {title}',
-                    'price': f'${99 + i*10}.99',
-                    'original_price': f'${149 + i*10}.99',
-                    'rating': 4.5 + (i * 0.1),
-                    'review_count': 1000 + (i * 100),
-                    'image_url': f'https://example.com/image{i+1}.jpg',
-                    'product_url': f'https://amazon.com/dp/TEST{i+1}',
-                    'asin': f'TEST{i+1}'
+            scraper = ProductionProgressiveAmazonScraperAsync(
+                self.scrapingdog_api_key,
+                self.config.get('openai_api_key')
+            )
+
+            # Search for products using search_with_variants_async
+            # This returns (products_list, best_variant)
+            products, best_variant = await scraper.search_with_variants_async(
+                title=title,
+                target_products=num_products,
+                min_reviews=10
+            )
+
+            if not products:
+                raise RuntimeError("Amazon scraping failed: No products found")
+
+            # Map field names to match expected format
+            mapped_products = []
+            for i, product in enumerate(products, 1):
+                mapped_product = {
+                    'title': product.get('title', ''),
+                    'price': product.get('price', ''),
+                    'rating': product.get('rating', 0),
+                    'review_count': product.get('reviews', 0),  # Map 'reviews' to 'review_count'
+                    'image_url': product.get('image', ''),      # Map 'image' to 'image_url'
+                    'product_url': product.get('link', ''),     # Map 'link' to 'product_url'
+                    'asin': product.get('asin', ''),
+                    'description': product.get('description', ''),
+                    'is_prime': product.get('is_prime', False),
+                    'score': product.get('score', 0)
                 }
-                for i in range(min(num_products, 5))
-            ]
+                mapped_products.append(mapped_product)
 
-            self.logger.info(f"✅ Found {len(products)} products")
+                # Log each product to verify real data
+                img_url = mapped_product.get('image_url', '')
+                is_real_amazon = 'amazon' in img_url.lower() or 'media-amazon' in img_url.lower()
+                self.logger.info(f"   Product {i}: {mapped_product['title'][:50]}...")
+                self.logger.info(f"              Image: {'✅ Real Amazon' if is_real_amazon else '❌ Not Amazon'} - {img_url[:50]}...")
+
+            self.logger.info(f"✅ Found {len(mapped_products)} REAL Amazon products with images")
 
             return {
-                'products': products,
+                'products': mapped_products,
                 'title': title,
-                'count': len(products)
+                'count': len(mapped_products)
             }
 
         except Exception as e:

@@ -38,6 +38,11 @@ class WowVideoGenerator:
         """
         Generate a WOW video with all effects
         """
+        # DEBUG: Log what data is received
+        logger.info(f"🔍 DEBUG: generate_wow_video called")
+        logger.info(f"🔍 DEBUG: record keys = {list(record.keys())}")
+        logger.info(f"🔍 DEBUG: record type = {type(record)}")
+
         try:
             fields = record.get('fields', {})
             record_id = record.get('record_id', 'unknown')
@@ -119,15 +124,50 @@ class WowVideoGenerator:
         """
         Prepare video props with all product data and effects
         """
+        # DEBUG: Log entry to this function
+        logger.info(f"🔍 DEBUG: _prepare_wow_props ENTRY")
+
         fields = record.get('fields', {})
         record_id = record.get('record_id', 'unknown')
-        
+
+        # Get image paths from agent or fall back to storage manager
+        agent_images = record.get('images', [])
+
+        logger.info(f"🖼️  DEBUG: record keys = {list(record.keys())}")
+        logger.info(f"🖼️  DEBUG: agent_images = {agent_images}")
+
         # Get local media paths
         from src.utils.dual_storage_manager import get_storage_manager
         storage_manager = get_storage_manager(self.config)
-        
+
         products = []
         for i in range(1, 6):
+            # Get image path from agent if available, otherwise construct it
+            image_path = None
+            if agent_images and len(agent_images) >= i and agent_images[i-1]:
+                candidate = agent_images[i-1]
+                # Validate it's a real path or URL
+                if isinstance(candidate, str):
+                    if candidate.startswith('http'):
+                        # Remote URL (Amazon image)
+                        image_path = candidate
+                        logger.info(f"🖼️  Product {i} - Using remote URL: {candidate[:60]}...")
+                    elif os.path.exists(candidate):
+                        # Local file path
+                        image_path = candidate
+                        logger.info(f"🖼️  Product {i} - Using local file: {candidate}")
+                    else:
+                        logger.warning(f"⚠️  Product {i} - Agent image invalid: {candidate}")
+                else:
+                    logger.warning(f"⚠️  Product {i} - Agent image not a string: {type(candidate)}")
+
+            if not image_path:
+                # Fall back to storage manager or fields
+                image_path = storage_manager.get_local_path(
+                    record_id, 'image', f'product{i}.jpg'
+                ) or fields.get(f'ProductNo{i}Photo', '')
+                logger.info(f"🖼️  Product {i} - Fallback to: {image_path}")
+
             # Parse product data
             product = {
                 'rank': 6 - i,  # Countdown from 5 to 1
@@ -138,9 +178,7 @@ class WowVideoGenerator:
                 'currency': '$',
                 'rating': self._parse_rating(fields.get(f'ProductNo{i}Rating', '0')),
                 'reviewCount': self._parse_reviews(fields.get(f'ProductNo{i}Reviews', '0')),
-                'imageUrl': storage_manager.get_local_path(
-                    record_id, 'image', f'product{i}.jpg'
-                ) or fields.get(f'ProductNo{i}Photo', ''),
+                'imageUrl': image_path,
                 'features': self._extract_features(fields.get(f'ProductNo{i}Description', '')),
                 'badge': self._determine_badge(i, fields),
                 'affiliateLink': fields.get(f'ProductNo{i}AffiliateLink', ''),
@@ -148,7 +186,8 @@ class WowVideoGenerator:
             products.append(product)
         
         # Build complete props
-        return {
+        # Build complete props
+        props = {
             'meta': {
                 'fps': 30,
                 'width': 1080,
@@ -157,7 +196,7 @@ class WowVideoGenerator:
             },
             'products': products,
             'audio': {
-                'backgroundMusic': '/home/claude-workflow/assets/background_music.mp3',
+                'backgroundMusic': None,  # Optional: Set to filename in public/ folder if available
                 'voiceoverUrl': storage_manager.get_local_path(
                     record_id, 'audio', 'full_voiceover.mp3'
                 ),
@@ -177,6 +216,10 @@ class WowVideoGenerator:
                 'fontFamily': 'Inter',
             },
         }
+
+        logger.info(f"🎵 DEBUG: backgroundMusic value = {props['audio']['backgroundMusic']}")
+
+        return props
     
     async def _generate_subtitles(self, record: Dict) -> List[Dict]:
         """

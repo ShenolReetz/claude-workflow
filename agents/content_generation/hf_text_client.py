@@ -22,6 +22,7 @@ class HuggingFaceTextClient:
         self.api_token = config.get('hf_api_token')
         self.model_id = config.get('hf_text_model', 'Qwen/Qwen2.5-72B-Instruct')
 
+        # Use router endpoint as per HF API (api-inference is deprecated)
         self.base_url = f"https://router.huggingface.co/models/{self.model_id}"
 
         self.logger = logging.getLogger(__name__)

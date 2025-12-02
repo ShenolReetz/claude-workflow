@@ -49,3 +49,12 @@ remotion-video-generator/node_modules/
 remotion-video-generator/out/
 remotion-video-generator/.remotion/
 remotion-video-generator/dist/
+
+# Workflow states (temporary runtime data)
+.workflow_state/
+
+# Local storage (generated media files)
+local_storage/
+
+# Media storage (generated images/videos)
+media_storage/

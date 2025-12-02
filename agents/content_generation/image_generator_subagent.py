@@ -34,18 +34,26 @@ class ImageGeneratorSubAgent(BaseSubAgent):
     def __init__(self, name: str, config: Dict[str, Any], parent_agent_id: str = None):
         super().__init__(name, config, parent_agent_id)
 
-        # Initialize HuggingFace image client
-        self.hf_client = HFImageClient(config)
+        # Check if HF is enabled
+        self.use_hf = config.get('hf_use_inference_api', True)
+
+        # Initialize HuggingFace image client only if enabled
+        if self.use_hf:
+            self.hf_client = HFImageClient(config)
 
         # Fallback to fal.ai if configured
-        self.use_fallback = config.get('image_fallback_enabled', True)
+        self.use_fallback = config.get('image_generation_fallback', True)
 
         # Local storage path
         self.storage_path = Path('/home/claude-workflow/media_storage/images')
         self.storage_path.mkdir(parents=True, exist_ok=True)
 
-        self.logger.info("✅ ImageGeneratorSubAgent initialized with HuggingFace FLUX.1-schnell")
-        self.logger.info("💰 Cost savings: $0.03 → $0.00 per image!")
+        if self.use_hf:
+            self.logger.info("✅ ImageGeneratorSubAgent initialized with HuggingFace FLUX.1-schnell")
+            self.logger.info("💰 Cost savings: $0.03 → $0.00 per image!")
+        else:
+            self.logger.info("✅ ImageGeneratorSubAgent initialized with fal.ai fallback")
+            self.logger.info("💰 Cost: $0.03 per image")
 
     async def execute_task(self, task: Dict[str, Any]) -> Any:
         """
@@ -69,19 +77,40 @@ class ImageGeneratorSubAgent(BaseSubAgent):
             # Build prompt for product image
             prompt = self._build_product_prompt(product)
 
-            # Try HuggingFace first
+            # Skip HF if disabled, go straight to fallback
+            if not self.use_hf:
+                self.logger.info(f"🔄 Using fal.ai (HF disabled in config)")
+                return await self._fallback_fal_ai(product, product_index, prompt)
+
+            # Try HuggingFace first if enabled
             try:
-                image_data = await self.hf_client.generate_image(
+                # HF FLUX doesn't support reference images - generates from prompt only
+                result = await self.hf_client.generate_image(
                     prompt=prompt,
-                    reference_image_url=product.get('image_url'),  # Use Amazon image as reference
                     width=1080,
                     height=1920
                 )
 
-                # Save image locally
-                image_path = await self._save_image(image_data, product_index)
+                # Check if HF generation was successful
+                if not result.get('success', False):
+                    error_msg = result.get('error', 'Unknown HF error')
+                    self.logger.warning(f"⚠️  HuggingFace failed: {error_msg}")
 
-                self.logger.info(f"✅ Image {product_index} generated with HuggingFace (FREE)")
+                    # Fallback to fal.ai if enabled
+                    if self.use_fallback:
+                        return await self._fallback_fal_ai(product, product_index, prompt)
+                    else:
+                        raise RuntimeError(f"HuggingFace generation failed: {error_msg}")
+
+                # Extract image bytes from successful result
+                image_bytes = result.get('image_bytes')
+                if not image_bytes:
+                    raise ValueError("HF result missing image_bytes")
+
+                # Save image locally
+                image_path = await self._save_image(image_bytes, product_index)
+
+                self.logger.info(f"✅ Image {product_index} generated with HuggingFace (FREE): {image_path}")
 
                 return {
                     'image_path': str(image_path),
@@ -90,7 +119,7 @@ class ImageGeneratorSubAgent(BaseSubAgent):
                 }
 
             except Exception as hf_error:
-                self.logger.warning(f"⚠️  HuggingFace failed: {hf_error}")
+                self.logger.error(f"❌ HuggingFace exception: {hf_error}")
 
                 # Fallback to fal.ai if enabled
                 if self.use_fallback:
@@ -139,23 +168,38 @@ Commercial photography style.
         self.logger.info(f"🔄 Falling back to fal.ai for image {product_index}...")
 
         try:
-            # Import fal.ai client
-            from src.mcp.production_fal_image_generator import production_generate_images_with_fal
+            # With real Amazon scraper, we should have real image URLs
+            # Proceed to fal.ai for image enhancement
 
-            # Generate with fal.ai
-            result = await production_generate_images_with_fal(
-                prompt=prompt,
-                amazon_image_url=product.get('image_url'),
-                product_index=product_index
+            # Import fal.ai generator class
+            from src.mcp.production_fal_image_generator import FalImageGenerator
+
+            # Instantiate fal.ai generator
+            generator = FalImageGenerator(self.config)
+
+            # Get record_id from parent agent context if available
+            record_id = self.parent_agent_id or 'unknown'
+
+            # Generate with fal.ai using single-product method
+            result = await generator.enhance_product_image(
+                amazon_image_url=product.get('image_url', ''),
+                product_title=product.get('title', ''),
+                product_description=product.get('description', ''),
+                product_num=product_index,
+                record_id=record_id,
+                vision_analysis=None
             )
 
-            self.logger.warning(f"⚠️  Image {product_index} generated with fal.ai (fallback, cost: $0.03)")
+            if result.get('success'):
+                self.logger.warning(f"⚠️  Image {product_index} generated with fal.ai (fallback, cost: $0.03)")
 
-            return {
-                'image_path': result['image_path'],
-                'method': 'fal_ai_fallback',
-                'cost': 0.03
-            }
+                return {
+                    'image_path': result['local_path'],
+                    'method': 'fal_ai_fallback',
+                    'cost': 0.03
+                }
+            else:
+                raise RuntimeError(f"fal.ai generation failed: {result.get('error', 'Unknown error')}")
 
         except Exception as e:
             self.logger.error(f"❌ Fallback also failed: {e}")

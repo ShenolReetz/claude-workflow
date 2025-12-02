@@ -102,12 +102,24 @@ class ContentGenerationAgent(BaseAgent):
         image_paths = []
         for i, result in enumerate(results, 1):
             if isinstance(result, Exception):
-                self.logger.error(f"❌ Image {i} failed: {result}")
+                self.logger.error(f"❌ Image {i} failed with exception: {result}")
                 image_paths.append(None)
-            elif result['success']:
-                image_paths.append(result['result']['image_path'])
+            elif not isinstance(result, dict):
+                self.logger.error(f"❌ Image {i} returned invalid type: {type(result)}")
+                image_paths.append(None)
+            elif not result.get('success', False):
+                error = result.get('error', 'Unknown error')
+                self.logger.error(f"❌ Image {i} failed: success=False, error={error}")
+                image_paths.append(None)
             else:
-                image_paths.append(None)
+                # Success case
+                image_path = result['result'].get('image_path')
+                if image_path:
+                    self.logger.info(f"✅ Image {i} path collected: {image_path}")
+                    image_paths.append(image_path)
+                else:
+                    self.logger.error(f"❌ Image {i}: success=True but no image_path in result")
+                    image_paths.append(None)
 
         return {
             'image_paths': image_paths,

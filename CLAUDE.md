@@ -1,0 +1,1 @@
+- ScrapingDog scrapes also product photos from each product, that means 5, which needs to be saved to the Google Drive and the photo links to be saved into Airtable for reference. Afterwards these photos needs to be used as reference to Image generation MCP-Agents to create the most detailed and realistic Product photos.

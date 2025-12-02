@@ -50,7 +50,6 @@ class OrchestratorAgent(BaseAgent):
     def _define_workflow_phases(self) -> List[str]:
         """Define all workflow phases in order"""
         return [
-            "validate_credentials",
             "fetch_title",
             "scrape_amazon",
             "extract_category",
@@ -72,8 +71,7 @@ class OrchestratorAgent(BaseAgent):
     def _define_phase_dependencies(self) -> Dict[str, List[str]]:
         """Define which phases depend on which others"""
         return {
-            "validate_credentials": [],
-            "fetch_title": ["validate_credentials"],
+            "fetch_title": [],
             "scrape_amazon": ["fetch_title"],
             "extract_category": ["fetch_title"],
             "validate_products": ["scrape_amazon"],
